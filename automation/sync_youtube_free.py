@@ -83,21 +83,40 @@ def get_live_status(player):
 
 def fetch_video_details(video_id: str):
     html = http_get(f"https://www.youtube.com/watch?v={video_id}")
+
     player = extract_player_response(html)
-    if not player:
-        return None
+    if player:
+        status, start_ts, end_ts = get_live_status(player)
+        if status in ("live", "upcoming") and start_ts:
+            return {
+                "status": status,
+                "start_et": iso_to_et_fmt(start_ts),
+                "end_et": iso_to_et_fmt(end_ts) if end_ts else ""
+            }
 
-    status, start_ts, end_ts = get_live_status(player)
-    if status not in ("live", "upcoming"):
-        return None
-    if not start_ts:
-        return None
+    # Fallback: search raw HTML for a startTimestamp (works on many upcoming lives)
+    m = re.search(r'"startTimestamp":"([^"]+)"', html)
+    if m:
+        start_ts = m.group(1)
+        # if we have a startTimestamp but no explicit status, assume upcoming
+        return {
+            "status": "upcoming",
+            "start_et": iso_to_et_fmt(start_ts),
+            "end_et": ""
+        }
 
-    return {
-        "status": status,
-        "start_et": iso_to_et_fmt(start_ts),
-        "end_et": iso_to_et_fmt(end_ts) if end_ts else ""
-    }
+    # Fallback: if currently live, some pages include isLiveNow true even if parsing fails
+    if '"isLiveNow":true' in html:
+        m2 = re.search(r'"startTimestamp":"([^"]+)"', html)
+        if m2:
+            return {
+                "status": "live",
+                "start_et": iso_to_et_fmt(m2.group(1)),
+                "end_et": ""
+            }
+
+    return None
+
 
 def main():
     if not CHANNEL_IDS:

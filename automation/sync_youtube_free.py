@@ -126,43 +126,29 @@ def main():
     seen = set()
 
     for cid in CHANNEL_IDS:
-    feed = fetch_rss(cid)
-    for item in feed:
-        vid = item["video_id"]
-        if vid in seen:
-            continue
+        feed = fetch_rss(cid)
 
-        time.sleep(0.35)
+        for item in feed:
+            vid = item["video_id"]
+            if vid in seen:
+                continue
 
-        details = fetch_video_details(vid)
-        if not details:
-            print("Skipped (no live/upcoming):", item["title"], item["watch_url"])
-            continue
+            time.sleep(0.35)
 
-        seen.add(vid)
-        events.append({
-            "start_et": details["start_et"],
-            "end_et": details["end_et"],
-            "title": item["title"],
-            "league": "",
-            "platform": "YouTube",
-            "channel": item["channel"],
-            "watch_url": item["watch_url"],
-            "source_id": vid,
-            "status": details["status"],
-        })
-
-
+            details = fetch_video_details(vid)
+            if not details:
+                print("Skipped (no live/upcoming):", item.get("title", ""), item.get("watch_url", ""))
+                continue
 
             seen.add(vid)
             events.append({
                 "start_et": details["start_et"],
                 "end_et": details["end_et"],
-                "title": item["title"],
+                "title": item.get("title", ""),
                 "league": "",
                 "platform": "YouTube",
-                "channel": item["channel"],
-                "watch_url": item["watch_url"],
+                "channel": item.get("channel", ""),
+                "watch_url": item.get("watch_url", ""),
                 "source_id": vid,
                 "status": details["status"],
             })
@@ -173,6 +159,7 @@ def main():
         json.dump(events, f, indent=2)
 
     print(f"Wrote {len(events)} events to {OUT_PATH}")
+
 
 if __name__ == "__main__":
     main()

@@ -337,6 +337,6 @@ wire();
 load().catch(err => {
   nowBody.innerHTML = `<p class="muted">Could not load schedule.</p><p class="muted small">${escapeHtml(err.message)}</p>`;
   nextBody.innerHTML = `<p class="muted">—</p>`;
-  scheduleBody.innerHTML = `<tr><td colspan="5" class="muted">Could not load schedule: ${escapeHtml(err.message)}</td></tr>`;
+scheduleCards.innerHTML = `<div class="muted">Could not load schedule: ${escapeHtml(err.message)}</div>`;
   console.error(err);
 });

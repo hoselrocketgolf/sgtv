@@ -234,3 +234,74 @@ button{
 tbody tr:hover{
   background: rgba(255,59,212,0.05);
 }
+
+
+/* ===== HYPE EVENT CARDS ===== */
+.scheduleCards{
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap:14px;
+  margin-top:12px;
+}
+
+.eventCard{
+  background: rgba(18,22,33,0.85);
+  border:1px solid rgba(255,255,255,0.10);
+  border-radius:18px;
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  position:relative;
+  overflow:hidden;
+}
+
+.eventCard.live{
+  border-color: rgba(34,197,94,0.45);
+  background:
+    radial-gradient(800px 260px at 20% 0%, rgba(34,197,94,0.20) 0%, transparent 60%),
+    rgba(18,22,33,0.90);
+}
+
+.eventTime{
+  font-weight:800;
+  font-size:13px;
+  color:#dbeafe;
+}
+
+.eventTitle{
+  font-weight:900;
+  line-height:1.2;
+  font-size:15px;
+}
+
+.eventMeta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+}
+
+.metaPill{
+  font-size:11px;
+  padding:5px 9px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+}
+
+.metaPill.live{
+  border-color: rgba(34,197,94,0.45);
+  background: rgba(34,197,94,0.18);
+}
+
+.eventActions{
+  margin-top:auto;
+  display:flex;
+  gap:8px;
+}
+
+.eventActions a{
+  flex:1;
+  text-align:center;
+  font-weight:800;
+}

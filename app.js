@@ -106,7 +106,7 @@ const nowBody = document.getElementById("nowBody");
 const nextBody = document.getElementById("nextBody");
 const nowPill = document.getElementById("nowPill");
 
-const scheduleBody = document.getElementById("scheduleBody");
+const scheduleCards = document.getElementById("scheduleCards");
 const emptyMsg = document.getElementById("emptyMsg");
 const lastUpdated = document.getElementById("lastUpdated");
 

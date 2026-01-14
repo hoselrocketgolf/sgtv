@@ -244,51 +244,30 @@ function render(){
 }
 
 async function load(){
-scheduleCards.innerHTML = `<div class="muted">Loading…</div>`;
+  scheduleCards.innerHTML = `<div class="muted">Loading…</div>`;
   emptyMsg.hidden = true;
 
-  const res = await fetch(CSV_URL, { cache: "no-store" });
-  if (!res.ok) throw new Error(`Failed to load CSV (${res.status})`);
-  const text = await res.text();
+  const res = await fetch(JSON_URL, { cache: "no-store" });
+  if (!res.ok) throw new Error(`Failed to load schedule.json (${res.status})`);
 
-  const rows = parseCSV(text);
-  if (rows.length < 2) throw new Error("CSV has no data rows.");
+  const data = await res.json();
 
-  const headersRaw = rows[0].map(normKey);
-  const headerIndex = new Map(headersRaw.map((h,i)=>[h,i]));
-
-  // Candidate header names (case-insensitive normalized)
-  const startKey = pickKey(headersRaw, ["start_et","start","start_time","start_time_et","datetime","time","starttime"]);
-  const endKey   = pickKey(headersRaw, ["end_et","end","end_time","end_time_et","endtime"]);
-  const titleKey = pickKey(headersRaw, ["title","event","name","match","program"]);
-  const leagueKey= pickKey(headersRaw, ["league","tour","series","org"]);
-  const platKey  = pickKey(headersRaw, ["platform","site","service"]);
-  const chanKey  = pickKey(headersRaw, ["channel","creator","host"]);
-  const urlKey   = pickKey(headersRaw, ["watch_url","url","link","watch","stream_url","stream"]);
-
-  // Parse events
   const events = [];
-  for (let r = 1; r < rows.length; r++){
-    const row = rows[r];
-    const get = (k) => (k && headerIndex.has(k)) ? norm(row[headerIndex.get(k)]) : "";
+  for (const r of data){
+    const start = parseDateET(r.start_et);
+    const end = parseDateET(r.end_et);
 
-    const startRaw = get(startKey);
-    const endRaw = get(endKey);
-
-    const start = parseDateET(startRaw);
-    const end = parseDateET(endRaw);
-
-    // Skip rows without a parsable start time (keeps table clean)
     if (!start) continue;
 
     events.push({
       start, end,
-      title: get(titleKey),
-      league: get(leagueKey),
-      platform: get(platKey),
-      channel: get(chanKey),
-      watch_url: get(urlKey),
-      _raw: row
+      title: r.title || "",
+      league: r.league || "",
+      platform: r.platform || "YouTube",
+      channel: r.channel || "",
+      watch_url: r.watch_url || "",
+      source_id: r.source_id || "",
+      status: r.status || ""
     });
   }
 
@@ -304,6 +283,7 @@ scheduleCards.innerHTML = `<div class="muted">Loading…</div>`;
 
   render();
 }
+
 
 function wire(){
   leagueFilter.addEventListener("change", render);

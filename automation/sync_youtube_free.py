@@ -46,7 +46,7 @@ def fetch_rss(channel_id: str):
                 "channel": author_name
             })
     entries.sort(key=lambda x: x.get("published",""), reverse=True)
-    return entries[:50]
+    return entries[:60]
 
 def extract_player_response(html: str):
     patterns = [

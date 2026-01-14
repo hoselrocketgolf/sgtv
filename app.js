@@ -5,7 +5,7 @@
   If you change the sheet, update CSV_URL below.
 */
 
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS2AzHxr-DjpaPOEsmXMTmoLmEulbqeBEwJBMDv9tykp0xK_3Gl5jtsUlAQTxGlzQOaFr99FgiOUBFf/pub?gid=0&single=true&output=csv";
+const JSON_URL = "./schedule.json";
 
 const { DateTime } = luxon;
 const TZ = "America/New_York";

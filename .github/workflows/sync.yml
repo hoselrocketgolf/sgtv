@@ -1,0 +1,34 @@
+name: Sync YouTube (free) -> schedule.json
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run sync
+        env:
+          CHANNEL_IDS: ${{ secrets.CHANNEL_IDS }}
+          OUT_PATH: schedule.json
+        run: |
+          python automation/sync_youtube_free.py
+
+      - name: Commit schedule.json if changed
+        run: |
+          git config user.name "sgtv-bot"
+          git config user.email "sgtv-bot@users.noreply.github.com"
+          git add schedule.json
+          git diff --cached --quiet || (git commit -m "Update schedule.json" && git push)

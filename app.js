@@ -192,39 +192,56 @@ function render(){
   setCard(nowBody, nowEvt, "Now");
   setCard(nextBody, nextEvt, "Next");
 
-  // Schedule table: show today's items from filtered
+ // Schedule cards: show today's items from filtered
+const now = DateTime.now().setZone(TZ);
+const startOfDay = now.startOf("day");
+const endOfDay = now.endOf("day");
+
+const todays = filtered
+  .filter(e => e.start && e.start >= startOfDay && e.start <= endOfDay)
+  .sort((a,b)=>a.start.toMillis()-b.start.toMillis());
+
+scheduleCards.innerHTML = "";
+
+if (todays.length === 0){
+  emptyMsg.hidden = false;
+  scheduleCards.innerHTML = `<div class="muted">No events scheduled for today with current filters.</div>`;
+  return;
+}
+
+emptyMsg.hidden = true;
+
+todays.forEach(evt => {
   const now = DateTime.now().setZone(TZ);
-  const startOfDay = now.startOf("day");
-  const endOfDay = now.endOf("day");
+  const end = evt.end ?? evt.start.plus({ hours: 2 });
+  const isLive = now >= evt.start && now <= end;
 
-  const todays = filtered
-    .filter(e => e.start && e.start >= startOfDay && e.start <= endOfDay)
-    .sort((a,b)=>a.start.toMillis()-b.start.toMillis());
+  const card = document.createElement("div");
+  card.className = `eventCard ${isLive ? "live" : ""}`;
 
-  scheduleBody.innerHTML = "";
-  if (todays.length === 0){
-    emptyMsg.hidden = false;
-    scheduleBody.innerHTML = `<tr><td colspan="5" class="muted">No events scheduled for today with current filters.</td></tr>`;
-    return;
-  }
-  emptyMsg.hidden = true;
+  const timeLine = evt.end
+    ? `${fmtTime(evt.start)}–${fmtTime(evt.end)} ET`
+    : `${fmtTime(evt.start)} ET`;
 
-  for (const e of todays){
-    const t = `${fmtTime(e.start)}${e.end ? `–${fmtTime(e.end)}` : ""}`;
-    const watch = e.watch_url
-      ? `<a href="${e.watch_url}" target="_blank" rel="noopener">Watch</a>`
-      : `<span class="muted">—</span>`;
-    const title = `<div class="title">${escapeHtml(e.title || "Untitled")}</div>${e.channel ? `<div class="muted small">${escapeHtml(e.channel)}</div>` : ""}`;
+  const watch = evt.watch_url
+    ? `<a href="${evt.watch_url}" target="_blank" rel="noopener">Watch</a>`
+    : `<span class="muted">No link</span>`;
 
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td><span class="tag">${t} ET</span></td>
-      <td>${title}</td>
-      <td>${escapeHtml(e.league || "—")}</td>
-      <td>${escapeHtml(e.platform || "—")}</td>
-      <td class="watch">${watch}</td>
-    `;
-    scheduleBody.appendChild(tr);
+  card.innerHTML = `
+    <div class="eventTime">${escapeHtml(timeLine)}</div>
+    <div class="eventTitle">${escapeHtml(evt.title || "Untitled")}</div>
+    <div class="eventMeta">
+      ${isLive ? `<span class="metaPill live">LIVE</span>` : ``}
+      ${evt.league ? `<span class="metaPill">${escapeHtml(evt.league)}</span>` : ``}
+      ${evt.platform ? `<span class="metaPill">${escapeHtml(evt.platform)}</span>` : ``}
+      ${evt.channel ? `<span class="metaPill">${escapeHtml(evt.channel)}</span>` : ``}
+    </div>
+    <div class="eventActions">${watch}</div>
+  `;
+
+  scheduleCards.appendChild(card);
+});
+
   }
 }
 

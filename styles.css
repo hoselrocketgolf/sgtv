@@ -1,0 +1,154 @@
+:root{
+  --bg:#0b0d10;
+  --panel:#121621;
+  --panel2:#0f131c;
+  --text:#eef2ff;
+  --muted:#9aa4b2;
+  --line:#222b3a;
+  --pill:#1f2a44;
+  --live:#0ea5e9;
+  --btn:#1d4ed8;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  background: radial-gradient(1200px 700px at 30% -10%, #1d4ed833 0%, transparent 60%),
+              radial-gradient(900px 600px at 80% 0%, #0ea5e933 0%, transparent 55%),
+              var(--bg);
+  color:var(--text);
+}
+
+.wrap{max-width:1100px;margin:0 auto;padding:18px}
+
+header{
+  position:sticky; top:0;
+  background: linear-gradient(180deg, rgba(11,13,16,.92) 0%, rgba(11,13,16,.75) 70%, rgba(11,13,16,0) 100%);
+  backdrop-filter: blur(10px);
+  z-index:10;
+  border-bottom:1px solid rgba(255,255,255,0.04);
+}
+
+.brand{display:flex;gap:14px;align-items:center}
+.logo{
+  width:44px;height:44px;border-radius:14px;
+  display:grid;place-items:center;
+  background: linear-gradient(135deg, #1d4ed8, #0ea5e9);
+  font-weight:800;
+}
+h1{margin:0;font-size:22px;line-height:1.1}
+.sub{margin:4px 0 0;color:var(--muted);font-size:13px}
+
+.controls{
+  margin-top:14px;
+  display:grid;
+  grid-template-columns: 160px 160px 1fr 120px;
+  gap:10px;
+}
+.control label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+select,input,button{
+  width:100%;
+  padding:10px 10px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.10);
+  background: rgba(18,22,33,0.85);
+  color:var(--text);
+  outline:none;
+}
+input::placeholder{color:#738197}
+button{
+  background: linear-gradient(135deg, rgba(29,78,216,0.95), rgba(14,165,233,0.85));
+  border:0;
+  cursor:pointer;
+  font-weight:700;
+}
+button:active{transform: translateY(1px)}
+
+.cards{
+  display:grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap:12px;
+  margin-top:12px;
+}
+.card{
+  background: rgba(18,22,33,0.85);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:18px;
+  padding:14px;
+  min-height:150px;
+}
+.cardHeader{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.card h2{margin:0;font-size:16px}
+.cardBody{margin-top:10px}
+.pill{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:6px 10px;
+  border-radius:999px;
+  font-size:12px;
+  background: rgba(31,42,68,0.9);
+  border:1px solid rgba(255,255,255,0.08);
+}
+.pill.live{
+  background: rgba(14,165,233,0.16);
+  border-color: rgba(14,165,233,0.35);
+  color: #bfe9ff;
+}
+.muted{color:var(--muted)}
+.small{font-size:12px}
+a{color:#bfe9ff;text-decoration:none}
+a:hover{text-decoration:underline}
+
+.panel{
+  margin-top:12px;
+  background: rgba(18,22,33,0.72);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:18px;
+  padding:14px;
+}
+.panelHeader{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.panelHeader h2{margin:0;font-size:16px}
+
+.tableWrap{overflow:auto;margin-top:10px;border-radius:14px;border:1px solid rgba(255,255,255,0.07)}
+table{width:100%;border-collapse:collapse;min-width:760px;background: rgba(15,19,28,0.7)}
+thead th{
+  text-align:left;
+  font-size:12px;
+  color:var(--muted);
+  padding:10px 12px;
+  border-bottom:1px solid rgba(255,255,255,0.08);
+  position:sticky; top:0;
+  background: rgba(15,19,28,0.95);
+}
+tbody td{
+  padding:12px;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+  vertical-align:top;
+}
+tbody tr:hover{background: rgba(255,255,255,0.03)}
+td .title{font-weight:700}
+.tag{
+  display:inline-flex;
+  padding:4px 8px;
+  border-radius:999px;
+  font-size:12px;
+  background: rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.08);
+  color: var(--text);
+}
+.watch a{
+  display:inline-flex;
+  padding:8px 10px;
+  border-radius:12px;
+  background: rgba(14,165,233,0.16);
+  border:1px solid rgba(14,165,233,0.35);
+}
+
+.footer{padding-bottom:30px}
+
+@media (max-width: 880px){
+  .controls{grid-template-columns: 1fr 1fr; }
+  .cards{grid-template-columns:1fr}
+  table{min-width:640px}
+}

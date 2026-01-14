@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SimGolf TV Guide</title>
+  <meta name="description" content="A lightweight TV guide for live simulator golf — powered by Google Sheets." />
+  <link rel="stylesheet" href="styles.css" />
+  <!-- Luxon for reliable timezone parsing/formatting -->
+  <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
+</head>
+<body>
+  <header class="wrap">
+    <div class="brand">
+      <div class="logo">SG</div>
+      <div>
+        <h1>SimGolf TV Guide</h1>
+        <p class="sub">Live 24/7 simulator golf schedule • Times shown in Eastern</p>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="control">
+        <label for="leagueFilter">League</label>
+        <select id="leagueFilter">
+          <option value="">All</option>
+        </select>
+      </div>
+      <div class="control">
+        <label for="platformFilter">Platform</label>
+        <select id="platformFilter">
+          <option value="">All</option>
+        </select>
+      </div>
+      <div class="control">
+        <label for="searchBox">Search</label>
+        <input id="searchBox" type="search" placeholder="Search title, league, channel…" />
+      </div>
+      <div class="control">
+        <label for="refreshBtn">Refresh</label>
+        <button id="refreshBtn" type="button">Update</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="cards">
+      <article class="card" id="nowCard">
+        <div class="cardHeader">
+          <h2>Now On</h2>
+          <span class="pill live" id="nowPill" hidden>LIVE</span>
+        </div>
+        <div class="cardBody" id="nowBody">
+          <p class="muted">Loading…</p>
+        </div>
+      </article>
+
+      <article class="card" id="nextCard">
+        <div class="cardHeader">
+          <h2>Up Next</h2>
+        </div>
+        <div class="cardBody" id="nextBody">
+          <p class="muted">Loading…</p>
+        </div>
+      </article>
+
+      <article class="card" id="aboutCard">
+        <div class="cardHeader">
+          <h2>How it works</h2>
+        </div>
+        <div class="cardBody">
+          <p>This site is powered by a published Google Sheet (CSV). Update the sheet and this guide updates.</p>
+          <ul>
+            <li>Edit <code>CSV_URL</code> in <code>app.js</code> if you change your sheet link.</li>
+            <li>Recommended columns: <code>start_et</code>, <code>end_et</code> (optional), <code>title</code>, <code>league</code>, <code>platform</code>, <code>channel</code> (optional), <code>watch_url</code>.</li>
+          </ul>
+          <p class="muted small">Tip: keep <code>start_et</code> in ISO like <code>2026-01-13 20:00</code> (Eastern).</p>
+        </div>
+      </article>
+    </section>
+
+    <section class="panel">
+      <div class="panelHeader">
+        <h2>Today's Schedule</h2>
+        <div class="panelMeta">
+          <span id="lastUpdated" class="muted small">—</span>
+        </div>
+      </div>
+      <div class="tableWrap">
+        <table id="scheduleTable">
+          <thead>
+            <tr>
+              <th>Time (ET)</th>
+              <th>Title</th>
+              <th>League</th>
+              <th>Platform</th>
+              <th>Watch</th>
+            </tr>
+          </thead>
+          <tbody id="scheduleBody">
+            <tr><td colspan="5" class="muted">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="muted small" id="emptyMsg" hidden>No matching events.</p>
+    </section>
+  </main>
+
+  <footer class="wrap footer">
+    <span class="muted small">Built as a lightweight static site (HTML/CSS/JS). Host free on Cloudflare Pages or GitHub Pages.</span>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

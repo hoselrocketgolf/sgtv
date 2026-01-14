@@ -134,9 +134,11 @@ def main():
 
             time.sleep(0.35)
 
-            details = fetch_video_details(vid)
-            if not details:
-                continue
+           details = fetch_video_details(vid)
+if not details:
+    print("Skipped (no live/upcoming):", item["title"], item["watch_url"])
+    continue
+
 
             seen.add(vid)
             events.append({

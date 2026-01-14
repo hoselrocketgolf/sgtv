@@ -246,7 +246,7 @@ todays.forEach(evt => {
 }
 
 async function load(){
-  scheduleBody.innerHTML = `<tr><td colspan="5" class="muted">Loading…</td></tr>`;
+scheduleCards.innerHTML = `<div class="muted">Loading…</div>`;
   emptyMsg.hidden = true;
 
   const res = await fetch(CSV_URL, { cache: "no-store" });

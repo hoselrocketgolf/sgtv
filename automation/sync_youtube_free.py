@@ -126,18 +126,32 @@ def main():
     seen = set()
 
     for cid in CHANNEL_IDS:
-        feed = fetch_rss(cid)
-        for item in feed:
-            vid = item["video_id"]
-            if vid in seen:
-                continue
+    feed = fetch_rss(cid)
+    for item in feed:
+        vid = item["video_id"]
+        if vid in seen:
+            continue
 
-            time.sleep(0.35)
+        time.sleep(0.35)
 
-           details = fetch_video_details(vid)
-if not details:
-    print("Skipped (no live/upcoming):", item["title"], item["watch_url"])
-    continue
+        details = fetch_video_details(vid)
+        if not details:
+            print("Skipped (no live/upcoming):", item["title"], item["watch_url"])
+            continue
+
+        seen.add(vid)
+        events.append({
+            "start_et": details["start_et"],
+            "end_et": details["end_et"],
+            "title": item["title"],
+            "league": "",
+            "platform": "YouTube",
+            "channel": item["channel"],
+            "watch_url": item["watch_url"],
+            "source_id": vid,
+            "status": details["status"],
+        })
+
 
 
             seen.add(vid)

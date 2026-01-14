@@ -212,9 +212,9 @@ function render(){
   emptyMsg.hidden = true;
 
   todays.forEach(evt => {
-    const now = DateTime.now().setZone(TZ);
+    const rightNow = DateTime.now().setZone(TZ);
     const end = evt.end ?? evt.start.plus({ hours: 2 });
-    const isLive = now >= evt.start && now <= end;
+    const isLive = rightNow >= evt.start && rightNow <= end;
 
     const card = document.createElement("div");
     card.className = `eventCard ${isLive ? "live" : ""}`;
@@ -242,7 +242,6 @@ function render(){
     scheduleCards.appendChild(card);
   });
 }
-
 
 async function load(){
 scheduleCards.innerHTML = `<div class="muted">Loading…</div>`;

@@ -316,9 +316,10 @@ def main():
         preferred_name = sheet_name or (f"@{sheet_handle}" if sheet_handle else "")
 
         # --- LIVE probe ---
-        live_vid = fetch_channel_live_video_id(cid)
-        if live_vid:
-            print("LIVE candidate:", cid, live_vid, preferred_name)
+        live_vid = fetch_channel_live_video_id(cid, sheet_handle)
+if live_vid:
+    print("LIVE candidate:", cid, live_vid, preferred_name, "(handle:", sheet_handle, ")")
+
 
         if live_vid and live_vid not in seen:
             time.sleep(0.35)

@@ -2,15 +2,41 @@
   {
     "start_et": "2026-01-15 18:00",
     "end_et": "",
+    "title": "Live Garage Simulator Golf - SGT Web+ Tour Rounds 1 & 2 @ Waialae",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "TurbodTalon Golf",
+    "watch_url": "https://www.youtube.com/watch?v=qsseUriV0Qw",
+    "source_id": "qsseUriV0Qw",
+    "status": "live",
+    "thumbnail_url": "https://i.ytimg.com/vi/qsseUriV0Qw/maxresdefault_live.jpg",
+    "subscribers": 175
+  },
+  {
+    "start_et": "2026-01-15 18:01",
+    "end_et": "",
     "title": "LIVE 3-Man Scramble \u2014 Can We Break the Course Record? | TNT",
     "league": "",
     "platform": "YouTube",
     "channel": "Hosel Rocket Golf",
     "watch_url": "https://www.youtube.com/watch?v=cxo6lgwlKzs",
     "source_id": "cxo6lgwlKzs",
-    "status": "upcoming",
+    "status": "live",
     "thumbnail_url": "https://i.ytimg.com/vi/cxo6lgwlKzs/maxresdefault_live.jpg",
-    "subscribers": 2460
+    "subscribers": 2470
+  },
+  {
+    "start_et": "2026-01-15 18:01",
+    "end_et": "",
+    "title": "Thursday Night Thunder - TNT (LIVE)",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Hosel Rocket Golf",
+    "watch_url": "https://www.youtube.com/watch?v=SyW1ZQAiSMc",
+    "source_id": "SyW1ZQAiSMc",
+    "status": "live",
+    "thumbnail_url": "https://i.ytimg.com/vi/SyW1ZQAiSMc/maxresdefault_live.jpg",
+    "subscribers": 2470
   },
   {
     "start_et": "2026-01-15 20:45",
@@ -75,7 +101,7 @@
     "source_id": "oYAnobNwkrc",
     "status": "upcoming",
     "thumbnail_url": "https://i.ytimg.com/vi/oYAnobNwkrc/maxresdefault_live.jpg",
-    "subscribers": 2460
+    "subscribers": 2470
   },
   {
     "start_et": "2026-01-17 16:00",

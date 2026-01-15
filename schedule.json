@@ -10,7 +10,7 @@
     "source_id": "JI4-z-HROjo",
     "status": "live",
     "thumbnail_url": "https://i.ytimg.com/vi/JI4-z-HROjo/maxresdefault_live.jpg",
-    "subscribers": 160000
+    "subscribers": 161000
   },
   {
     "start_et": "2026-01-15 14:00",
@@ -76,5 +76,18 @@
     "status": "upcoming",
     "thumbnail_url": "https://i.ytimg.com/vi/HJa0AUeS5lE/maxresdefault_live.jpg",
     "subscribers": 12
+  },
+  {
+    "start_et": "2026-01-17 16:00",
+    "end_et": "",
+    "title": "SIM WORLD - With Joe Lagowski Golf - LIVESTREAM 1hr (Ep.34) PGA Show Special",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Joe Lagowski Golf",
+    "watch_url": "https://www.youtube.com/watch?v=U-5LdIqIJgM",
+    "source_id": "U-5LdIqIJgM",
+    "status": "upcoming",
+    "thumbnail_url": "https://i.ytimg.com/vi/U-5LdIqIJgM/maxresdefault_live.jpg",
+    "subscribers": 16900
   }
 ]

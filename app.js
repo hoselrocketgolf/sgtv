@@ -62,18 +62,6 @@ function fmtDay(dt) {
   return `${days[dt.getDay()]}, ${months[dt.getMonth()]} ${dt.getDate()}`;
 }
 
-function pad2(n){ return String(n).padStart(2,"0"); }
-
-function sameDay(a, b) {
-  return (
-    a &&
-    b &&
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  );
-}
-
 function clamp(n, a, b) {
   return Math.max(a, Math.min(b, n));
 }
@@ -108,11 +96,8 @@ function eventEnd(e) {
   const start = parseET(e.start_et);
   if (!start) return null;
 
-  // CHANGE #1: Default duration 2 hours when no end time
-  // - Live streams commonly run ~2 hours
-  // - Upcoming scheduled streams often ~2 hours too
-  const mins = 120;
-  return new Date(start.getTime() + mins * 60000);
+  // Default duration 2 hours when no end time
+  return new Date(start.getTime() + 120 * 60000);
 }
 
 function sortEvents(events) {
@@ -173,7 +158,7 @@ function applyFilters() {
   filteredEvents = sortEvents(filteredEvents);
 
   renderNowNext();
-  renderRightTileTodayList(); // CHANGE #2
+  renderRightTileTodayList();
   renderGuide();
 }
 
@@ -219,7 +204,7 @@ function renderNowNext() {
     : `<div class="muted">No upcoming events found.</div>`;
 }
 
-// --- CHANGE #2: Right tile becomes "Today's lineup" clickable chips ---
+// --- Right tile: Today's lineup chips (ONLY channel name in bold white) ---
 function renderRightTileTodayList() {
   if (!infoTileBody) return;
 
@@ -243,20 +228,17 @@ function renderRightTileTodayList() {
     const s = parseET(e.start_et);
     const t = fmtTime(s).replace(" ET", "");
     const isLive = e.status === "live";
-    const title = e.title || "";
     const ch = e.channel || "";
     const badge = isLive ? `<span class="chipBadge">LIVE</span>` : "";
     return `
-      <a class="chip" href="${escapeHtml(e.watch_url)}" target="_blank" rel="noreferrer" title="${escapeHtml(title)}">
+      <a class="chip" href="${escapeHtml(e.watch_url)}" target="_blank" rel="noreferrer">
         <span class="chipTime">${escapeHtml(t)}</span>
-        <span class="chipTitle">${escapeHtml(title)}</span>
-        <span class="chipChan">${escapeHtml(ch)}</span>
+        <span class="chipChanStrong">${escapeHtml(ch)}</span>
         ${badge}
       </a>
     `;
   }).join("");
 
-  // Inline styles so you don't have to touch CSS unless you want to later
   infoTileBody.innerHTML = `
     <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;">
       <div class="muted">Today • ${fmtDay(now)}</div>
@@ -297,22 +279,15 @@ function renderRightTileTodayList() {
         min-width: 86px;
         white-space: nowrap;
       }
-      .chipTitle{
-        font-weight:800;
-        font-size:12.5px;
-        color: rgba(255,255,255,.92);
+      /* Bold white channel name */
+      .chipChanStrong{
+        font-weight:900;
+        font-size:13px;
+        color: rgba(255,255,255,.94);
         overflow:hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
         flex:1;
-      }
-      .chipChan{
-        font-size:12px;
-        color: rgba(255,255,255,.65);
-        white-space: nowrap;
-        max-width: 160px;
-        overflow:hidden;
-        text-overflow: ellipsis;
       }
       .chipBadge{
         margin-left:auto;
@@ -325,7 +300,6 @@ function renderRightTileTodayList() {
         white-space: nowrap;
       }
       @media (max-width: 980px){
-        .chipChan{display:none;}
         .chipTime{min-width: 78px;}
       }
     </style>
@@ -342,7 +316,6 @@ function roundToTick(dt) {
 function ensureWindowStart() {
   if (windowStart) return;
 
-  // anchor on: live start OR next upcoming OR now
   const live = filteredEvents.find(e => e.status === "live");
   const next = filteredEvents.find(e => e.status !== "live");
 
@@ -353,7 +326,6 @@ function ensureWindowStart() {
 function jumpToNow() {
   windowStart = roundToTick(new Date());
   renderGuide();
-
   if (rowsEl) rowsEl.scrollTop = 0;
 }
 
@@ -410,7 +382,6 @@ function renderGuide() {
   const startMs = windowStart.getTime();
   const endMs = startMs + windowMins * 60000;
 
-  // Only show events that intersect the window
   const windowEvents = filteredEvents.filter(e => {
     const s = parseET(e.start_et)?.getTime();
     if (!s) return false;
@@ -513,7 +484,6 @@ async function loadSchedule() {
 
   rebuildFilters(allEvents);
 
-  // reset window so it follows live/next again
   windowStart = null;
 
   const now = new Date();

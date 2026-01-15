@@ -201,8 +201,6 @@ def fetch_channel_subscribers(channel_id: str) -> int:
 
     return 0
 
-
-
 def main():
     if not CHANNEL_IDS:
         raise SystemExit("CHANNEL_IDS env var is empty. Set it in GitHub Secrets.")
@@ -211,7 +209,10 @@ def main():
     seen = set()
 
     for cid in CHANNEL_IDS:
-        # 1) Try to catch currently-live (even if not scheduled / not in feed yet)
+        # Fetch subscriber count once per channel (best-effort)
+        subs = fetch_channel_subscribers(cid)
+
+        # 1) Catch currently-live (even if not scheduled)
         live_vid = fetch_channel_live_video_id(cid)
         if live_vid and live_vid not in seen:
             time.sleep(0.35)
@@ -224,14 +225,15 @@ def main():
                     "title": "LIVE (unscheduled)",
                     "league": "",
                     "platform": "YouTube",
-                    "channel": "",  # we’ll fill from feed items below if possible
+                    "channel": "",
                     "watch_url": f"https://www.youtube.com/watch?v={live_vid}",
                     "source_id": live_vid,
                     "status": details["status"],
-                    "thumbnail_url": ""  # best-effort below
+                    "thumbnail_url": "",
+                    "subscribers": subs,
                 })
 
-        # 2) Pull recent feed items (scheduled + live)
+        # 2) Scheduled/live from feed
         feed = fetch_rss(cid)
         for item in feed:
             vid = item["video_id"]
@@ -242,7 +244,6 @@ def main():
 
             details = fetch_video_details(vid)
             if not details:
-                # debug line (keep it, it’s useful)
                 print("Skipped (no live/upcoming):", item.get("title", ""), item.get("watch_url", ""))
                 continue
 
@@ -257,18 +258,18 @@ def main():
                 "watch_url": item.get("watch_url", ""),
                 "source_id": vid,
                 "status": details["status"],
-                "thumbnail_url": item.get("thumbnail_url", "")
+                "thumbnail_url": item.get("thumbnail_url", ""),
+                "subscribers": subs,
             })
 
-    # Fill missing channel/thumb for unscheduled live if we can match it from feed
+    # Fill missing channel/thumb for unscheduled live if possible (from feed-matched items)
     by_id = {e["source_id"]: e for e in events if e.get("source_id")}
     for e in events:
-        if e.get("channel"):
-            continue
-        match = by_id.get(e.get("source_id", ""))
-        if match:
-            e["channel"] = match.get("channel", e.get("channel", ""))
-            e["thumbnail_url"] = match.get("thumbnail_url", e.get("thumbnail_url", ""))
+        if not e.get("channel"):
+            match = by_id.get(e.get("source_id", ""))
+            if match:
+                e["channel"] = match.get("channel", "")
+                e["thumbnail_url"] = match.get("thumbnail_url", "")
 
     events.sort(key=lambda x: x["start_et"])
 

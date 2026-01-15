@@ -14,23 +14,38 @@ CHANNEL_SHEET_CSV = os.environ.get(
 OUT_PATH = os.environ.get("OUT_PATH", "schedule.json")
 
 USER_AGENT = "Mozilla/5.0 (compatible; sgtv-bot/1.0; +https://sgtv-9xx.pages.dev/)"
+# Key fix: force YouTube to skip the consent interstitial in botty environments (like GitHub Actions).
+YOUTUBE_CONSENT_COOKIE = os.environ.get("YOUTUBE_CONSENT_COOKIE", "CONSENT=YES+cb.20240101-00-p0.en+FX+999")
+
 REQ_HEADERS = {
     "User-Agent": USER_AGENT,
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Accept-Language": "en-US,en;q=0.9",
+    "Cookie": YOUTUBE_CONSENT_COOKIE,
 }
 
 # ----------------- HTTP -----------------
 def http_get(url: str) -> str:
     req = urllib.request.Request(url, headers=REQ_HEADERS)
     with urllib.request.urlopen(req, timeout=30) as resp:
-        return resp.read().decode("utf-8", errors="ignore")
+        data = resp.read().decode("utf-8", errors="ignore")
+        # detect consent walls even when status=200
+        if "consent.youtube.com" in resp.geturl() or "consent.google.com" in resp.geturl():
+            raise RuntimeError(f"CONSENT_WALL redirect: {resp.geturl()}")
+        if "Before you continue to YouTube" in data or "consent" in data and "youtube" in data and "Before you continue" in data:
+            raise RuntimeError("CONSENT_WALL HTML detected")
+        return data
 
 def http_get_with_final_url(url: str):
     req = urllib.request.Request(url, headers=REQ_HEADERS)
     with urllib.request.urlopen(req, timeout=30) as resp:
         final_url = resp.geturl()
         html = resp.read().decode("utf-8", errors="ignore")
-        return final_url, html
+        if "consent.youtube.com" in final_url or "consent.google.com" in final_url:
+            return final_url, html, True
+        if "Before you continue to YouTube" in html:
+            return final_url, html, True
+        return final_url, html, False
 
 # ----------------- CSV -----------------
 def parse_simple_csv(text: str):
@@ -39,17 +54,10 @@ def parse_simple_csv(text: str):
     return list(csv.DictReader(f))
 
 def load_channels_from_sheet():
-    """
-    Sheet headers expected:
-      handle, display_name, channel_id, subscribers
-    - handle can be with or without @
-    - subscribers optional (fallback only)
-    """
     csv_text = http_get(CHANNEL_SHEET_CSV)
     rows = parse_simple_csv(csv_text)
     if not rows:
         return []
-
     print("Sheet headers:", list(rows[0].keys()))
 
     channels = []
@@ -75,7 +83,6 @@ def load_channels_from_sheet():
                 "sheet_subscribers": sheet_subs,
             }
         )
-
     return channels
 
 # ----------------- Time -----------------
@@ -86,7 +93,7 @@ def iso_to_et_fmt(iso: str) -> str:
 def now_et_fmt() -> str:
     return datetime.now(ET_TZ).strftime("%Y-%m-%d %H:%M")
 
-# ----------------- RSS (Upcoming lives appear here) -----------------
+# ----------------- RSS -----------------
 def fetch_rss(channel_id: str):
     url = f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}"
     xml_text = http_get(url)
@@ -131,14 +138,9 @@ def fetch_rss(channel_id: str):
 
 # ----------------- Player response extraction -----------------
 def extract_player_response(html: str):
-    """
-    Brace-balance extraction for ytInitialPlayerResponse.
-    Works better than regex-only when YouTube changes formatting.
-    """
     idx = html.find("ytInitialPlayerResponse")
     if idx == -1:
         return None
-
     start = html.find("{", idx)
     if start == -1:
         return None
@@ -169,7 +171,6 @@ def extract_player_response(html: str):
                         return json.loads(blob)
                     except Exception:
                         return None
-
     return None
 
 def get_live_status_from_player(player):
@@ -199,19 +200,17 @@ def get_live_status_from_player(player):
     return None, None, None, title
 
 def fetch_video_details(video_id: str):
-    """
-    Returns:
-      {"status": "live"|"upcoming", "start_et": "...", "end_et": "...", "title": "..."}
-    or None.
-    """
-    html = http_get(f"https://www.youtube.com/watch?v={video_id}")
+    try:
+        html = http_get(f"https://www.youtube.com/watch?v={video_id}")
+    except Exception as e:
+        # if consent wall, you’ll see it clearly
+        print("fetch_video_details error:", video_id, str(e)[:180])
+        return None
 
-    # 1) parsed player response
     player = extract_player_response(html)
     if player:
         status, start_ts, end_ts, title = get_live_status_from_player(player)
         if status in ("live", "upcoming"):
-            # live sometimes lacks startTimestamp; use now
             if status == "live" and not start_ts:
                 return {"status": "live", "start_et": now_et_fmt(), "end_et": "", "title": title or ""}
             if start_ts:
@@ -222,15 +221,13 @@ def fetch_video_details(video_id: str):
                     "title": title or "",
                 }
 
-    # 2) fallback scan (handles escaped versions)
-    # detect live
+    # fallback scan
     if re.search(r'isLiveNow\\*":true', html):
         m = re.search(r'"startTimestamp":"([^"]+)"', html)
         if m:
             return {"status": "live", "start_et": iso_to_et_fmt(m.group(1)), "end_et": "", "title": ""}
         return {"status": "live", "start_et": now_et_fmt(), "end_et": "", "title": ""}
 
-    # detect upcoming (only if explicitly upcoming-ish)
     if ('"isUpcoming":true' in html) or ("upcomingEventData" in html):
         m = re.search(r'"startTimestamp":"([^"]+)"', html)
         if m:
@@ -240,38 +237,27 @@ def fetch_video_details(video_id: str):
 
 # ----------------- Live detection per channel -----------------
 def extract_video_ids_from_streams_html(html: str):
-    """
-    On /streams pages, live items are usually tagged with isLiveNow:true.
-    We collect a few candidate videoIds near those markers.
-    """
     vids = set()
-
-    # videoId ... isLiveNow true (either direction)
     for m in re.finditer(r'"videoId":"([A-Za-z0-9_-]{6,})".{0,1500}isLiveNow\\*":true', html, re.DOTALL):
         vids.add(m.group(1))
     for m in re.finditer(r'isLiveNow\\*":true.{0,1500}"videoId":"([A-Za-z0-9_-]{6,})"', html, re.DOTALL):
         vids.add(m.group(1))
-
     return list(vids)
 
 def fetch_channel_live_video_id(channel_id: str, handle: str = "") -> str:
-    """
-    Find a channel's currently-live video id (ONLY if actually live).
-    We DO NOT trust /live redirects alone; we confirm with fetch_video_details(...).
-    """
     h = (handle or "").strip().lstrip("@")
 
     urls = []
     if h:
         urls += [
-            f"https://www.youtube.com/@{h}/live",
             f"https://www.youtube.com/@{h}/streams?live_view=501",
             f"https://www.youtube.com/@{h}/streams",
+            f"https://www.youtube.com/@{h}/live",
         ]
     urls += [
-        f"https://www.youtube.com/channel/{channel_id}/live",
         f"https://www.youtube.com/channel/{channel_id}/streams?live_view=501",
         f"https://www.youtube.com/channel/{channel_id}/streams",
+        f"https://www.youtube.com/channel/{channel_id}/live",
     ]
 
     candidates = []
@@ -279,11 +265,15 @@ def fetch_channel_live_video_id(channel_id: str, handle: str = "") -> str:
 
     for url in urls:
         try:
-            final_url, html = http_get_with_final_url(url)
+            final_url, html, consent = http_get_with_final_url(url)
         except Exception:
             continue
 
-        # candidate from redirect url
+        if consent:
+            print("CONSENT wall hit on:", url, "->", final_url)
+            continue
+
+        # candidate from redirect URL
         m = re.search(r"[?&]v=([A-Za-z0-9_-]{6,})", final_url)
         if m:
             candidates.append(m.group(1))
@@ -292,18 +282,16 @@ def fetch_channel_live_video_id(channel_id: str, handle: str = "") -> str:
         if "streams" in url and html:
             candidates += extract_video_ids_from_streams_html(html)
 
-        # candidates from canonical watch url if present
+        # canonical
         if html:
             m2 = re.search(r'rel="canonical"\s+href="https://www\.youtube\.com/watch\?v=([A-Za-z0-9_-]{6,})"', html)
             if m2:
                 candidates.append(m2.group(1))
 
-    # confirm candidates are LIVE
     for vid in candidates:
         if not vid or vid in checked:
             continue
         checked.add(vid)
-
         time.sleep(0.15)
         details = fetch_video_details(vid)
         if details and details.get("status") == "live":
@@ -315,14 +303,11 @@ def fetch_channel_live_video_id(channel_id: str, handle: str = "") -> str:
 def parse_subscribers_to_int(text: str) -> int:
     if not text:
         return 0
-    t = text.lower()
-    t = t.replace("subscribers", "").replace("subscriber", "").strip()
+    t = text.lower().replace("subscribers", "").replace("subscriber", "").strip()
     t = t.replace(",", "").replace(" ", "")
-
     m = re.search(r"([0-9]*\.?[0-9]+)([km]?)", t)
     if not m:
         return 0
-
     num = float(m.group(1))
     suf = m.group(2)
     if suf == "k":
@@ -358,9 +343,12 @@ def fetch_channel_subscribers(channel_id: str, handle: str = "") -> int:
             subs = scrape_subscribers_from_html(html)
             if subs > 0:
                 return subs
-        except Exception:
+        except Exception as e:
+            # logs if consent still happening
+            msg = str(e)
+            if "CONSENT_WALL" in msg:
+                print("Subscriber CONSENT wall:", u)
             continue
-
     return 0
 
 # ----------------- Main -----------------
@@ -388,7 +376,7 @@ def main():
         print("-----")
         print("Channel:", cid, "handle:", handle, "name:", preferred_name, "subs:", subs)
 
-        # 1) LIVE NOW (unscheduled)
+        # LIVE NOW (unscheduled)
         live_vid = fetch_channel_live_video_id(cid, handle)
         if live_vid:
             details = fetch_video_details(live_vid)
@@ -415,7 +403,7 @@ def main():
         else:
             print("No LIVE detected right now.")
 
-        # 2) UPCOMING + LIVE flagged videos from RSS list
+        # UPCOMING from RSS list
         feed = fetch_rss(cid)
         for item in feed:
             vid = item.get("video_id", "")
@@ -425,7 +413,6 @@ def main():
             time.sleep(0.20)
             details = fetch_video_details(vid)
             if not details:
-                # debug
                 print("Skipped (no live/upcoming):", item.get("title", ""), item.get("watch_url", ""))
                 continue
 

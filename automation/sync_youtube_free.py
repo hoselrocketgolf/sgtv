@@ -12,9 +12,8 @@ CHANNEL_SHEET_CSV = os.environ.get(
 )
 OUT_PATH = os.environ.get("OUT_PATH", "schedule.json")
 
-# SPEED TUNING (you can tweak later)
-MAX_RSS_ENTRIES_PER_CHANNEL = int(os.environ.get("MAX_RSS_ENTRIES_PER_CHANNEL", "18"))  # keep small = fast
-SLEEP_BETWEEN_REQUESTS = float(os.environ.get("SLEEP_BETWEEN_REQUESTS", "0.12"))       # low but polite
+MAX_RSS_ENTRIES_PER_CHANNEL = int(os.environ.get("MAX_RSS_ENTRIES_PER_CHANNEL", "18"))
+SLEEP_BETWEEN_REQUESTS = float(os.environ.get("SLEEP_BETWEEN_REQUESTS", "0.12"))
 
 USER_AGENT = "Mozilla/5.0 (compatible; sgtv-bot/1.0)"
 REQ_HEADERS = {
@@ -28,6 +27,11 @@ def http_get(url: str) -> str:
     req = urllib.request.Request(url, headers=REQ_HEADERS, method="GET")
     with urllib.request.urlopen(req, timeout=25) as resp:
         return resp.read().decode("utf-8", errors="ignore")
+
+def http_get_final_url(url: str) -> str:
+    req = urllib.request.Request(url, headers=REQ_HEADERS, method="GET")
+    with urllib.request.urlopen(req, timeout=25) as resp:
+        return resp.geturl()
 
 def parse_simple_csv(text: str):
     f = io.StringIO(text)
@@ -60,7 +64,7 @@ def load_channels_from_sheet():
             "channel_id": cid,
             "handle": handle,
             "display_name": display,
-            "subscribers": sheet_subs,  # IMPORTANT: we trust sheet; no scraping (fast)
+            "subscribers": sheet_subs,  # use sheet value (fast + reliable)
         })
 
     return channels
@@ -113,22 +117,24 @@ def fetch_rss(channel_id: str):
     entries.sort(key=lambda x: x.get("published", ""), reverse=True)
     return entries[:MAX_RSS_ENTRIES_PER_CHANNEL]
 
-# ---------- LIVE detection (FAST, no /watch confirm) ----------
-def find_live_video_id_from_channel_html(html: str) -> str:
-    """
-    We only accept a videoId if the SAME html indicates isLiveNow:true.
-    This avoids /live redirect lying and avoids slow watch-page fetch.
-    """
-    # Must have isLiveNow true somewhere (raw or escaped)
-    if not (
+# ---------- Live helpers ----------
+def extract_vid_from_url(u: str) -> str:
+    m = re.search(r"[?&]v=([A-Za-z0-9_-]{6,})", u)
+    return m.group(1) if m else ""
+
+def html_says_live_now(html: str) -> bool:
+    return (
         '"isLiveNow":true' in html
         or '\\"isLiveNow\\":true' in html
         or 'isLiveNow\\":true' in html
         or "isLiveNow\":true" in html
-    ):
+    )
+
+def live_vid_from_channel_html(html: str) -> str:
+    # Only trust a videoId if same page indicates isLiveNow:true
+    if not html_says_live_now(html):
         return ""
 
-    # Try to grab nearby videoId
     m = re.search(r'"videoId":"([A-Za-z0-9_-]{6,})".{0,1600}"isLiveNow":true', html, re.DOTALL)
     if m:
         return m.group(1)
@@ -137,55 +143,82 @@ def find_live_video_id_from_channel_html(html: str) -> str:
     if m:
         return m.group(1)
 
-    # fallback: canonical watch
     m = re.search(r'rel="canonical"\s+href="https://www\.youtube\.com/watch\?v=([A-Za-z0-9_-]{6,})"', html)
     if m:
         return m.group(1)
 
     return ""
 
+def watch_page_confirms_live(video_id: str) -> bool:
+    # quick confirm to avoid /live redirect lies
+    try:
+        html = http_get(f"https://www.youtube.com/watch?v={video_id}")
+        return html_says_live_now(html)
+    except Exception:
+        return False
+
 def fetch_channel_live_video_id(channel_id: str, handle: str = "") -> str:
     """
-    Hit a few channel pages, return live videoId if page itself claims isLiveNow:true.
+    Robust LIVE detection:
+      1) Try channel/handle pages and only accept if html includes isLiveNow:true.
+      2) Try /live redirect to candidate, then CONFIRM via watch page isLiveNow:true.
     """
     h = (handle or "").strip().lstrip("@")
 
-    urls = []
+    html_urls = []
     if h:
-        urls += [
+        html_urls += [
             f"https://www.youtube.com/@{h}/live",
             f"https://www.youtube.com/@{h}/streams?live_view=501",
             f"https://www.youtube.com/@{h}",
         ]
-    urls += [
+    html_urls += [
         f"https://www.youtube.com/channel/{channel_id}/live",
         f"https://www.youtube.com/channel/{channel_id}/streams?live_view=501",
         f"https://www.youtube.com/channel/{channel_id}",
     ]
 
-    for u in urls:
+    # 1) HTML says live now
+    for u in html_urls:
         try:
             html = http_get(u)
         except Exception:
             continue
 
-        vid = find_live_video_id_from_channel_html(html)
+        vid = live_vid_from_channel_html(html)
         if vid:
             return vid
 
         time.sleep(SLEEP_BETWEEN_REQUESTS)
 
+    # 2) /live redirect candidate, then confirm
+    redirect_urls = []
+    if h:
+        redirect_urls.append(f"https://www.youtube.com/@{h}/live")
+    redirect_urls.append(f"https://www.youtube.com/channel/{channel_id}/live")
+
+    checked = set()
+    for u in redirect_urls:
+        try:
+            final_url = http_get_final_url(u)
+        except Exception:
+            continue
+
+        cand = extract_vid_from_url(final_url)
+        if not cand or cand in checked:
+            continue
+        checked.add(cand)
+
+        time.sleep(SLEEP_BETWEEN_REQUESTS)
+        if watch_page_confirms_live(cand):
+            return cand
+
     return ""
 
-# ---------- UPCOMING detection (keep small & fast) ----------
+# ---------- Upcoming ----------
 def fetch_upcoming_details(video_id: str):
-    """
-    Minimal watch scrape ONLY for upcoming.
-    (We avoid it for live.)
-    """
     html = http_get(f"https://www.youtube.com/watch?v={video_id}")
 
-    # Upcoming gate
     if not ('"isUpcoming":true' in html or "upcomingEventData" in html or '\\"isUpcoming\\":true' in html):
         return None
 
@@ -194,11 +227,7 @@ def fetch_upcoming_details(video_id: str):
         return None
 
     start_ts = m.group(1)
-    return {
-        "status": "upcoming",
-        "start_et": iso_to_et_fmt(start_ts),
-        "end_et": ""
-    }
+    return {"status": "upcoming", "start_et": iso_to_et_fmt(start_ts), "end_et": ""}
 
 # ---------- Main ----------
 def main():
@@ -214,13 +243,13 @@ def main():
 
     for ch in channels:
         cid = ch["channel_id"]
-        handle = ch.get("handle", "")
+        handle = (ch.get("handle") or "").strip().lstrip("@")
         name = (ch.get("display_name") or "").strip() or (f"@{handle}" if handle else "")
         subs = int(ch.get("subscribers") or 0)
 
         print("Channel:", cid, "handle:", handle, "name:", name, "subs(sheet):", subs)
 
-        # 1) LIVE NOW (fast)
+        # LIVE
         live_vid = fetch_channel_live_video_id(cid, handle)
         if live_vid:
             print("LIVE detected:", live_vid)
@@ -244,7 +273,7 @@ def main():
 
         time.sleep(SLEEP_BETWEEN_REQUESTS)
 
-        # 2) UPCOMING from RSS (limited)
+        # UPCOMING
         feed = fetch_rss(cid)
         for item in feed:
             vid = item["video_id"]
@@ -259,7 +288,7 @@ def main():
             seen.add(vid)
             events.append({
                 "start_et": details["start_et"],
-                "end_et": details.get("end_et", ""),
+                "end_et": "",
                 "title": item.get("title", ""),
                 "league": "",
                 "platform": "YouTube",
@@ -273,7 +302,7 @@ def main():
 
         print("-----")
 
-    # Sort: LIVE first, then start time, tie by subs desc
+    # Sort: live first, then time, tie by subs desc
     def sort_key(e):
         live_rank = 0 if e.get("status") == "live" else 1
         start = e.get("start_et") or "9999-99-99 99:99"

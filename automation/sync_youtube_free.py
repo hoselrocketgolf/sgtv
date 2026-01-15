@@ -179,16 +179,15 @@ def fetch_video_details(video_id: str):
 
 def fetch_channel_live_video_id(channel_id: str) -> str:
     """
-    Best-effort: find currently-live video ID for a channel.
-    1) Try /live redirect URL
-    2) If no redirect, fetch /live HTML and extract videoId when isLiveNow is true
-    3) Fallback: find first /watch?v= in the /live page
+    Free + robust live detection:
+    1) Try /live redirect (fast when it works)
+    2) If that fails, scrape /streams and take the first videoId candidate
+       (then main() confirms it is actually live via fetch_video_details()).
     """
-    url = f"https://www.youtube.com/channel/{channel_id}/live"
-
-    # 1) Try redirect URL
+    # 1) Try /live redirect URL
     try:
-        req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+        live_url = f"https://www.youtube.com/channel/{channel_id}/live"
+        req = urllib.request.Request(live_url, headers={"User-Agent": USER_AGENT})
         with urllib.request.urlopen(req, timeout=30) as resp:
             final_url = resp.geturl()
         m = re.search(r"[?&]v=([A-Za-z0-9_-]{6,})", final_url)
@@ -197,29 +196,26 @@ def fetch_channel_live_video_id(channel_id: str) -> str:
     except Exception:
         pass
 
-    # 2) Parse HTML for an actual live videoId
+    # 2) Scrape /streams page for first videoId
     try:
-        html = http_get(url)
-        if '"isLiveNow":true' in html:
-            # Look for a videoId near live markers
-            m2 = re.search(r'"videoId":"([A-Za-z0-9_-]{6,})".{0,500}"isLiveNow":true', html, re.DOTALL)
-            if m2:
-                return m2.group(1)
+        streams_url = f"https://www.youtube.com/channel/{channel_id}/streams"
+        html = http_get(streams_url)
 
-            # Another common placement
-            m3 = re.search(r'"isLiveNow":true.{0,800}"videoId":"([A-Za-z0-9_-]{6,})"', html, re.DOTALL)
-            if m3:
-                return m3.group(1)
+        # Most common: videoId appears in JSON blobs
+        m2 = re.search(r'"videoId":"([A-Za-z0-9_-]{6,})"', html)
+        if m2:
+            return m2.group(1)
 
-        # 3) last resort: first watch link on the live page
-        m4 = re.search(r'href="/watch\?v=([A-Za-z0-9_-]{6,})', html)
-        if m4:
-            return m4.group(1)
+        # Fallback: first watch link
+        m3 = re.search(r'href="/watch\?v=([A-Za-z0-9_-]{6,})', html)
+        if m3:
+            return m3.group(1)
 
     except Exception:
         pass
 
     return ""
+
 
 
 def parse_subscribers_to_int(text: str) -> int:

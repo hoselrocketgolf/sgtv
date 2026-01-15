@@ -9,7 +9,7 @@
     "watch_url": "https://www.youtube.com/watch?v=cxo6lgwlKzs",
     "source_id": "cxo6lgwlKzs",
     "status": "upcoming",
-    "thumbnail_url": "https://i.ytimg.com/vi/cxo6lgwlKzs/hqdefault.jpg",
+    "thumbnail_url": "https://i4.ytimg.com/vi/cxo6lgwlKzs/hqdefault.jpg",
     "subscribers": 2460
   },
   {
@@ -22,7 +22,20 @@
     "watch_url": "https://www.youtube.com/watch?v=IdPRZQimZUw",
     "source_id": "IdPRZQimZUw",
     "status": "upcoming",
-    "thumbnail_url": "https://i.ytimg.com/vi/IdPRZQimZUw/hqdefault.jpg",
+    "thumbnail_url": "https://i2.ytimg.com/vi/IdPRZQimZUw/hqdefault.jpg",
     "subscribers": 2460
+  },
+  {
+    "start_et": "2026-01-15 22:00",
+    "end_et": "",
+    "title": "Thursday Night Thunder with Take It Low and the Boys",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Take It Low Golf 29",
+    "watch_url": "https://www.youtube.com/watch?v=HJa0AUeS5lE",
+    "source_id": "HJa0AUeS5lE",
+    "status": "upcoming",
+    "thumbnail_url": "https://i1.ytimg.com/vi/HJa0AUeS5lE/hqdefault.jpg",
+    "subscribers": 11
   }
 ]

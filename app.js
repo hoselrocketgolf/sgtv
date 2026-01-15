@@ -1,4 +1,4 @@
-// SimGolf TV Guide - resilient (won't crash if some DOM elements are missing)
+// SimGolf.TV Guide
 const SCHEDULE_URL = "schedule.json";
 
 const $ = (id) => document.getElementById(id);
@@ -8,12 +8,12 @@ const leagueFilter = $("leagueFilter");
 const platformFilter = $("platformFilter");
 const searchInput = $("searchInput");
 const refreshBtn = $("refreshBtn");
+const brandBtn = $("brandBtn");
 
 const nowOn = $("nowOn");
 const upNext = $("upNext");
 const lastUpdated = $("lastUpdated");
 
-// Optional guide elements (may not exist depending on your HTML)
 const infoTileBody = document.querySelector("#infoTile .tileBody");
 const timeRow = $("timeRow");
 const rowsEl = $("rows");
@@ -69,7 +69,7 @@ let filteredEvents = [];
 let windowStart = null;
 
 // Guide window settings
-let windowMins = 240;
+let windowMins = 240; // 4 hours shown
 let tickMins = 30;
 let pxPerTick = 140;
 let pxPerMin = pxPerTick / tickMins;
@@ -79,7 +79,7 @@ function eventEnd(e) {
   if (end) return end;
   const start = parseET(e.start_et);
   if (!start) return null;
-  // default 2 hours
+  // default 2 hours if end time missing
   return new Date(start.getTime() + 120 * 60000);
 }
 
@@ -142,20 +142,24 @@ function applyFilters() {
   filteredEvents = sortEvents(filteredEvents);
 
   renderNowNext();
-  renderRightTileTodayList();  // safe if tile missing
-  renderGuide();               // safe if guide missing
+  renderRightTileTodayList();
+  renderGuide();
+
+  // pulse logo if something live
+  const hasLive = filteredEvents.some(e => e.status === "live");
+  if (brandBtn) brandBtn.classList.toggle("isLive", hasLive);
 }
 
 // --- Now/Next cards ---
 function renderCard(e, forceLiveBadge = false) {
   const start = parseET(e.start_et);
-  const media = e.thumbnail_url ? `style="background-image:url('${encodeURI(e.thumbnail_url)}')"` : "";
+  const thumb = e.thumbnail_url || (e.source_id ? `https://i.ytimg.com/vi/${e.source_id}/hqdefault.jpg` : "");
   const badge = (forceLiveBadge || e.status === "live") ? `<span class="pill live">LIVE</span>` : "";
   const subs = e.subscribers ? `${Number(e.subscribers).toLocaleString()} subs` : "";
 
   return `
     <div class="card">
-      <div class="cardMedia" ${media}></div>
+      <div class="cardMedia" style="background-image:url('${encodeURI(thumb)}')"></div>
       <div class="cardBody">
         <div class="cardTitle">${escapeHtml(e.title || "")}</div>
         <div class="cardMeta">
@@ -167,9 +171,9 @@ function renderCard(e, forceLiveBadge = false) {
           ${subs ? `<span>•</span><span>${subs}</span>` : ""}
           ${badge ? `<span>•</span>${badge}` : ""}
         </div>
-      </div>
-      <div class="cardActions">
-        <a class="watchBtn" href="${escapeHtml(e.watch_url || "#")}" target="_blank" rel="noreferrer">Watch</a>
+        <div class="cardActions">
+          <a class="watchBtn" href="${escapeHtml(e.watch_url || "#")}" target="_blank" rel="noreferrer">Watch</a>
+        </div>
       </div>
     </div>
   `;
@@ -223,30 +227,15 @@ function renderRightTileTodayList() {
   }).join("");
 
   infoTileBody.innerHTML = `
-    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;">
+    <div class="chipHead">
       <div class="muted">Today • ${fmtDay(now)}</div>
-      <div class="muted" style="font-size:12px;">${todays.length} shows</div>
+      <div class="muted">${todays.length} shows</div>
     </div>
-
-    <div class="chipList">
-      ${items}
-    </div>
-
-    <style>
-      .chipList{display:flex; flex-direction:column; gap:8px; max-height:360px; overflow:auto; padding-right:4px;}
-      .chip{display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:999px;
-        border:1px solid rgba(255,255,255,.12); background:rgba(0,0,0,.20); transition:filter .12s ease, transform .12s ease;}
-      .chip:hover{filter:brightness(1.07); transform:translateY(-1px);}
-      .chipTime{font-weight:900; font-size:12px; color:rgba(255,255,255,.90); min-width:86px; white-space:nowrap;}
-      .chipChanStrong{font-weight:900; font-size:13px; color:rgba(255,255,255,.94); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;}
-      .chipBadge{margin-left:auto; font-size:11px; padding:4px 9px; border-radius:999px; color:rgba(46,229,157,.95);
-        background:rgba(46,229,157,.10); border:1px solid rgba(46,229,157,.30); white-space:nowrap;}
-      @media (max-width: 980px){.chipTime{min-width:78px;}}
-    </style>
+    <div class="chipList">${items}</div>
   `;
 }
 
-// --- Guide rendering (only if your HTML has the guide elements) ---
+// --- Guide rendering ---
 function roundToTick(dt) {
   const mins = dt.getMinutes();
   const rounded = Math.floor(mins / tickMins) * tickMins;
@@ -302,7 +291,6 @@ function groupByChannel(events) {
 }
 
 function renderGuide() {
-  // If your HTML doesn't have guide elements, skip.
   if (!rowsEl || !emptyState) return;
 
   ensureWindowStart();
@@ -339,10 +327,10 @@ function renderGuide() {
       const rightMin = (ee.getTime() - startMs) / 60000;
 
       const left = clamp(leftMin * pxPerMin, -9999, 9999);
-      const width = clamp((rightMin - leftMin) * pxPerMin, 120, 9999);
+      const width = clamp((rightMin - leftMin) * pxPerMin, 160, 9999);
 
       const thumb = e.thumbnail_url || (e.source_id ? `https://i.ytimg.com/vi/${e.source_id}/hqdefault.jpg` : "");
-      const liveBadge = e.status === "live" ? `<span class="badgeLive">LIVE</span>` : "";
+      const isLive = e.status === "live";
 
       const startLabel = fmtTime(s).replace(" ET", "");
       const endLabel = fmtTime(ee).replace(" ET", "");
@@ -355,11 +343,11 @@ function renderGuide() {
           <div class="blockContent">
             <div class="blockTop">
               <div class="blockTitle">${escapeHtml(e.title || "")}</div>
-              ${liveBadge}
+              ${isLive ? `<span class="badgeLiveMini">LIVE</span>` : ``}
             </div>
             <div class="blockBottom">
               <div class="blockTime">${startLabel}–${endLabel}</div>
-              <div>${escapeHtml(e.platform || "")}</div>
+              <div class="blockPlat">${escapeHtml(e.platform || "")}</div>
             </div>
           </div>
         </a>
@@ -372,7 +360,7 @@ function renderGuide() {
           <div class="name">${escapeHtml(r.channel)}</div>
           <div class="subs">${subs}</div>
         </div>
-        <div class="lane" style="background-size:${pxPerTick}px 1px;">
+        <div class="lane">
           ${blocks}
         </div>
       </div>
@@ -430,7 +418,7 @@ async function loadSchedule() {
   applyFilters();
 }
 
-// --- Wire up (null-safe) ---
+// --- Wire up ---
 on(leagueFilter, "change", applyFilters);
 on(platformFilter, "change", applyFilters);
 on(searchInput, "input", applyFilters);

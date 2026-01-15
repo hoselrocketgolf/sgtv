@@ -246,17 +246,26 @@ def fetch_channel_subscribers(channel_id: str) -> int:
     return 0
 
 def main():
-    if not CHANNEL_IDS:
-        raise SystemExit("CHANNEL_IDS env var is empty. Set it in GitHub Secrets.")
+    channels = load_channels_from_sheet()
+    if not channels:
+        raise SystemExit("No channels found in channel sheet CSV (check headers + publish link).")
 
     events = []
     seen = set()
 
-    for cid in CHANNEL_IDS:
-        # Fetch subscriber count once per channel (best-effort)
-        subs = fetch_channel_subscribers(cid)
+    for ch in channels:
+        cid = ch["channel_id"]
 
-        # 1) Catch currently-live (even if not scheduled)
+        # subscriber count: scrape first, fall back to sheet value
+        scraped_subs = fetch_channel_subscribers(cid)
+        subs = scraped_subs if scraped_subs > 0 else int(ch.get("sheet_subscribers", 0) or 0)
+
+        # display name preference: sheet display_name > @handle > YouTube name from feed
+        sheet_name = (ch.get("display_name") or "").strip()
+        sheet_handle = (ch.get("handle") or "").strip()
+        preferred_name = sheet_name or (f"@{sheet_handle}" if sheet_handle else "")
+
+        # 1) Catch currently-live (even if unscheduled)
         live_vid = fetch_channel_live_video_id(cid)
         if live_vid and live_vid not in seen:
             time.sleep(0.35)
@@ -269,7 +278,7 @@ def main():
                     "title": "LIVE (unscheduled)",
                     "league": "",
                     "platform": "YouTube",
-                    "channel": "",
+                    "channel": preferred_name,  # best effort label
                     "watch_url": f"https://www.youtube.com/watch?v={live_vid}",
                     "source_id": live_vid,
                     "status": details["status"],
@@ -277,7 +286,7 @@ def main():
                     "subscribers": subs,
                 })
 
-        # 2) Scheduled/live from feed
+        # 2) Scheduled/live from RSS feed (also gives best thumbnail + YouTube channel name)
         feed = fetch_rss(cid)
         for item in feed:
             vid = item["video_id"]
@@ -288,17 +297,22 @@ def main():
 
             details = fetch_video_details(vid)
             if not details:
+                # keep debug
                 print("Skipped (no live/upcoming):", item.get("title", ""), item.get("watch_url", ""))
                 continue
 
             seen.add(vid)
+
+            yt_name = (item.get("channel") or "").strip()
+            final_name = preferred_name or yt_name or ""
+
             events.append({
                 "start_et": details["start_et"],
                 "end_et": details["end_et"],
                 "title": item.get("title", ""),
                 "league": "",
                 "platform": "YouTube",
-                "channel": item.get("channel", ""),
+                "channel": final_name,
                 "watch_url": item.get("watch_url", ""),
                 "source_id": vid,
                 "status": details["status"],
@@ -306,14 +320,10 @@ def main():
                 "subscribers": subs,
             })
 
-    # Fill missing channel/thumb for unscheduled live if possible (from feed-matched items)
-    by_id = {e["source_id"]: e for e in events if e.get("source_id")}
+    # If any unscheduled lives are missing thumbnails, try a safe default
     for e in events:
-        if not e.get("channel"):
-            match = by_id.get(e.get("source_id", ""))
-            if match:
-                e["channel"] = match.get("channel", "")
-                e["thumbnail_url"] = match.get("thumbnail_url", "")
+        if not e.get("thumbnail_url") and e.get("source_id"):
+            e["thumbnail_url"] = f"https://i.ytimg.com/vi/{e['source_id']}/hqdefault.jpg"
 
     events.sort(key=lambda x: x["start_et"])
 
@@ -325,4 +335,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

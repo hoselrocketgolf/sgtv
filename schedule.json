@@ -10,7 +10,7 @@
     "source_id": "fDECEGpGHkU",
     "status": "upcoming",
     "thumbnail_url": "https://i3.ytimg.com/vi/fDECEGpGHkU/hqdefault.jpg",
-    "subscribers": 58
+    "subscribers": 0
   },
   {
     "start_et": "2026-01-15 18:00",
@@ -23,7 +23,7 @@
     "source_id": "cxo6lgwlKzs",
     "status": "upcoming",
     "thumbnail_url": "https://i4.ytimg.com/vi/cxo6lgwlKzs/hqdefault.jpg",
-    "subscribers": 2460
+    "subscribers": 0
   },
   {
     "start_et": "2026-01-15 20:45",
@@ -36,20 +36,7 @@
     "source_id": "IdPRZQimZUw",
     "status": "upcoming",
     "thumbnail_url": "https://i2.ytimg.com/vi/IdPRZQimZUw/hqdefault.jpg",
-    "subscribers": 2460
-  },
-  {
-    "start_et": "2026-01-15 22:00",
-    "end_et": "",
-    "title": "Grip N Sip Presents Thursday Night Thunder Late Night Edition",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Grip n Sip Golf",
-    "watch_url": "https://www.youtube.com/watch?v=apgfGKmuVkw",
-    "source_id": "apgfGKmuVkw",
-    "status": "upcoming",
-    "thumbnail_url": "https://i2.ytimg.com/vi/apgfGKmuVkw/hqdefault.jpg",
-    "subscribers": 35
+    "subscribers": 0
   },
   {
     "start_et": "2026-01-15 22:00",
@@ -62,6 +49,19 @@
     "source_id": "HJa0AUeS5lE",
     "status": "upcoming",
     "thumbnail_url": "https://i1.ytimg.com/vi/HJa0AUeS5lE/hqdefault.jpg",
-    "subscribers": 11
+    "subscribers": 0
+  },
+  {
+    "start_et": "2026-01-15 22:00",
+    "end_et": "",
+    "title": "Grip N Sip Presents Thursday Night Thunder Late Night Edition",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Grip n Sip Golf",
+    "watch_url": "https://www.youtube.com/watch?v=apgfGKmuVkw",
+    "source_id": "apgfGKmuVkw",
+    "status": "upcoming",
+    "thumbnail_url": "https://i2.ytimg.com/vi/apgfGKmuVkw/hqdefault.jpg",
+    "subscribers": 0
   }
 ]

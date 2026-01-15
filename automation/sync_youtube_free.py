@@ -216,63 +216,86 @@ def fetch_video_details(video_id: str):
 # ----------------- Live detection per channel -----------------
 def fetch_channel_live_video_id(channel_id: str, handle: str = "") -> str:
     """
-    Checks:
-      - /channel/<id>/live redirect
-      - /@handle/live redirect
-      - /channel/<id>/streams HTML for isLiveNow:true
-      - /@handle/streams HTML for isLiveNow:true
+    More robust free live detection.
+
+    Tries these endpoints (some channels only work on one of them):
+      - /@handle/live
+      - /channel/<id>/live
+      - /@handle/streams?live_view=501
+      - /channel/<id>/streams?live_view=501
+
+    Strategy:
+      1) Try redirect URL (sometimes includes ?v=)
+      2) If not, fetch HTML and extract a watch videoId from:
+         - <link rel="canonical" href="...watch?v=...">
+         - "urlCanonical":"https://www.youtube.com/watch?v=..."
+         - "watchEndpoint":{"videoId":"..."}
+      3) Only accept if page strongly indicates live now:
+         - isLiveNow true (raw or escaped)
     """
-    def try_redirect(url: str) -> str:
+    def try_get_final_and_html(url: str):
         try:
             req = urllib.request.Request(url, headers=REQ_HEADERS)
             with urllib.request.urlopen(req, timeout=30) as resp:
                 final_url = resp.geturl()
-            m = re.search(r"[?&]v=([A-Za-z0-9_-]{6,})", final_url)
-            return m.group(1) if m else ""
+                html = resp.read().decode("utf-8", errors="ignore")
+            return final_url, html
         except Exception:
-            return ""
+            return "", ""
 
-    def try_streams_html(url: str) -> str:
-        try:
-            html = http_get(url)
-            # videoId near isLiveNow:true, handle multiple encodings
-            pats = [
-                r'"videoId":"([A-Za-z0-9_-]{6,})".{0,1200}"isLiveNow":true',
-                r'"isLiveNow":true.{0,1200}"videoId":"([A-Za-z0-9_-]{6,})"',
-                r'\\"videoId\\":\\"([A-Za-z0-9_-]{6,})\\".{0,1200}\\"isLiveNow\\":true',
-                r'\\"isLiveNow\\":true.{0,1200}\\"videoId\\":\\"([A-Za-z0-9_-]{6,})\\"',
-            ]
-            for p in pats:
-                m = re.search(p, html, re.DOTALL)
-                if m:
-                    return m.group(1)
-            return ""
-        except Exception:
-            return ""
+    def extract_vid_from_url(u: str) -> str:
+        m = re.search(r"[?&]v=([A-Za-z0-9_-]{6,})", u)
+        return m.group(1) if m else ""
+
+    def extract_vid_from_html(html: str) -> str:
+        m = re.search(r'rel="canonical"\s+href="https://www\.youtube\.com/watch\?v=([A-Za-z0-9_-]{6,})"', html)
+        if m:
+            return m.group(1)
+
+        m = re.search(r'"urlCanonical":"https:\\/\\/www\\.youtube\\.com\\/watch\\?v=([A-Za-z0-9_-]{6,})"', html)
+        if m:
+            return m.group(1)
+
+        m = re.search(r'"watchEndpoint":\{"videoId":"([A-Za-z0-9_-]{6,})"', html)
+        if m:
+            return m.group(1)
+
+        m = re.search(r'\\"watchEndpoint\\":\{\\"videoId\\":\\"([A-Za-z0-9_-]{6,})\\"', html)
+        if m:
+            return m.group(1)
+
+        return ""
+
+    def page_says_live(html: str) -> bool:
+        return (
+            '"isLiveNow":true' in html
+            or '\\"isLiveNow\\":true' in html
+            or 'isLiveNow\\":true' in html
+        )
 
     h = (handle or "").strip().lstrip("@")
 
-    # redirects
-    urls = [f"https://www.youtube.com/channel/{channel_id}/live"]
+    urls = []
     if h:
         urls.append(f"https://www.youtube.com/@{h}/live")
+        urls.append(f"https://www.youtube.com/@{h}/streams?live_view=501")
+    urls.append(f"https://www.youtube.com/channel/{channel_id}/live")
+    urls.append(f"https://www.youtube.com/channel/{channel_id}/streams?live_view=501")
 
-    for u in urls:
-        vid = try_redirect(u)
+    for url in urls:
+        final_url, html = try_get_final_and_html(url)
+
+        vid = extract_vid_from_url(final_url)
         if vid:
             return vid
 
-    # streams HTML
-    urls = [f"https://www.youtube.com/channel/{channel_id}/streams"]
-    if h:
-        urls.append(f"https://www.youtube.com/@{h}/streams")
-
-    for u in urls:
-        vid = try_streams_html(u)
-        if vid:
-            return vid
+        if html and page_says_live(html):
+            vid = extract_vid_from_html(html)
+            if vid:
+                return vid
 
     return ""
+
 
 # ----------------- Subscribers -----------------
 def parse_subscribers_to_int(text: str) -> int:

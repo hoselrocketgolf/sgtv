@@ -179,12 +179,12 @@ def fetch_video_details(video_id: str):
 
 def fetch_channel_live_video_id(channel_id: str) -> str:
     """
-    Free + robust live detection:
-    1) Try /live redirect (fast when it works)
-    2) If that fails, scrape /streams and take the first videoId candidate
-       (then main() confirms it is actually live via fetch_video_details()).
+    Find a channel's currently-live video ID, best-effort, then CONFIRM it's live.
+    This avoids grabbing a random recent upload from /streams.
     """
-    # 1) Try /live redirect URL
+    candidates = []
+
+    # Try /live redirect
     try:
         live_url = f"https://www.youtube.com/channel/{channel_id}/live"
         req = urllib.request.Request(live_url, headers={"User-Agent": USER_AGENT})
@@ -192,29 +192,44 @@ def fetch_channel_live_video_id(channel_id: str) -> str:
             final_url = resp.geturl()
         m = re.search(r"[?&]v=([A-Za-z0-9_-]{6,})", final_url)
         if m:
-            return m.group(1)
+            candidates.append(m.group(1))
     except Exception:
         pass
 
-    # 2) Scrape /streams page for first videoId
+    # Try /streams scrape
     try:
         streams_url = f"https://www.youtube.com/channel/{channel_id}/streams"
         html = http_get(streams_url)
 
-        # Most common: videoId appears in JSON blobs
-        m2 = re.search(r'"videoId":"([A-Za-z0-9_-]{6,})"', html)
-        if m2:
-            return m2.group(1)
+        # Collect a few video IDs (first ones are usually newest)
+        ids = re.findall(r'"videoId":"([A-Za-z0-9_-]{6,})"', html)
+        for vid in ids[:6]:
+            candidates.append(vid)
 
-        # Fallback: first watch link
-        m3 = re.search(r'href="/watch\?v=([A-Za-z0-9_-]{6,})', html)
-        if m3:
-            return m3.group(1)
-
+        # Fallback watch links
+        ids2 = re.findall(r'href="/watch\?v=([A-Za-z0-9_-]{6,})', html)
+        for vid in ids2[:6]:
+            candidates.append(vid)
     except Exception:
         pass
 
+    # De-dupe while preserving order
+    seen = set()
+    uniq = []
+    for v in candidates:
+        if v not in seen:
+            uniq.append(v)
+            seen.add(v)
+
+    # Confirm which one is actually live
+    for vid in uniq[:6]:
+        time.sleep(0.25)
+        details = fetch_video_details(vid)
+        if details and details.get("status") == "live":
+            return vid
+
     return ""
+
 
 
 

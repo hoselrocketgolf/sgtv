@@ -161,23 +161,38 @@ function setCard(el, evt, label){
 function computeNowNext(events){
   const now = DateTime.now().setZone(TZ);
 
-  // Sort by start time
-  const sorted = [...events].sort((a,b)=>a.start.toMillis()-b.start.toMillis());
+  const getSubs = (e) => Number(e.subscribers || 0);
 
-  // Determine "live" if within [start, end] or within 2h of start if no end
+  const sorted = [...events].sort((a,b)=>{
+    // LIVE first
+    const aEnd = a.end ?? a.start.plus({ hours: 2 });
+    const bEnd = b.end ?? b.start.plus({ hours: 2 });
+    const aLive = (now >= a.start && now <= aEnd) ? 1 : 0;
+    const bLive = (now >= b.start && now <= bEnd) ? 1 : 0;
+    if (aLive !== bLive) return bLive - aLive;
+
+    // higher subs first
+    const ds = getSubs(b) - getSubs(a);
+    if (ds !== 0) return ds;
+
+    // earlier start first
+    return a.start.toMillis() - b.start.toMillis();
+  });
+
   const live = sorted.filter(e=>{
-    if (!e.start) return false;
     const end = e.end ?? e.start.plus({ hours: 2 });
     return now >= e.start && now <= end;
-  }).sort((a,b)=>a.start.toMillis()-b.start.toMillis());
+  });
 
-  const upcoming = sorted.filter(e=>e.start && e.start > now).sort((a,b)=>a.start.toMillis()-b.start.toMillis());
+  const upcoming = sorted.filter(e => e.start > now);
 
-  const nowEvt = live[0] || null;
-  const nextEvt = upcoming[0] || (nowEvt ? upcoming[0] : null);
-
-  return { nowEvt, nextEvt, isLive: !!nowEvt };
+  return {
+    nowEvt: live[0] || null,
+    nextEvt: upcoming[0] || null,
+    isLive: live.length > 0
+  };
 }
+
 
 function rowMatchesFilters(evt){
   const lf = leagueFilter.value;

@@ -177,58 +177,66 @@ def fetch_video_details(video_id: str):
     return None
 
 
-def fetch_channel_live_video_id(channel_id: str) -> str:
+def fetch_channel_live_video_id(channel_id: str, handle: str = "") -> str:
     """
-    Find a channel's currently-live video ID, best-effort, then CONFIRM it's live.
-    This avoids grabbing a random recent upload from /streams.
+    Robust free live detection.
+    Checks these pages in order:
+      1) /channel/<id>/live (redirect)
+      2) /channel/<id>/streams (HTML)
+      3) /@<handle>/live (redirect)
+      4) /@<handle>/streams (HTML)
+
+    On HTML pages, we specifically look for isLiveNow:true and grab the nearest videoId.
     """
-    candidates = []
+    def try_redirect(url: str) -> str:
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                final_url = resp.geturl()
+            m = re.search(r"[?&]v=([A-Za-z0-9_-]{6,})", final_url)
+            return m.group(1) if m else ""
+        except Exception:
+            return ""
 
-    # Try /live redirect
-    try:
-        live_url = f"https://www.youtube.com/channel/{channel_id}/live"
-        req = urllib.request.Request(live_url, headers={"User-Agent": USER_AGENT})
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            final_url = resp.geturl()
-        m = re.search(r"[?&]v=([A-Za-z0-9_-]{6,})", final_url)
-        if m:
-            candidates.append(m.group(1))
-    except Exception:
-        pass
+    def try_html_for_live(url: str) -> str:
+        try:
+            html = http_get(url)
 
-    # Try /streams scrape
-    try:
-        streams_url = f"https://www.youtube.com/channel/{channel_id}/streams"
-        html = http_get(streams_url)
+            # Look for videoId near isLiveNow:true (both directions)
+            m1 = re.search(r'"videoId":"([A-Za-z0-9_-]{6,})".{0,800}"isLiveNow":true', html, re.DOTALL)
+            if m1:
+                return m1.group(1)
 
-        # Collect a few video IDs (first ones are usually newest)
-        ids = re.findall(r'"videoId":"([A-Za-z0-9_-]{6,})"', html)
-        for vid in ids[:6]:
-            candidates.append(vid)
+            m2 = re.search(r'"isLiveNow":true.{0,800}"videoId":"([A-Za-z0-9_-]{6,})"', html, re.DOTALL)
+            if m2:
+                return m2.group(1)
 
-        # Fallback watch links
-        ids2 = re.findall(r'href="/watch\?v=([A-Za-z0-9_-]{6,})', html)
-        for vid in ids2[:6]:
-            candidates.append(vid)
-    except Exception:
-        pass
+            return ""
+        except Exception:
+            return ""
 
-    # De-dupe while preserving order
-    seen = set()
-    uniq = []
-    for v in candidates:
-        if v not in seen:
-            uniq.append(v)
-            seen.add(v)
+    urls_live = [f"https://www.youtube.com/channel/{channel_id}/live"]
+    urls_streams = [f"https://www.youtube.com/channel/{channel_id}/streams"]
 
-    # Confirm which one is actually live
-    for vid in uniq[:6]:
-        time.sleep(0.25)
-        details = fetch_video_details(vid)
-        if details and details.get("status") == "live":
+    h = (handle or "").strip().lstrip("@")
+    if h:
+        urls_live.append(f"https://www.youtube.com/@{h}/live")
+        urls_streams.append(f"https://www.youtube.com/@{h}/streams")
+
+    # 1) try redirects first
+    for u in urls_live:
+        vid = try_redirect(u)
+        if vid:
+            return vid
+
+    # 2) scrape streams pages for isLiveNow:true
+    for u in urls_streams:
+        vid = try_html_for_live(u)
+        if vid:
             return vid
 
     return ""
+
 
 
 

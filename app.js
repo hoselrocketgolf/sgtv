@@ -1,624 +1,412 @@
-/* app.js — FULL REPLACEMENT (self-contained layout + styles)
-   Goal: stop the UI from getting "jacked up" by relying on unknown existing CSS.
-   This file injects its own styles and renders into #app (or body fallback).
-*/
+// SimGolf TV Guide - TV Guide style timeline + thumbnails
+// Reads schedule.json produced by your GitHub Action / script.
+//
+// Expected fields per event:
+//  - start_et "YYYY-MM-DD HH:MM" (Eastern)
+//  - end_et "" or same format
+//  - title, platform, channel, league, watch_url
+//  - status: "live" | "upcoming"
+//  - thumbnail_url (optional)
+//  - subscribers (number, optional)
 
-const DATA_URL = "./schedule.json";
+const SCHEDULE_URL = "schedule.json";
 
-// ----------------- Time helpers (ET) -----------------
-function etNow() {
-  const fmt = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/New_York",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
-  const parts = fmt.formatToParts(new Date());
-  const get = (t) => means(parts, t) || "";
-  const y = get("year");
-  const m = get("month");
-  const d = get("day");
-  const hh = get("hour");
-  const mm = get("minute");
-  return new Date(`${y}-${m}-${d}T${hh}:${mm}:00`);
-}
-function means(parts, t) {
-  const p = parts.find((x) => x.type === t);
-  return p ? p.value : "";
-}
-function parseEtString(etStr) {
-  if (!etStr) return null;
-  const s = String(etStr).trim().replace(" ", "T");
-  const dt = new Date(s);
-  return isNaN(dt.getTime()) ? null : dt;
-}
-function formatTimeEt(d) {
-  return new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/New_York",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(d);
-}
-function formatDayEt(d) {
-  return new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/New_York",
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  }).format(d);
-}
-function clampToHalfHour(d) {
-  const dd = new Date(d);
-  dd.setSeconds(0, 0);
-  dd.setMinutes(dd.getMinutes() < 30 ? 0 : 30);
-  return dd;
-}
-function addMinutes(d, mins) {
-  const dd = new Date(d);
-  dd.setMinutes(dd.getMinutes() + mins);
-  return dd;
-}
-function sameEtDate(a, b) {
-  const fmt = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/New_York",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
-  return fmt.format(a) === fmt.format(b);
+const $ = (id) => document.getElementById(id);
+
+const leagueFilter = $("leagueFilter");
+const platformFilter = $("platformFilter");
+const searchInput = $("searchInput");
+const refreshBtn = $("refreshBtn");
+
+const nowOn = $("nowOn");
+const upNext = $("upNext");
+const lastUpdated = $("lastUpdated");
+
+const timeRow = $("timeRow");
+const rowsEl = $("rows");
+const emptyState = $("emptyState");
+
+const prevWindow = $("prevWindow");
+const nextWindow = $("nextWindow");
+const windowLabel = $("windowLabel");
+
+// --- Time helpers (treat input as Eastern local time) ---
+function parseET(str) {
+  // "YYYY-MM-DD HH:MM"
+  // We treat it as "local ET" but JS Date has no ET without libs.
+  // So we parse as if it's local, but since you are displaying ET and your source is ET,
+  // it's consistent for ordering + rendering within the guide window.
+  // (If you later want true timezone correctness, we can add Luxon.)
+  if (!str) return null;
+  const [d, t] = str.split(" ");
+  if (!d || !t) return null;
+  const [Y, M, D] = d.split("-").map(Number);
+  const [h, m] = t.split(":").map(Number);
+  return new Date(Y, (M - 1), D, h, m, 0, 0);
 }
 
-// ----------------- Data normalization -----------------
-function normalizeEvent(e) {
-  const status = String(e.status || "").toLowerCase();
-  const start = parseEtString(e.start_et) || etNow();
-  const end = parseEtString(e.end_et) || addMinutes(start, 120);
-
-  const subs = Number(e.subscribers || 0) || 0;
-
-  let thumb = e.thumbnail_url || "";
-  if (!thumb && e.source_id) thumb = `https://i.ytimg.com/vi/${e.source_id}/hqdefault.jpg`;
-
-  return {
-    ...e,
-    status,
-    start_dt: start,
-    end_dt: end,
-    subscribers: subs,
-    title: e.title || "",
-    channel: e.channel || "",
-    platform: e.platform || "",
-    league: e.league || "",
-    watch_url: e.watch_url || "",
-    source_id: e.source_id || "",
-    thumbnail_url: thumb,
-  };
+function fmtTime(dt) {
+  if (!dt) return "";
+  const h = dt.getHours();
+  const m = dt.getMinutes().toString().padStart(2, "0");
+  const ampm = h >= 12 ? "PM" : "AM";
+  const hr = ((h + 11) % 12) + 1;
+  return `${hr}:${m} ${ampm} ET`;
 }
+
+function fmtDay(dt) {
+  if (!dt) return "";
+  const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return `${days[dt.getDay()]}, ${months[dt.getMonth()]} ${dt.getDate()}`;
+}
+
+function clamp(n, a, b) {
+  return Math.max(a, Math.min(b, n));
+}
+
+function contains(hay, needle) {
+  return (hay || "").toLowerCase().includes((needle || "").toLowerCase());
+}
+
+// --- State ---
+let allEvents = [];
+let filteredEvents = [];
+let windowStart = null; // Date
+let windowMins = 240;   // 4 hours window
+let tickMins = 30;      // 30 min ticks
+let pxPerTick = 120;    // matches CSS background + tick width
+
+function eventEnd(e) {
+  const end = parseET(e.end_et);
+  if (end) return end;
+
+  // No end time -> default durations:
+  // live: 90 mins visual
+  // upcoming: 60 mins visual
+  const start = parseET(e.start_et);
+  if (!start) return null;
+
+  const mins = e.status === "live" ? 90 : 60;
+  return new Date(start.getTime() + mins * 60000);
+}
+
 function sortEvents(events) {
   return [...events].sort((a, b) => {
-    const ar = a.status === "live" ? 0 : 1;
-    const br = b.status === "live" ? 0 : 1;
-    if (ar !== br) return ar - br;
-    const at = a.start_dt.getTime();
-    const bt = b.start_dt.getTime();
+    const aLive = a.status === "live" ? 0 : 1;
+    const bLive = b.status === "live" ? 0 : 1;
+
+    if (aLive !== bLive) return aLive - bLive;
+
+    const at = parseET(a.start_et)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+    const bt = parseET(b.start_et)?.getTime() ?? Number.MAX_SAFE_INTEGER;
     if (at !== bt) return at - bt;
-    return (b.subscribers || 0) - (a.subscribers || 0);
+
+    const as = Number(a.subscribers || 0);
+    const bs = Number(b.subscribers || 0);
+    return bs - as;
   });
 }
 
-// ----------------- DOM helpers -----------------
-function el(tag, attrs = {}, kids = []) {
-  const n = document.createElement(tag);
-  for (const [k, v] of Object.entries(attrs)) {
-    if (k === "class") n.className = v;
-    else if (k === "html") n.innerHTML = v;
-    else if (k.startsWith("on") && typeof v === "function") n.addEventListener(k.slice(2), v);
-    else n.setAttribute(k, String(v));
-  }
-  for (const c of kids) {
-    if (c == null) continue;
-    if (typeof c === "string") n.appendChild(document.createTextNode(c));
-    else n.appendChild(c);
-  }
-  return n;
-}
-function btn(text, onClick, extra = "") {
-  return el("button", { class: `sgtv-btn ${extra}`, onClick }, [text]);
-}
-function pill(text, kind) {
-  return el("span", { class: `sgtv-pill ${kind || ""}` }, [text]);
-}
-function linkBtn(text, href) {
-  return el("a", { class: "sgtv-btn sgtv-btn-primary", href: href || "#", target: "_blank", rel: "noopener" }, [text]);
-}
+function rebuildFilters(events) {
+  const leagues = new Set();
+  const platforms = new Set();
 
-// ----------------- Styles (self-contained) -----------------
-function injectStyles() {
-  if (document.getElementById("sgtv-styles")) return;
-  const css = `
-:root{
-  --sgtv-bg0:#05070c;
-  --sgtv-bg1:#0b1020;
-  --sgtv-card:rgba(255,255,255,.06);
-  --sgtv-card2:rgba(255,255,255,.08);
-  --sgtv-border:rgba(255,255,255,.10);
-  --sgtv-text:rgba(255,255,255,.92);
-  --sgtv-dim:rgba(255,255,255,.68);
-  --sgtv-dimmer:rgba(255,255,255,.55);
-  --sgtv-accent1:#59c2ff;
-  --sgtv-accent2:#b36bff;
-  --sgtv-live:#15f2b1;
-  --sgtv-radius:18px;
-  --sgtv-shadow: 0 10px 30px rgba(0,0,0,.35);
-  --sgtv-gap:14px;
-  --sgtv-font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-}
-body{
-  margin:0;
-  background: radial-gradient(1100px 700px at 15% 10%, rgba(89,194,255,.18), transparent 55%),
-              radial-gradient(900px 650px at 88% 22%, rgba(179,107,255,.18), transparent 55%),
-              linear-gradient(180deg, var(--sgtv-bg1), var(--sgtv-bg0));
-  color:var(--sgtv-text);
-  font-family:var(--sgtv-font);
-}
-#app{ min-height:100vh; }
-.sgtv-wrap{ max-width:1120px; margin:0 auto; padding:22px 16px 60px; }
-.sgtv-header{ display:flex; align-items:center; gap:12px; margin-bottom:16px; }
-.sgtv-badge{
-  width:44px; height:44px; border-radius:14px;
-  background: linear-gradient(135deg, var(--sgtv-accent1), var(--sgtv-accent2));
-  display:flex; align-items:center; justify-content:center;
-  font-weight:800;
-  box-shadow: var(--sgtv-shadow);
-}
-.sgtv-title{ font-size:22px; font-weight:800; line-height:1.1; }
-.sgtv-sub{ font-size:13px; color:var(--sgtv-dim); margin-top:2px; }
-
-.sgtv-controls{
-  display:grid;
-  grid-template-columns: 160px 160px 1fr 120px;
-  gap:12px;
-  align-items:end;
-  margin: 14px 0 18px;
-}
-.sgtv-field{ display:flex; flex-direction:column; gap:6px; }
-.sgtv-label{ font-size:12px; color:var(--sgtv-dim); }
-.sgtv-input, .sgtv-select{
-  height:40px;
-  border-radius:12px;
-  border:1px solid var(--sgtv-border);
-  background: rgba(255,255,255,.04);
-  color:var(--sgtv-text);
-  padding: 0 12px;
-  outline:none;
-}
-.sgtv-input::placeholder{ color: rgba(255,255,255,.40); }
-.sgtv-btn{
-  height:40px;
-  border-radius:12px;
-  border:1px solid var(--sgtv-border);
-  background: rgba(255,255,255,.06);
-  color:var(--sgtv-text);
-  cursor:pointer;
-  padding: 0 12px;
-}
-.sgtv-btn:hover{ background: rgba(255,255,255,.10); }
-.sgtv-btn-primary{
-  border:none;
-  background: linear-gradient(135deg, var(--sgtv-accent1), var(--sgtv-accent2));
-  font-weight:700;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  text-decoration:none;
-}
-.sgtv-btn-primary:hover{ filter: brightness(1.05); }
-
-.sgtv-hero{
-  display:grid;
-  grid-template-columns: 1fr 1fr 1.2fr;
-  gap: var(--sgtv-gap);
-  margin-bottom: 16px;
-}
-.sgtv-tile{
-  border-radius: var(--sgtv-radius);
-  border:1px solid var(--sgtv-border);
-  background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.04));
-  box-shadow: var(--sgtv-shadow);
-  padding: 14px;
-  overflow:hidden;
-}
-.sgtv-tile-h{
-  display:flex; align-items:center; justify-content:space-between;
-  margin-bottom:10px;
-}
-.sgtv-tile-h .h{ font-weight:800; font-size:16px; }
-.sgtv-pill{
-  font-size:12px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border:1px solid var(--sgtv-border);
-  background: rgba(255,255,255,.06);
-  color: var(--sgtv-dim);
-}
-.sgtv-pill.live{
-  border-color: rgba(21,242,177,.35);
-  background: rgba(21,242,177,.12);
-  color: rgba(21,242,177,.95);
-  font-weight:800;
-}
-.sgtv-pill.upcoming{
-  border-color: rgba(89,194,255,.35);
-  background: rgba(89,194,255,.12);
-  color: rgba(89,194,255,.95);
-  font-weight:800;
-}
-.sgtv-empty{
-  border-radius: 14px;
-  border:1px dashed rgba(255,255,255,.16);
-  padding: 14px;
-  color: var(--sgtv-dim);
-  background: rgba(0,0,0,.12);
-}
-
-.sgtv-card{
-  display:grid;
-  grid-template-columns: 140px 1fr;
-  gap: 12px;
-  padding: 10px;
-  border-radius: 16px;
-  border:1px solid rgba(255,255,255,.10);
-  background: rgba(0,0,0,.16);
-}
-.sgtv-thumb{
-  width:140px; height:78px;
-  border-radius: 14px;
-  object-fit: cover;
-  background: rgba(255,255,255,.08);
-}
-.sgtv-ctitle{ font-weight:800; font-size:14px; line-height:1.25; margin-bottom:6px; }
-.sgtv-ctime{ font-size:13px; color: var(--sgtv-dim); margin-bottom:4px; }
-.sgtv-cmeta{ font-size:12px; color: var(--sgtv-dimmer); margin-bottom:10px; }
-.sgtv-row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-.sgtv-subs{ font-size:12px; color: var(--sgtv-dimmer); }
-
-.sgtv-tvtitle{ display:flex; justify-content:space-between; gap:10px; align-items:flex-end; }
-.sgtv-tvtitle .h{ font-weight:900; font-size:16px; }
-.sgtv-tvtitle .sub{ font-size:12px; color: var(--sgtv-dim); margin-top:2px; }
-.sgtv-tvnav{ display:flex; gap:10px; align-items:center; margin-top:10px; }
-.sgtv-tvslots{
-  display:flex;
-  gap:8px;
-  overflow:auto;
-  padding-bottom:6px;
-  flex:1;
-}
-.sgtv-tvslot{
-  white-space:nowrap;
-  padding: 10px 12px;
-  border-radius: 999px;
-  border:1px solid rgba(255,255,255,.12);
-  background: rgba(255,255,255,.05);
-  color: var(--sgtv-text);
-  cursor:pointer;
-  font-size:13px;
-}
-.sgtv-tvslot:hover{ background: rgba(255,255,255,.10); }
-.sgtv-tvslot.active{
-  background: rgba(89,194,255,.16);
-  border-color: rgba(89,194,255,.40);
-}
-.sgtv-tvslot.now{
-  box-shadow: 0 0 0 2px rgba(21,242,177,.16) inset;
-}
-.sgtv-tvlist{ display:flex; flex-direction:column; gap:10px; margin-top:10px; max-height: 360px; overflow:auto; }
-
-.sgtv-section{ margin-top: 18px; }
-.sgtv-sechead{
-  display:flex; justify-content:space-between; align-items:flex-end;
-  margin: 6px 2px 10px;
-}
-.sgtv-sechead .h{ font-weight:900; font-size:16px; }
-.sgtv-sechead .sub{ font-size:12px; color: var(--sgtv-dim); }
-
-.sgtv-grid{
-  display:grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--sgtv-gap);
-}
-
-@media (max-width: 1000px){
-  .sgtv-hero{ grid-template-columns: 1fr; }
-  .sgtv-controls{ grid-template-columns: 1fr 1fr; }
-  .sgtv-grid{ grid-template-columns: 1fr; }
-  .sgtv-card{ grid-template-columns: 120px 1fr; }
-  .sgtv-thumb{ width:120px; height:68px; }
-}
-`;
-  const style = document.createElement("style");
-  style.id = "sgtv-styles";
-  style.textContent = css;
-  document.head.appendChild(style);
-}
-
-// ----------------- Fetch -----------------
-async function fetchEvents() {
-  const res = await fetch(`${DATA_URL}?t=${Date.now()}`, { cache: "no-store" });
-  if (!res.ok) throw new Error(`Failed to load schedule.json (${res.status})`);
-  const data = await res.json();
-  if (!Array.isArray(data)) return [];
-  return data.map(normalizeEvent);
-}
-
-// ----------------- Cards -----------------
-function eventCard(e, compact = false) {
-  const top = `${formatDayEt(e.start_dt)} • ${e.platform}${e.channel ? " • " + e.channel : ""}`;
-  const time = `${formatTimeEt(e.start_dt)} ET`;
-
-  const statusPill =
-    e.status === "live" ? pill("LIVE", "live") :
-    e.status === "upcoming" ? pill("UPCOMING", "upcoming") :
-    null;
-
-  return el("div", { class: "sgtv-card" }, [
-    el("img", { class: "sgtv-thumb", src: e.thumbnail_url || "", alt: e.title || "", loading: "lazy" }),
-    el("div", {}, [
-      el("div", { class: "sgtv-row", style: "justify-content:space-between; align-items:flex-start;" }, [
-        el("div", { class: "sgtv-ctitle" }, [e.title || "Untitled"]),
-        statusPill,
-      ]),
-      el("div", { class: "sgtv-ctime" }, [time]),
-      el("div", { class: "sgtv-cmeta" }, [top]),
-      el("div", { class: "sgtv-row" }, [
-        (e.subscribers && e.subscribers > 0) ? el("div", { class: "sgtv-subs" }, [`${e.subscribers.toLocaleString()} subs`]) : null,
-        linkBtn("Watch", e.watch_url || "#"),
-      ]),
-    ])
-  ]);
-}
-
-function empty(text) {
-  return el("div", { class: "sgtv-empty" }, [text]);
-}
-
-// ----------------- TV Guide scroller -----------------
-function buildTvScroller(events, state) {
-  const slotMinutes = 30;
-  const numSlots = 7;
-
-  const now = etNow();
-  const stripStart = addMinutes(state.slotStart, -60); // show 1h earlier
-  const slotEnd = addMinutes(state.slotStart, slotMinutes);
-
-  const title = el("div", { class: "sgtv-tvtitle" }, [
-    el("div", {}, [
-      el("div", { class: "h" }, ["Today's Schedule"]),
-      el("div", { class: "sub" }, [`${formatDayEt(state.today)} • ${formatTimeEt(state.slotStart)}–${formatTimeEt(slotEnd)} ET`]),
-    ]),
-    el("div", { class: "sub" }, ["TV Guide mode"]),
-  ]);
-
-  const left = btn("←", () => { state.slotStart = addMinutes(state.slotStart, -slotMinutes); render(state); });
-  const right = btn("→", () => { state.slotStart = addMinutes(state.slotStart, slotMinutes); render(state); });
-
-  const slotsWrap = el("div", { class: "sgtv-tvslots" }, []);
-  for (let i = 0; i < numSlots; i++) {
-    const t = addMinutes(stripStart, i * slotMinutes);
-    const isActive = t.getTime() === state.slotStart.getTime();
-    const isNow = now.getTime() >= t.getTime() && now.getTime() < addMinutes(t, slotMinutes).getTime() && sameEtDate(now, t);
-
-    const slotBtn = el("button", {
-      class: `sgtv-tvslot ${isActive ? "active" : ""} ${isNow ? "now" : ""}`,
-      onClick: () => { state.slotStart = t; render(state); }
-    }, [formatTimeEt(t)]);
-    slotsWrap.appendChild(slotBtn);
-  }
-
-  const nav = el("div", { class: "sgtv-tvnav" }, [left, slotsWrap, right]);
-
-  const inSlot = (e) => {
-    if (!sameEtDate(e.start_dt, state.today)) return false;
-    if (e.status === "live") return true;
-    // overlap slot window
-    return e.start_dt.getTime() < slotEnd.getTime() && e.end_dt.getTime() > state.slotStart.getTime();
-  };
-
-  const list = sortEvents(events.filter(inSlot));
-
-  const listWrap = el("div", { class: "sgtv-tvlist" }, []);
-  if (!list.length) listWrap.appendChild(empty("No streams in this time slot."));
-  else list.forEach((e) => listWrap.appendChild(eventCard(e, true)));
-
-  return el("div", {}, [title, nav, listWrap]);
-}
-
-// ----------------- Filters + selection -----------------
-function filterEvents(events, state) {
-  let out = events;
-
-  if (state.filters.platform !== "All") {
-    out = out.filter((e) => (e.platform || "") === state.filters.platform);
-  }
-  if (state.filters.league !== "All") {
-    out = out.filter((e) => (e.league || "") === state.filters.league);
-  }
-  const q = (state.filters.search || "").trim().toLowerCase();
-  if (q) {
-    out = out.filter((e) =>
-      (e.title || "").toLowerCase().includes(q) ||
-      (e.channel || "").toLowerCase().includes(q) ||
-      (e.league || "").toLowerCase().includes(q) ||
-      (e.platform || "").toLowerCase().includes(q)
-    );
-  }
-  return out;
-}
-
-function pickNowOn(events) {
-  const live = events.find((e) => e.status === "live");
-  return live || null;
-}
-function pickUpNext(events) {
-  const now = etNow();
-  const upcoming = events
-    .filter((e) => e.status === "upcoming")
-    .sort((a, b) => a.start_dt - b.start_dt);
-  return upcoming.find((e) => e.start_dt.getTime() >= now.getTime()) || upcoming[0] || null;
-}
-
-// ----------------- Render -----------------
-async function doRefresh(state) {
-  state.loading = true;
-  state.error = "";
-  render(state);
-
-  try {
-    state.rawEvents = await fetchEvents();
-    state.lastUpdated = new Date();
-  } catch (e) {
-    state.error = e?.message || String(e);
-  } finally {
-    state.loading = false;
-    render(state);
-  }
-}
-
-function render(state) {
-  injectStyles();
-
-  const root = document.getElementById("app") || document.body;
-  root.innerHTML = "";
-
-  const wrap = el("div", { class: "sgtv-wrap" }, []);
-
-  // Header
-  wrap.appendChild(
-    el("div", { class: "sgtv-header" }, [
-      el("div", { class: "sgtv-badge" }, ["SG"]),
-      el("div", {}, [
-        el("div", { class: "sgtv-title" }, ["SimGolf TV Guide"]),
-        el("div", { class: "sgtv-sub" }, ["LIVE 24/7 • matches, leagues, and streams • Times in Eastern"]),
-      ]),
-    ])
-  );
-
-  // Controls
-  const platforms = ["All", ...Array.from(new Set((state.rawEvents || []).map((e) => e.platform).filter(Boolean))).sort()];
-  const leagues = ["All", ...Array.from(new Set((state.rawEvents || []).map((e) => e.league).filter(Boolean))).sort()];
-
-  const leagueSel = el("select", {
-    class: "sgtv-select",
-    onChange: (ev) => { state.filters.league = ev.target.value; render(state); }
-  }, leagues.map((v) => el("option", { value: v, selected: v === state.filters.league ? "selected" : null }, [v])));
-
-  const platSel = el("select", {
-    class: "sgtv-select",
-    onChange: (ev) => { state.filters.platform = ev.target.value; render(state); }
-  }, platforms.map((v) => el("option", { value: v, selected: v === state.filters.platform ? "selected" : null }, [v])));
-
-  const search = el("input", {
-    class: "sgtv-input",
-    type: "text",
-    placeholder: "Search title, league, channel…",
-    value: state.filters.search,
-    onInput: (ev) => { state.filters.search = ev.target.value; render(state); }
+  events.forEach(e => {
+    if (e.league) leagues.add(e.league);
+    if (e.platform) platforms.add(e.platform);
   });
 
-  const updateBtn = btn("Update", () => doRefresh(state), "sgtv-btn-primary");
+  const keepLeague = leagueFilter.value;
+  const keepPlat = platformFilter.value;
 
-  wrap.appendChild(
-    el("div", { class: "sgtv-controls" }, [
-      el("div", { class: "sgtv-field" }, [el("div", { class: "sgtv-label" }, ["League"]), leagueSel]),
-      el("div", { class: "sgtv-field" }, [el("div", { class: "sgtv-label" }, ["Platform"]), platSel]),
-      el("div", { class: "sgtv-field" }, [el("div", { class: "sgtv-label" }, ["Search"]), search]),
-      el("div", { class: "sgtv-field" }, [el("div", { class: "sgtv-label" }, ["Refresh"]), updateBtn]),
-    ])
-  );
+  leagueFilter.innerHTML = `<option value="all">All</option>` + [...leagues].sort().map(x => `<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join("");
+  platformFilter.innerHTML = `<option value="all">All</option>` + [...platforms].sort().map(x => `<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join("");
 
-  if (state.error) {
-    wrap.appendChild(el("div", { class: "sgtv-empty" }, [state.error]));
+  if ([...leagues].includes(keepLeague)) leagueFilter.value = keepLeague;
+  if ([...platforms].includes(keepPlat)) platformFilter.value = keepPlat;
+}
+
+function applyFilters() {
+  const l = leagueFilter.value;
+  const p = platformFilter.value;
+  const q = searchInput.value.trim().toLowerCase();
+
+  filteredEvents = allEvents.filter(e => {
+    if (l !== "all" && (e.league || "") !== l) return false;
+    if (p !== "all" && (e.platform || "") !== p) return false;
+    if (q) {
+      const blob = `${e.title || ""} ${e.league || ""} ${e.platform || ""} ${e.channel || ""}`;
+      if (!blob.toLowerCase().includes(q)) return false;
+    }
+    return true;
+  });
+
+  filteredEvents = sortEvents(filteredEvents);
+
+  renderNowNext();
+  renderGuide();
+}
+
+function escapeHtml(s) {
+  return String(s ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+// --- UI: Now + Next cards ---
+function renderCard(e, showLiveBadge = false) {
+  const start = parseET(e.start_et);
+  const media = e.thumbnail_url ? `style="background-image:url('${encodeURI(e.thumbnail_url)}')"` : "";
+  const badge = showLiveBadge || e.status === "live" ? `<span class="pill live">LIVE</span>` : "";
+  const subs = e.subscribers ? `${Number(e.subscribers).toLocaleString()} subs` : "";
+
+  return `
+    <div class="card">
+      <div class="cardMedia" ${media}></div>
+      <div class="cardBody">
+        <div class="cardTitle">${escapeHtml(e.title || "")}</div>
+        <div class="cardMeta">
+          <span>${fmtTime(start)}</span>
+          <span>•</span>
+          <span>${escapeHtml(e.platform || "")}</span>
+          <span>•</span>
+          <span>${escapeHtml(e.channel || "")}</span>
+          ${subs ? `<span>•</span><span>${subs}</span>` : ""}
+          ${badge ? `<span>•</span>${badge}` : ""}
+        </div>
+      </div>
+      <div class="cardActions">
+        <a class="watchBtn" href="${escapeHtml(e.watch_url || "#")}" target="_blank" rel="noreferrer">Watch</a>
+      </div>
+    </div>
+  `;
+}
+
+function renderNowNext() {
+  const live = filteredEvents.find(e => e.status === "live");
+  const upcoming = filteredEvents.find(e => e.status !== "live");
+
+  nowOn.innerHTML = live
+    ? renderCard(live, true)
+    : `<div class="muted">No live event right now.</div>`;
+
+  upNext.innerHTML = upcoming
+    ? renderCard(upcoming, false)
+    : `<div class="muted">No upcoming events found.</div>`;
+}
+
+// --- TV Guide rendering ---
+function ensureWindowStart() {
+  if (windowStart) return;
+
+  // base on earliest of:
+  // - a live event start
+  // - next upcoming
+  // - otherwise "now"
+  const live = filteredEvents.find(e => e.status === "live");
+  const next = filteredEvents.find(e => e.status !== "live");
+
+  let base = parseET(live?.start_et) || parseET(next?.start_et) || new Date();
+
+  // round down to nearest tick
+  const mins = base.getMinutes();
+  const rounded = Math.floor(mins / tickMins) * tickMins;
+  base = new Date(base.getFullYear(), base.getMonth(), base.getDate(), base.getHours(), rounded, 0, 0);
+  windowStart = base;
+}
+
+function shiftWindow(dir) {
+  ensureWindowStart();
+  windowStart = new Date(windowStart.getTime() + dir * windowMins * 60000);
+  renderGuide();
+}
+
+function renderTimeRow() {
+  ensureWindowStart();
+
+  const ticks = Math.ceil(windowMins / tickMins) + 1;
+  const parts = [];
+
+  for (let i = 0; i < ticks; i++) {
+    const dt = new Date(windowStart.getTime() + i * tickMins * 60000);
+    parts.push(`<div class="timeTick" style="min-width:${pxPerTick}px">${fmtTime(dt).replace(" ET","")}</div>`);
   }
 
-  if (state.loading) {
-    wrap.appendChild(empty("Loading…"));
-    root.appendChild(wrap);
+  timeRow.innerHTML = parts.join("");
+
+  const end = new Date(windowStart.getTime() + windowMins * 60000);
+  windowLabel.textContent = `${fmtDay(windowStart)} • ${fmtTime(windowStart)} → ${fmtTime(end)}`;
+}
+
+function groupByChannel(events) {
+  const map = new Map();
+  for (const e of events) {
+    const key = e.channel || "Unknown";
+    if (!map.has(key)) map.set(key, []);
+    map.get(key).push(e);
+  }
+
+  // sort rows by: has live first, then subscriber desc
+  const rows = [...map.entries()].map(([channel, list]) => {
+    const hasLive = list.some(x => x.status === "live");
+    const maxSubs = Math.max(...list.map(x => Number(x.subscribers || 0)));
+    return { channel, list: sortEvents(list), hasLive, maxSubs };
+  });
+
+  rows.sort((a, b) => {
+    if (a.hasLive !== b.hasLive) return a.hasLive ? -1 : 1;
+    if (a.maxSubs !== b.maxSubs) return b.maxSubs - a.maxSubs;
+    return a.channel.localeCompare(b.channel);
+  });
+
+  return rows;
+}
+
+function renderGuide() {
+  ensureWindowStart();
+  renderTimeRow();
+
+  const startMs = windowStart.getTime();
+  const endMs = startMs + windowMins * 60000;
+  const pxPerMin = pxPerTick / tickMins;
+
+  // Only show events that intersect the window at all
+  const windowEvents = filteredEvents.filter(e => {
+    const s = parseET(e.start_et)?.getTime();
+    if (!s) return false;
+    const ee = eventEnd(e)?.getTime() ?? s;
+    return ee >= startMs && s <= endMs;
+  });
+
+  if (!windowEvents.length) {
+    rowsEl.innerHTML = "";
+    emptyState.style.display = "";
     return;
   }
+  emptyState.style.display = "none";
 
-  const filtered = filterEvents(state.rawEvents || [], state);
+  const rows = groupByChannel(windowEvents);
 
-  // Hero tiles
-  const nowOn = pickNowOn(filtered);
-  const upNext = pickUpNext(filtered);
+  rowsEl.innerHTML = rows.map(r => {
+    const subs = r.maxSubs ? `${Number(r.maxSubs).toLocaleString()} subs` : "";
 
-  const tileNow = el("div", { class: "sgtv-tile" }, [
-    el("div", { class: "sgtv-tile-h" }, [el("div", { class: "h" }, ["Now On"]), pill("LIVE", "live")]),
-    nowOn ? eventCard(nowOn) : empty("No live event right now."),
-  ]);
+    // lane width = windowMins * pxPerMin (auto via flex; we rely on absolute positions)
+    const blocks = r.list.map(e => {
+      const s = parseET(e.start_et);
+      const ee = eventEnd(e);
+      if (!s || !ee) return "";
 
-  const tileNext = el("div", { class: "sgtv-tile" }, [
-    el("div", { class: "sgtv-tile-h" }, [el("div", { class: "h" }, ["Up Next"])]),
-    upNext ? eventCard(upNext) : empty("No upcoming events found."),
-  ]);
+      const sMs = s.getTime();
+      const eMs = ee.getTime();
 
-  const tileTV = el("div", { class: "sgtv-tile" }, [
-    buildTvScroller(filtered, state)
-  ]);
+      const leftMin = (sMs - startMs) / 60000;
+      const rightMin = (eMs - startMs) / 60000;
 
-  wrap.appendChild(el("div", { class: "sgtv-hero" }, [tileNow, tileNext, tileTV]));
+      const left = clamp(leftMin * pxPerMin, -9999, 9999);
+      const width = clamp((rightMin - leftMin) * pxPerMin, 90, 9999);
 
-  // Today's grid (below)
-  const today = state.today;
-  const todays = sortEvents(filtered.filter((e) => sameEtDate(e.start_dt, today)));
+      const thumb = e.thumbnail_url || (e.source_id ? `https://i.ytimg.com/vi/${e.source_id}/hqdefault.jpg` : "");
+      const liveBadge = e.status === "live" ? `<span class="badgeLive">LIVE</span>` : "";
 
-  const updatedText = state.lastUpdated
-    ? new Intl.DateTimeFormat("en-US", {
-        timeZone: "America/New_York",
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-        hour: "numeric",
-        minute: "2-digit",
-      }).format(state.lastUpdated) + " ET"
-    : "";
+      const startLabel = fmtTime(s).replace(" ET", "");
+      const endLabel = fmtTime(ee).replace(" ET", "");
 
-  wrap.appendChild(
-    el("div", { class: "sgtv-section" }, [
-      el("div", { class: "sgtv-sechead" }, [
-        el("div", { class: "h" }, ["Today"]),
-        el("div", { class: "sub" }, [updatedText ? `Last updated: ${updatedText}` : ""]),
-      ]),
-      el("div", { class: "sgtv-grid" }, [
-        ...(todays.length ? todays.map((e) => el("div", { class: "sgtv-tile" }, [eventCard(e)])) : [el("div", { class: "sgtv-tile" }, [empty("No events today.")])])
-      ])
-    ])
-  );
+      return `
+        <a class="block" href="${escapeHtml(e.watch_url || "#")}" target="_blank" rel="noreferrer"
+           style="left:${left}px; width:${width}px;">
+          <div class="blockMedia" style="background-image:url('${encodeURI(thumb)}')"></div>
+          <div class="blockOverlay"></div>
+          <div class="blockContent">
+            <div class="blockTop">
+              <div class="blockTitle">${escapeHtml(e.title || "")}</div>
+              ${liveBadge}
+            </div>
+            <div class="blockBottom">
+              <div class="blockTime">${startLabel}–${endLabel}</div>
+              <div>${escapeHtml(e.platform || "")}</div>
+            </div>
+          </div>
+        </a>
+      `;
+    }).join("");
 
-  root.appendChild(wrap);
+    return `
+      <div class="row">
+        <div class="rowLabel">
+          <div class="name">${escapeHtml(r.channel)}</div>
+          <div class="subs">${subs}</div>
+        </div>
+        <div class="lane" style="background-size:${pxPerTick}px 1px;">
+          ${blocks}
+        </div>
+      </div>
+    `;
+  }).join("");
 }
 
-// ----------------- Boot -----------------
-(async function boot() {
-  const state = {
-    rawEvents: [],
-    loading: true,
-    error: "",
-    lastUpdated: null,
-    filters: { league: "All", platform: "All", search: "" },
-    today: etNow(),
-    slotStart: clampToHalfHour(etNow()),
-  };
+// --- Fetch schedule.json ---
+async function loadSchedule() {
+  nowOn.textContent = "Loading…";
+  upNext.textContent = "Loading…";
+  rowsEl.innerHTML = "";
+  emptyState.style.display = "none";
 
-  render(state);
-  await doRefresh(state);
+  const bust = `${SCHEDULE_URL}?v=${Date.now()}`;
+  const res = await fetch(bust, { cache: "no-store" });
+  if (!res.ok) throw new Error(`Failed to fetch schedule.json (${res.status})`);
 
-  // Keep the "now" highlighting fresh without re-fetching
-  setInterval(() => {
-    // only update "today" and re-render; don't reset the chosen slot
-    state.today = etNow();
-    render(state);
-  }, 60_000);
-})();
+  const data = await res.json();
+  if (!Array.isArray(data)) throw new Error("schedule.json is not an array");
+
+  allEvents = sortEvents(
+    data
+      .filter(e => e && e.start_et && e.watch_url)
+      .map(e => ({
+        ...e,
+        status: e.status || "upcoming",
+        league: e.league || "",
+        platform: e.platform || "",
+        channel: e.channel || "",
+        thumbnail_url: e.thumbnail_url || "",
+        subscribers: Number(e.subscribers || 0),
+      }))
+  );
+
+  rebuildFilters(allEvents);
+
+  // reset window so it follows "live/next" after refresh
+  windowStart = null;
+
+  const now = new Date();
+  lastUpdated.textContent = `Last updated: ${fmtDay(now)} ${fmtTime(now)}`;
+
+  applyFilters();
+}
+
+// --- Wire up ---
+leagueFilter.addEventListener("change", applyFilters);
+platformFilter.addEventListener("change", applyFilters);
+searchInput.addEventListener("input", () => {
+  // small debounce feel without timers
+  applyFilters();
+});
+
+refreshBtn.addEventListener("click", () => loadSchedule().catch(err => {
+  console.error(err);
+  nowOn.innerHTML = `<div class="muted">Error loading schedule.</div>`;
+  upNext.innerHTML = `<div class="muted">${escapeHtml(err.message)}</div>`;
+}));
+
+prevWindow.addEventListener("click", () => shiftWindow(-1));
+nextWindow.addEventListener("click", () => shiftWindow(1));
+
+// initial
+loadSchedule().catch(err => {
+  console.error(err);
+  nowOn.innerHTML = `<div class="muted">Error loading schedule.</div>`;
+  upNext.innerHTML = `<div class="muted">${escapeHtml(err.message)}</div>`;
+});

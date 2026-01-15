@@ -2,19 +2,28 @@
 :root{
   --bg0:#070a12;
   --bg1:#0a1020;
+
   --card: rgba(255,255,255,0.06);
   --card2: rgba(255,255,255,0.08);
   --border: rgba(255,255,255,0.12);
+
   --text: rgba(255,255,255,0.92);
   --muted: rgba(255,255,255,0.68);
   --muted2: rgba(255,255,255,0.55);
+
   --shadow: 0 18px 42px rgba(0,0,0,0.45);
   --radius: 22px;
   --radius2: 16px;
+
   --accentA: rgba(120,220,255,0.35);
   --accentB: rgba(140,90,255,0.22);
+
   --live: rgba(70, 240, 170, 0.95);
   --liveBg: rgba(50, 240, 160, 0.14);
+
+  --rowH: 76px;
+  --cellH: 64px;
+  --gutter: 18px;
 }
 
 *{ box-sizing:border-box; }
@@ -28,6 +37,9 @@ body{
     linear-gradient(180deg, var(--bg1), var(--bg0));
   color: var(--text);
 }
+
+a{ color: inherit; text-decoration: none; }
+a:hover{ text-decoration: underline; }
 
 /* ========= Top / Header ========= */
 .top{
@@ -58,7 +70,6 @@ h1{
 }
 
 /* ========= CRISP Logo Badge (SVG mask) ========= */
-/* This avoids the <img> blur issue by rendering as a mask layer */
 .brandLogo{
   width: 52px;
   height: 52px;
@@ -77,7 +88,6 @@ h1{
   transition: transform 160ms ease, box-shadow 200ms ease, border-color 200ms ease;
 }
 
-/* The actual logo glyph: we "paint" it with gradients using a mask */
 .brandLogo::before{
   content:"";
   position:absolute;
@@ -92,7 +102,6 @@ h1{
   opacity: 0.98;
 }
 
-/* Extra glass highlight sweep */
 .brandLogo::after{
   content:"";
   position:absolute;
@@ -112,14 +121,9 @@ h1{
     inset 0 0 0 1px rgba(255,255,255,0.08),
     0 18px 44px rgba(0,0,0,0.48);
 }
-.brandLogo:hover::after{
-  transform: translateX(25%) rotate(10deg);
-}
-.brandLogo:active{
-  transform: translateY(0px) scale(0.99);
-}
+.brandLogo:hover::after{ transform: translateX(25%) rotate(10deg); }
+.brandLogo:active{ transform: translateY(0px) scale(0.99); }
 
-/* fallback text if mask doesn't load */
 .brandLogo__fallback{
   position:absolute;
   inset:0;
@@ -130,17 +134,11 @@ h1{
   font-size: 13px;
   color: rgba(255,255,255,0.95);
   text-shadow: 0 6px 14px rgba(0,0,0,0.55);
-  opacity: 0.0; /* hidden by default */
+  opacity: 0;
 }
 
-/* If mask fails to render, user will still see fallback (you can force this by setting opacity:1) */
-
-/* Optional: pulse when live exists (you can add/remove this class in JS later) */
+/* Optional: pulse when live exists (if JS toggles it) */
 .brandLogo.isLive{
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,0.08),
-    0 18px 44px rgba(0,0,0,0.48),
-    0 0 0 0 rgba(70,240,170,0.0);
   animation: livePulse 1.8s ease-in-out infinite;
 }
 @keyframes livePulse{
@@ -197,12 +195,7 @@ select, input{
   padding: 0 12px;
   outline: none;
 }
-
 input::placeholder{ color: rgba(255,255,255,0.35); }
-
-button{
-  font: inherit;
-}
 
 #refreshBtn{
   height: 42px;
@@ -272,7 +265,99 @@ button{
   background: rgba(50,240,160,0.12);
 }
 
-/* Info tile */
+/* ========= HERO cards (Now On / Up Next thumbnails) ========= */
+/* These are intentionally flexible to match whatever app.js is outputting. */
+.card{
+  border-radius: var(--radius2);
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(0,0,0,0.22);
+  overflow:hidden;
+}
+
+.cardThumb,
+.thumb,
+.thumbnail,
+.thumbWrap{
+  width: 100%;
+  border-radius: 14px;
+  overflow:hidden;
+  background: rgba(255,255,255,0.05);
+}
+
+/* If app.js uses a DIV with background-image */
+.cardThumb,
+.thumb,
+.thumbnail{
+  aspect-ratio: 16 / 9;
+  background-size: cover;
+  background-position: center;
+}
+
+/* If app.js uses an IMG tag */
+.tileBody img,
+.card img,
+.thumb img,
+.thumbnail img{
+  width: 100%;
+  height: auto;
+  display:block;
+}
+
+/* Prevent “invisible image” collapse if it’s absolutely positioned */
+.thumb img,
+.thumbnail img{
+  object-fit: cover;
+}
+
+/* Content under thumbnail */
+.cardBody,
+.meta,
+.details,
+.infoRow{
+  padding-top: 12px;
+}
+
+.title{
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1.2;
+  margin: 10px 0 6px;
+}
+
+.metaLine,
+.subline,
+.small{
+  color: rgba(255,255,255,0.70);
+  font-size: 12px;
+}
+
+/* Watch button styling (covers <a> or <button>) */
+.watch,
+.watchBtn,
+a.watchBtn,
+button.watchBtn,
+.tileBody a[href*="youtube"],
+.tileBody a.watchLink{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(140,90,255,0.45);
+  background: rgba(140,90,255,0.14);
+  color: rgba(255,255,255,0.92);
+  cursor:pointer;
+  margin-top: 10px;
+  text-decoration:none;
+}
+.watch:hover,
+.watchBtn:hover{
+  filter: brightness(1.06);
+  text-decoration:none;
+}
+
+/* ========= Info tile ========= */
 .tileBody.info{
   color: rgba(255,255,255,0.76);
   font-size: 13px;
@@ -285,6 +370,74 @@ button{
 .tileBody.info ul{
   margin: 10px 0 0 18px;
   padding: 0;
+}
+
+/* ========= Right Guide list (top-right tile) ========= */
+.guideList{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.guideHead{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  color: rgba(255,255,255,0.70);
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+
+.guideItem{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(0,0,0,0.18);
+  cursor:pointer;
+}
+.guideItem:hover{
+  background: rgba(255,255,255,0.06);
+}
+
+.guideTime{
+  min-width: 78px;
+  font-weight: 800;
+  font-size: 12px;
+  color: rgba(255,255,255,0.90);
+}
+
+.guideChan{
+  flex: 1;
+  text-align:left;
+  font-weight: 800;
+  font-size: 12px;
+  color: rgba(255,255,255,0.92);
+  white-space: nowrap;
+  overflow:hidden;
+  text-overflow: ellipsis;
+}
+
+.guideRight{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.badgeLive{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(70,240,170,0.34);
+  background: rgba(50,240,160,0.12);
+  color: rgba(70,240,170,0.95);
+  font-size: 12px;
+  font-weight: 700;
 }
 
 /* ========= Schedule Section ========= */
@@ -340,7 +493,7 @@ button{
   font-size: 12px;
   color: rgba(255,255,255,0.68);
   padding: 0 6px;
-  min-width: 170px;
+  min-width: 260px;
   text-align:center;
 }
 
@@ -354,17 +507,138 @@ button{
   border-top: 1px solid rgba(255,255,255,0.08);
 }
 
+/* Time header row */
 .timeRow{
-  display:flex;
-  gap: 12px;
-  padding: 12px 18px;
+  display:grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 160px;
+  gap: 0;
+  padding: 0;
   overflow:auto;
   white-space:nowrap;
   border-bottom: 1px solid rgba(255,255,255,0.08);
 }
+.timeCell{
+  padding: 12px 14px;
+  font-weight: 800;
+  font-size: 12px;
+  color: rgba(255,255,255,0.78);
+  border-right: 1px solid rgba(255,255,255,0.06);
+}
 
+/* Rows container */
 .rows{
+  display:flex;
+  flex-direction:column;
+}
+
+/* One channel row */
+.row{
+  display:grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 160px;
+  align-items:stretch;
+  min-height: var(--rowH);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  overflow:auto;
+}
+.rowLabel{
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding: 10px 14px;
+  min-width: 220px;
+  max-width: 220px;
+  background: linear-gradient(90deg, rgba(0,0,0,0.36), rgba(0,0,0,0.18));
+  border-right: 1px solid rgba(255,255,255,0.08);
+}
+.rowLabel .rowChan{
+  font-weight: 800;
+  font-size: 12px;
+  color: rgba(255,255,255,0.90);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow: ellipsis;
+}
+.rowLabel .rowMeta{
+  color: rgba(255,255,255,0.55);
+  font-size: 11px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow: ellipsis;
+}
+
+/* Show blocks in the grid */
+.block{
+  position: relative;
+  margin: 8px 8px;
+  height: var(--cellH);
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(0,0,0,0.22);
+  overflow:hidden;
+  cursor:pointer;
+  display:flex;
+  align-items:stretch;
+}
+.block:hover{
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.14);
+}
+
+/* Thumbnail inside block (if app.js uses it) */
+.blockThumb{
+  width: 96px;
+  flex: 0 0 96px;
+  background-size: cover;
+  background-position:center;
+  background-color: rgba(255,255,255,0.05);
+}
+.blockThumb img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
   display:block;
+}
+
+.blockBody{
+  padding: 10px 10px;
+  min-width: 0;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:6px;
+}
+.blockTitle{
+  font-weight: 800;
+  font-size: 12px;
+  color: rgba(255,255,255,0.92);
+  white-space: nowrap;
+  overflow:hidden;
+  text-overflow: ellipsis;
+}
+.blockMeta{
+  font-size: 11px;
+  color: rgba(255,255,255,0.60);
+  white-space: nowrap;
+  overflow:hidden;
+  text-overflow: ellipsis;
+}
+
+.blockLive{
+  position:absolute;
+  top: 10px;
+  right: 10px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  border: 1px solid rgba(70,240,170,0.34);
+  background: rgba(50,240,160,0.12);
+  color: rgba(70,240,170,0.95);
 }
 
 /* empty */
@@ -374,20 +648,13 @@ button{
 }
 
 /* footer removed */
-.footer{
-  display:none;
-}
+.footer{ display:none; }
 
 /* ========= Responsive ========= */
 @media (max-width: 980px){
-  .heroGrid{
-    grid-template-columns: 1fr;
-  }
-  .controls{
-    flex-wrap:wrap;
-  }
-  .control.grow{
-    min-width: 220px;
-    flex: 1 1 240px;
-  }
+  .heroGrid{ grid-template-columns: 1fr; }
+  .controls{ flex-wrap:wrap; }
+  .control.grow{ min-width: 220px; flex: 1 1 240px; }
+  .rowLabel{ min-width: 180px; max-width: 180px; }
+  .timeRow, .row{ grid-auto-columns: 140px; }
 }

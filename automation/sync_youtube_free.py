@@ -12,15 +12,22 @@ CHANNEL_SHEET_CSV = os.environ.get(
 )
 OUT_PATH = os.environ.get("OUT_PATH", "schedule.json")
 
-MAX_RSS_ENTRIES_PER_CHANNEL = int(os.environ.get("MAX_RSS_ENTRIES_PER_CHANNEL", "18"))
-SLEEP_BETWEEN_REQUESTS = float(os.environ.get("SLEEP_BETWEEN_REQUESTS", "0.12"))
+# Tune for speed vs reliability
+MAX_RSS_ENTRIES_PER_CHANNEL = int(os.environ.get("MAX_RSS_ENTRIES_PER_CHANNEL", "20"))
+SLEEP_BETWEEN_REQUESTS = float(os.environ.get("SLEEP_BETWEEN_REQUESTS", "0.10"))
 
-USER_AGENT = "Mozilla/5.0 (compatible; sgtv-bot/1.0)"
+# --- IMPORTANT: consent cookies + headers ---
+# This is the key change for GitHub Actions IPs that get consent / interstitial HTML.
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36"
+CONSENT_COOKIE = "CONSENT=YES+1; SOCS=CAI;"
+
 REQ_HEADERS = {
     "User-Agent": USER_AGENT,
     "Accept-Language": "en-US,en;q=0.9",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Cache-Control": "no-cache",
     "Pragma": "no-cache",
+    "Cookie": CONSENT_COOKIE,
 }
 
 def http_get(url: str) -> str:
@@ -54,6 +61,7 @@ def load_channels_from_sheet():
         handle = (r.get("handle") or "").strip().lstrip("@")
         display = (r.get("display_name") or "").strip()
 
+        # NOTE: for now this expects a number. Put e.g. 8660 in the sheet.
         sub_raw = (r.get("subscribers") or "").strip().replace(",", "")
         try:
             sheet_subs = int(float(sub_raw)) if sub_raw else 0
@@ -64,7 +72,7 @@ def load_channels_from_sheet():
             "channel_id": cid,
             "handle": handle,
             "display_name": display,
-            "subscribers": sheet_subs,  # use sheet value (fast + reliable)
+            "subscribers": sheet_subs,
         })
 
     return channels
@@ -122,6 +130,11 @@ def extract_vid_from_url(u: str) -> str:
     m = re.search(r"[?&]v=([A-Za-z0-9_-]{6,})", u)
     return m.group(1) if m else ""
 
+def looks_like_consent_page(html: str) -> bool:
+    # these show up when Google serves an interstitial / consent page
+    s = html.lower()
+    return ("consent.youtube.com" in s) or ("before you continue" in s) or ("consent" in s and "youtube" in s and "form" in s)
+
 def html_says_live_now(html: str) -> bool:
     return (
         '"isLiveNow":true' in html
@@ -135,11 +148,11 @@ def live_vid_from_channel_html(html: str) -> str:
     if not html_says_live_now(html):
         return ""
 
-    m = re.search(r'"videoId":"([A-Za-z0-9_-]{6,})".{0,1600}"isLiveNow":true', html, re.DOTALL)
+    m = re.search(r'"videoId":"([A-Za-z0-9_-]{6,})".{0,2000}"isLiveNow":true', html, re.DOTALL)
     if m:
         return m.group(1)
 
-    m = re.search(r'"isLiveNow":true.{0,1600}"videoId":"([A-Za-z0-9_-]{6,})"', html, re.DOTALL)
+    m = re.search(r'"isLiveNow":true.{0,2000}"videoId":"([A-Za-z0-9_-]{6,})"', html, re.DOTALL)
     if m:
         return m.group(1)
 
@@ -150,9 +163,11 @@ def live_vid_from_channel_html(html: str) -> str:
     return ""
 
 def watch_page_confirms_live(video_id: str) -> bool:
-    # quick confirm to avoid /live redirect lies
     try:
         html = http_get(f"https://www.youtube.com/watch?v={video_id}")
+        if looks_like_consent_page(html):
+            # If this still happens, we want it obvious in logs
+            print("WARNING: watch page looks like consent/interstitial for", video_id)
         return html_says_live_now(html)
     except Exception:
         return False
@@ -160,8 +175,8 @@ def watch_page_confirms_live(video_id: str) -> bool:
 def fetch_channel_live_video_id(channel_id: str, handle: str = "") -> str:
     """
     Robust LIVE detection:
-      1) Try channel/handle pages and only accept if html includes isLiveNow:true.
-      2) Try /live redirect to candidate, then CONFIRM via watch page isLiveNow:true.
+      A) HTML pages that include isLiveNow:true -> extract videoId
+      B) /live redirect -> candidate v=... -> confirm via watch page isLiveNow:true
     """
     h = (handle or "").strip().lstrip("@")
 
@@ -178,12 +193,15 @@ def fetch_channel_live_video_id(channel_id: str, handle: str = "") -> str:
         f"https://www.youtube.com/channel/{channel_id}",
     ]
 
-    # 1) HTML says live now
+    # A) HTML says live now
     for u in html_urls:
         try:
             html = http_get(u)
         except Exception:
             continue
+
+        if looks_like_consent_page(html):
+            print("WARNING: channel page looks like consent/interstitial:", u)
 
         vid = live_vid_from_channel_html(html)
         if vid:
@@ -191,7 +209,7 @@ def fetch_channel_live_video_id(channel_id: str, handle: str = "") -> str:
 
         time.sleep(SLEEP_BETWEEN_REQUESTS)
 
-    # 2) /live redirect candidate, then confirm
+    # B) /live redirect candidate, then confirm
     redirect_urls = []
     if h:
         redirect_urls.append(f"https://www.youtube.com/@{h}/live")
@@ -218,6 +236,9 @@ def fetch_channel_live_video_id(channel_id: str, handle: str = "") -> str:
 # ---------- Upcoming ----------
 def fetch_upcoming_details(video_id: str):
     html = http_get(f"https://www.youtube.com/watch?v={video_id}")
+
+    if looks_like_consent_page(html):
+        print("WARNING: watch page looks like consent/interstitial for", video_id)
 
     if not ('"isUpcoming":true' in html or "upcomingEventData" in html or '\\"isUpcoming\\":true' in html):
         return None

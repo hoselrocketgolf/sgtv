@@ -241,17 +241,27 @@ function render(){
       ? `<a href="${evt.watch_url}" target="_blank" rel="noopener">Watch</a>`
       : `<span class="muted">No link</span>`;
 
-    card.innerHTML = `
+   const thumb = evt.thumbnail_url
+  ? `<img class="thumb" src="${evt.thumbnail_url}" alt="" loading="lazy" />`
+  : ``;
+
+card.innerHTML = `
+  <div class="eventTop">
+    ${thumb}
+    <div class="eventTopText">
       <div class="eventTime">${escapeHtml(timeLine)}</div>
       <div class="eventTitle">${escapeHtml(evt.title || "Untitled")}</div>
       <div class="eventMeta">
         ${isLive ? `<span class="metaPill live">LIVE</span>` : ``}
-        ${evt.league ? `<span class="metaPill">${escapeHtml(evt.league)}</span>` : ``}
         ${evt.platform ? `<span class="metaPill">${escapeHtml(evt.platform)}</span>` : ``}
+        ${evt.league ? `<span class="metaPill">${escapeHtml(evt.league)}</span>` : ``}
         ${evt.channel ? `<span class="metaPill">${escapeHtml(evt.channel)}</span>` : ``}
       </div>
-      <div class="eventActions">${watch}</div>
-    `;
+    </div>
+  </div>
+  <div class="eventActions">${watch}</div>
+`;
+
 
     scheduleCards.appendChild(card);
   });

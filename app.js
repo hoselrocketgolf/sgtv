@@ -131,18 +131,32 @@ function setCard(el, evt, label){
     el.innerHTML = `<p class="muted">No ${label.toLowerCase()} event.</p>`;
     return;
   }
+
   const start = evt.start;
   const end = evt.end;
   const timeLine = end ? `${fmtTime(start)}–${fmtTime(end)} ET` : `${fmtTime(start)} ET`;
-  const subLine = `${fmtDate(start)} • ${escapeHtml(evt.league || "—")} • ${escapeHtml(evt.platform || "—")}`;
-  const watch = evt.watch_url ? `<a href="${evt.watch_url}" target="_blank" rel="noopener">Watch</a>` : `<span class="muted">No link</span>`;
+  const subLine = `${fmtDate(start)} • ${escapeHtml(evt.platform || "—")}${evt.league ? ` • ${escapeHtml(evt.league)}` : ""}`;
+  const watch = evt.watch_url
+    ? `<a href="${evt.watch_url}" target="_blank" rel="noopener">Watch</a>`
+    : `<span class="muted">No link</span>`;
+
+  const thumb = evt.thumbnail_url
+    ? `<img class="thumb" src="${evt.thumbnail_url}" alt="" loading="lazy" />`
+    : ``;
+
   el.innerHTML = `
-    <div class="title" style="font-weight:800;font-size:15px;margin-bottom:6px;">${escapeHtml(evt.title || "Untitled")}</div>
-    <div class="muted" style="margin-bottom:10px;">${timeLine}</div>
-    <div class="muted small" style="margin-bottom:10px;">${subLine}${evt.channel ? ` • ${escapeHtml(evt.channel)}` : ""}</div>
+    <div class="heroRow">
+      ${thumb}
+      <div class="heroText">
+        <div class="title">${escapeHtml(evt.title || "Untitled")}</div>
+        <div class="muted">${timeLine}</div>
+        <div class="muted small">${subLine}${evt.channel ? ` • ${escapeHtml(evt.channel)}` : ""}</div>
+      </div>
+    </div>
     <div class="watch">${watch}</div>
   `;
 }
+
 
 function computeNowNext(events){
   const now = DateTime.now().setZone(TZ);

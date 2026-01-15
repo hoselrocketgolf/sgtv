@@ -10,7 +10,7 @@
     "source_id": "tfPOIbxwZN8",
     "status": "live",
     "thumbnail_url": "https://i.ytimg.com/vi/tfPOIbxwZN8/maxresdefault_live.jpg",
-    "subscribers": 821
+    "subscribers": 822
   },
   {
     "start_et": "2026-01-15 18:00",
@@ -76,5 +76,18 @@
     "status": "upcoming",
     "thumbnail_url": "https://i.ytimg.com/vi/U-5LdIqIJgM/maxresdefault_live.jpg",
     "subscribers": 16900
+  },
+  {
+    "start_et": "2026-01-22 14:00",
+    "end_et": "",
+    "title": "Mixed Club Break 50 Challenge with Joshomatic & Simplyme80",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Strong Design Studio",
+    "watch_url": "https://www.youtube.com/watch?v=fDECEGpGHkU",
+    "source_id": "fDECEGpGHkU",
+    "status": "upcoming",
+    "thumbnail_url": "https://i.ytimg.com/vi/fDECEGpGHkU/maxresdefault_live.jpg",
+    "subscribers": 58
   }
 ]

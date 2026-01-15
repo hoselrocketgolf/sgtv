@@ -3,43 +3,42 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SimGolf TV Guide</title>
+    <title>SimGolf.TV Guide</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <header class="top">
       <div class="brand">
-        <!-- SGTV logo badge (image w/ fallback to stylized text) -->
-        <div
-          class="logo"
-          aria-label="SimGolf.TV"
-          title="SimGolf.TV"
+        <!-- Clickable SGTV logo badge (acts as refresh) -->
+        <button
+          id="brandBtn"
+          type="button"
+          aria-label="Refresh"
+          title="Refresh"
           style="
+            all: unset;
+            cursor: pointer;
+            display: grid;
+            place-items: center;
             width: 52px;
             height: 52px;
             border-radius: 14px;
-            display: grid;
-            place-items: center;
             overflow: hidden;
-            background: radial-gradient(120% 120% at 30% 20%, rgba(120, 220, 255, 0.35), rgba(140, 90, 255, 0.18) 45%, rgba(0, 0, 0, 0) 70%),
-                        linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.02));
+            background:
+              radial-gradient(120% 120% at 30% 20%, rgba(120, 220, 255, 0.35), rgba(140, 90, 255, 0.18) 45%, rgba(0, 0, 0, 0) 70%),
+              linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.02));
             border: 1px solid rgba(255,255,255,0.14);
             box-shadow: 0 14px 30px rgba(0,0,0,0.35);
           "
         >
+          <!-- Image (auto-fallback between multiple paths), then text fallback -->
           <img
-            src="assets/sgtv-logo.png"
+            id="brandLogo"
             alt="SGTV"
-            style="
-              width: 100%;
-              height: 100%;
-              object-fit: cover;
-              display: block;
-            "
-            onerror="this.style.display='none'; this.parentElement.querySelector('.logoText').style.display='grid';"
+            style="width: 100%; height: 100%; object-fit: cover; display: block;"
           />
           <span
-            class="logoText"
+            id="brandLogoText"
             style="
               display: none;
               width: 100%;
@@ -51,15 +50,12 @@
               color: rgba(255,255,255,0.95);
               text-shadow: 0 10px 18px rgba(0,0,0,0.55);
             "
-            >SGTV</span
-          >
-        </div>
+          >SGTV</span>
+        </button>
 
         <div>
-          <h1>SimGolf TV Guide</h1>
-          <div class="subtitle">
-            LIVE 24/7 • matches, leagues, and streams • Times in Eastern
-          </div>
+          <h1>SimGolf.TV Guide</h1>
+          <div class="subtitle">LIVE 24/7 • matches, leagues, and streams • Times in Eastern</div>
         </div>
       </div>
 
@@ -158,5 +154,50 @@
     </main>
 
     <script src="app.js"></script>
+
+    <script>
+      // --- Logo path fallback (so it shows even if the asset path differs) ---
+      (function () {
+        const img = document.getElementById("brandLogo");
+        const txt = document.getElementById("brandLogoText");
+
+        // Try these in order. Put your actual file here if different.
+        const candidates = [
+          "assets/sgtv-logo.png",
+          "assets/sgtv-logo.webp",
+          "assets/sgtv-logo.jpg",
+          "sgtv-logo.png",
+          "sgtv-logo.webp",
+          "sgtv-logo.jpg",
+          "./assets/sgtv-logo.png",
+          "./sgtv-logo.png",
+        ];
+
+        let i = 0;
+
+        function tryNext() {
+          if (i >= candidates.length) {
+            img.style.display = "none";
+            txt.style.display = "grid";
+            return;
+          }
+          img.src = candidates[i++];
+        }
+
+        img.onerror = tryNext;
+        // kick it off
+        tryNext();
+      })();
+
+      // --- Clicking the SGTV badge triggers the same refresh as Update ---
+      (function () {
+        const brandBtn = document.getElementById("brandBtn");
+        brandBtn.addEventListener("click", () => {
+          const refreshBtn = document.getElementById("refreshBtn");
+          if (refreshBtn) refreshBtn.click();
+          else window.location.reload();
+        });
+      })();
+    </script>
   </body>
 </html>

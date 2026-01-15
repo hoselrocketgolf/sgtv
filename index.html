@@ -35,7 +35,13 @@
           <img
             id="brandLogo"
             alt="SGTV"
-            style="width: 100%; height: 100%; object-fit: cover; display: block;"
+            style="
+              width: 100%;
+              height: 100%;
+              object-fit: contain;
+              padding: 8px;
+              display: block;
+            "
           />
           <span
             id="brandLogoText"
@@ -156,21 +162,17 @@
     <script src="app.js"></script>
 
     <script>
-      // --- Logo path fallback (so it shows even if the asset path differs) ---
+      // --- Logo path fallback ---
       (function () {
         const img = document.getElementById("brandLogo");
         const txt = document.getElementById("brandLogoText");
 
-        // Try these in order. Put your actual file here if different.
+        // Your actual file is: assets/sgtv-logo.svg
         const candidates = [
-          "assets/sgtv-logo.png",
-          "assets/sgtv-logo.webp",
-          "assets/sgtv-logo.jpg",
-          "sgtv-logo.png",
-          "sgtv-logo.webp",
-          "sgtv-logo.jpg",
-          "./assets/sgtv-logo.png",
-          "./sgtv-logo.png",
+          "assets/sgtv-logo.svg",
+          "./assets/sgtv-logo.svg",
+          "sgtv-logo.svg",
+          "./sgtv-logo.svg"
         ];
 
         let i = 0;
@@ -185,7 +187,6 @@
         }
 
         img.onerror = tryNext;
-        // kick it off
         tryNext();
       })();
 

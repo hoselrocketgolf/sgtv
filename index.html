@@ -1,103 +1,114 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SimGolf TV Guide</title>
-  <meta name="description" content="A lightweight TV guide for live simulator golf — powered by Google Sheets." />
-  <link rel="stylesheet" href="styles.css" />
-  <!-- Luxon for reliable timezone parsing/formatting -->
-  <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
-</head>
-<body>
-  <header class="wrap">
-    <div class="brand">
-      <div class="logo">SG</div>
-      <div>
-        <h1>SimGolf TV Guide</h1>
-<p class="sub">LIVE 24/7 • matches, leagues, and streams • Times in Eastern</p>
-      </div>
-    </div>
-
-    <div class="controls">
-      <div class="control">
-        <label for="leagueFilter">League</label>
-        <select id="leagueFilter">
-          <option value="">All</option>
-        </select>
-      </div>
-      <div class="control">
-        <label for="platformFilter">Platform</label>
-        <select id="platformFilter">
-          <option value="">All</option>
-        </select>
-      </div>
-      <div class="control">
-        <label for="searchBox">Search</label>
-        <input id="searchBox" type="search" placeholder="Search title, league, channel…" />
-      </div>
-      <div class="control">
-        <label for="refreshBtn">Refresh</label>
-        <button id="refreshBtn" type="button">Update</button>
-      </div>
-    </div>
-  </header>
-
-  <main class="wrap">
-    <section class="cards">
-      <article class="card" id="nowCard">
-        <div class="cardHeader">
-          <h2>Now On</h2>
-          <span class="pill live" id="nowPill" hidden>LIVE</span>
-        </div>
-        <div class="cardBody" id="nowBody">
-          <p class="muted">Loading…</p>
-        </div>
-      </article>
-
-      <article class="card" id="nextCard">
-        <div class="cardHeader">
-          <h2>Up Next</h2>
-        </div>
-        <div class="cardBody" id="nextBody">
-          <p class="muted">Loading…</p>
-        </div>
-      </article>
-
-      <article class="card" id="aboutCard">
-        <div class="cardHeader">
-          <h2>How it works</h2>
-        </div>
-        <div class="cardBody">
-          <p>This site is powered by a published Google Sheet (CSV). Update the sheet and this guide updates.</p>
-          <ul>
-            <li>Edit <code>CSV_URL</code> in <code>app.js</code> if you change your sheet link.</li>
-            <li>Recommended columns: <code>start_et</code>, <code>end_et</code> (optional), <code>title</code>, <code>league</code>, <code>platform</code>, <code>channel</code> (optional), <code>watch_url</code>.</li>
-          </ul>
-          <p class="muted small">Tip: keep <code>start_et</code> in ISO like <code>2026-01-13 20:00</code> (Eastern).</p>
-        </div>
-      </article>
-    </section>
-
-    <section class="panel">
-      <div class="panelHeader">
-        <h2>Today's Schedule</h2>
-        <div class="panelMeta">
-          <span id="lastUpdated" class="muted small">—</span>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SimGolf TV Guide</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div class="brand">
+        <div class="logo">SG</div>
+        <div>
+          <h1>SimGolf TV Guide</h1>
+          <div class="subtitle">LIVE 24/7 • matches, leagues, and streams • Times in Eastern</div>
         </div>
       </div>
-<div id="scheduleCards" class="scheduleCards">
-  <div class="muted">Loading…</div>
-</div>
-       
-      <p class="muted small" id="emptyMsg" hidden>No matching events.</p>
-    </section>
-  </main>
 
-  <footer class="wrap footer">
-    <span class="muted small">Built as a lightweight static site (HTML/CSS/JS). Host free on Cloudflare Pages or GitHub Pages.</span>
-  </footer>
+      <div class="controls">
+        <div class="control">
+          <label>League</label>
+          <select id="leagueFilter">
+            <option value="all">All</option>
+          </select>
+        </div>
 
-  <script src="app.js"></script>
-</body>
+        <div class="control">
+          <label>Platform</label>
+          <select id="platformFilter">
+            <option value="all">All</option>
+          </select>
+        </div>
+
+        <div class="control grow">
+          <label>Search</label>
+          <input id="searchInput" placeholder="Search title, league, channel…" />
+        </div>
+
+        <div class="control refresh">
+          <label>Refresh</label>
+          <button id="refreshBtn">Update</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section class="heroGrid">
+        <div class="tile" id="nowTile">
+          <div class="tileHeader">
+            <h2>Now On</h2>
+            <span class="pill live">LIVE</span>
+          </div>
+          <div id="nowOn" class="tileBody">Loading…</div>
+        </div>
+
+        <div class="tile" id="nextTile">
+          <div class="tileHeader">
+            <h2>Up Next</h2>
+          </div>
+          <div id="upNext" class="tileBody">Loading…</div>
+        </div>
+
+        <div class="tile" id="infoTile">
+          <div class="tileHeader">
+            <h2>Guide</h2>
+          </div>
+          <div class="tileBody info">
+            <div class="muted">
+              TV-guide view below. Live shows first. Use filters + search to narrow.
+            </div>
+            <ul>
+              <li>Times are Eastern</li>
+              <li>Scroll the grid with arrows or trackpad</li>
+              <li>Click any show to watch</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="scheduleSection">
+        <div class="scheduleHeader">
+          <h2>Today's Schedule</h2>
+
+          <div class="scheduleTools">
+            <button class="iconBtn" id="prevWindow" title="Back">
+              ◀
+            </button>
+            <div class="windowLabel" id="windowLabel">Loading…</div>
+            <button class="iconBtn" id="nextWindow" title="Forward">
+              ▶
+            </button>
+          </div>
+
+          <div class="updated" id="lastUpdated"></div>
+        </div>
+
+        <div class="guide">
+          <div class="timeRow" id="timeRow"></div>
+          <div class="rows" id="rows"></div>
+        </div>
+
+        <div class="empty" id="emptyState" style="display:none;">
+          No matching events.
+        </div>
+      </section>
+
+      <footer class="footer">
+        Built as a lightweight static site (HTML/CSS/JS). Host free on Cloudflare Pages or GitHub Pages.
+      </footer>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
 </html>

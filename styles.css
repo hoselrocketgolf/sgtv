@@ -3,9 +3,6 @@
   --bg0:#070a12;
   --bg1:#0a1020;
 
-  --card: rgba(255,255,255,0.06);
-  --border: rgba(255,255,255,0.12);
-
   --text: rgba(255,255,255,0.92);
   --muted: rgba(255,255,255,0.68);
   --muted2: rgba(255,255,255,0.55);
@@ -16,8 +13,6 @@
 
   --accentA: rgba(120,220,255,0.35);
   --accentB: rgba(140,90,255,0.22);
-
-  --live: rgba(70, 240, 170, 0.95);
 
   --rowH: 84px;
   --cellH: 72px;
@@ -38,6 +33,8 @@ body{
 a{ color: inherit; text-decoration: none; }
 a:hover{ text-decoration: none; }
 
+.muted{ color: rgba(255,255,255,0.62); }
+
 /* ========= Top / Header ========= */
 .top{
   max-width: 1180px;
@@ -55,6 +52,7 @@ a:hover{ text-decoration: none; }
 }
 
 h1{
+ _toggle: none;
   margin:0;
   font-size: 22px;
   letter-spacing: 0.2px;
@@ -66,7 +64,7 @@ h1{
   font-size: 13px;
 }
 
-/* ========= Logo Badge (sharp) ========= */
+/* ========= Logo Badge ========= */
 .brandLogo{
   width: 52px;
   height: 52px;
@@ -93,26 +91,11 @@ h1{
   height: 100%;
   display:block;
   object-fit: contain;
-  /* crispness */
   image-rendering: -webkit-optimize-contrast;
   filter: drop-shadow(0 10px 18px rgba(0,0,0,0.55));
   transform: translateZ(0);
 }
 
-.brandLogo__fallback{
-  position:absolute;
-  inset:0;
-  display:grid;
-  place-items:center;
-  font-weight: 900;
-  letter-spacing: 0.5px;
-  font-size: 13px;
-  color: rgba(255,255,255,0.95);
-  text-shadow: 0 6px 14px rgba(0,0,0,0.55);
-  opacity: 0;
-}
-
-/* Pulse when live exists */
 .brandLogo.isLive{
   animation: livePulse 1.8s ease-in-out infinite;
 }
@@ -212,7 +195,6 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
 
 .tileBody{ padding: 0 18px 18px; }
 
-/* Pills */
 .pill{
   display:inline-flex;
   align-items:center;
@@ -230,14 +212,13 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
   background: rgba(50,240,160,0.12);
 }
 
-/* ========= HERO cards (Now On / Up Next) ========= */
+/* ========= HERO cards ========= */
 .card{
   border-radius: var(--radius2);
   border: 1px solid rgba(255,255,255,0.10);
   background: rgba(0,0,0,0.22);
   overflow:hidden;
 }
-
 .cardMedia{
   width: 100%;
   aspect-ratio: 16 / 9;
@@ -245,7 +226,6 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
   background-position: center;
   background-color: rgba(255,255,255,0.05);
 }
-
 .cardBody{ padding: 12px 12px 14px; }
 .cardTitle{
   font-weight: 800;
@@ -273,24 +253,10 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
   background: rgba(140,90,255,0.14);
   color: rgba(255,255,255,0.92);
   cursor:pointer;
-  text-decoration:none;
 }
 .watchBtn:hover{ filter: brightness(1.06); }
 
-/* ========= Info tile ========= */
-.tileBody.info{
-  color: rgba(255,255,255,0.76);
-  font-size: 13px;
-  line-height: 1.45;
-}
-.muted{ color: rgba(255,255,255,0.62); }
-
-.tileBody.info ul{
-  margin: 10px 0 0 18px;
-  padding: 0;
-}
-
-/* ===== Right Guide chip list (rendered by JS) ===== */
+/* ========= Right tile chip list ========= */
 .chipHead{
   display:flex;
   align-items:center;
@@ -348,7 +314,6 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
   color: rgba(255,255,255,0.9);
   cursor:pointer;
 }
-
 .nowBtn{
   height: 36px;
   padding: 0 12px;
@@ -358,7 +323,6 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
   color: rgba(255,255,255,0.9);
   cursor:pointer;
 }
-
 .windowLabel{
   font-size: 12px;
   color: rgba(255,255,255,0.68);
@@ -366,23 +330,28 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
   min-width: 260px;
   text-align:center;
 }
-
 .updated{
   font-size: 12px;
   color: rgba(255,255,255,0.55);
 }
 
-/* Guide grid shell */
+/* ✅ ONE horizontal scroller for the entire guide */
 .guide{
   border-top: 1px solid rgba(255,255,255,0.08);
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
-/* Time header row */
+/* time header row */
 .timeRow{
   display:flex;
-  overflow:auto;
   white-space:nowrap;
   border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.timeSpacer{
+  flex: 0 0 var(--labelW, 220px);
+  border-right: 1px solid rgba(255,255,255,0.08);
+  background: linear-gradient(90deg, rgba(0,0,0,0.36), rgba(0,0,0,0.18));
 }
 .timeTick{
   padding: 12px 14px;
@@ -393,19 +362,15 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
   flex: 0 0 auto;
 }
 
-/* Rows container */
-.rows{
-  display:flex;
-  flex-direction:column;
-}
+/* rows */
+.rows{ display:flex; flex-direction:column; }
 
-/* One channel row */
+/* a row: sticky label + fixed-width lane */
 .row{
   display:flex;
   align-items:stretch;
   min-height: var(--rowH);
   border-bottom: 1px solid rgba(255,255,255,0.06);
-  overflow:hidden;
 }
 
 .rowLabel{
@@ -417,8 +382,6 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
   justify-content:center;
   gap:6px;
   padding: 10px 14px;
-  min-width: 220px;
-  max-width: 220px;
   background: linear-gradient(90deg, rgba(0,0,0,0.36), rgba(0,0,0,0.18));
   border-right: 1px solid rgba(255,255,255,0.08);
 }
@@ -433,23 +396,18 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
 .rowLabel .subs{
   color: rgba(255,255,255,0.55);
   font-size: 11px;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow: ellipsis;
 }
 
-/* The timeline lane */
+/* ✅ lane no longer scrolls (removes those white bars) */
 .lane{
   position: relative;
-  flex: 1 1 auto;
-  min-height: var(--rowH);
-  overflow-x: auto;
-  overflow-y: hidden;
+  height: var(--rowH);
+  overflow: hidden;
   background-image: linear-gradient(to right, rgba(255,255,255,0.06) 1px, rgba(0,0,0,0) 1px);
-  background-size: 140px 1px; /* matches pxPerTick in JS */
+  background-size: 140px 1px; /* matches pxPerTick */
 }
 
-/* Show blocks */
+/* blocks */
 .block{
   position:absolute;
   top: 6px;
@@ -472,13 +430,11 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
   background-color: rgba(255,255,255,0.05);
   transform: scale(1.02);
 }
-
 .blockOverlay{
   position:absolute;
   inset:0;
   background: linear-gradient(180deg, rgba(0,0,0,0.10), rgba(0,0,0,0.72));
 }
-
 .blockContent{
   position:absolute;
   inset:0;
@@ -488,7 +444,6 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
   justify-content:space-between;
   gap:8px;
 }
-
 .blockTop{
   display:flex;
   align-items:flex-start;
@@ -504,7 +459,6 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
   white-space: nowrap;
   max-width: 100%;
 }
-
 .badgeLiveMini{
   display:inline-flex;
   align-items:center;
@@ -518,7 +472,6 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
   font-weight: 800;
   flex: 0 0 auto;
 }
-
 .blockBottom{
   display:flex;
   align-items:center;
@@ -530,7 +483,6 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
 .blockTime{ font-weight: 800; color: rgba(255,255,255,0.82); }
 .blockPlat{ color: rgba(255,255,255,0.70); }
 
-/* empty */
 .empty{
   padding: 20px 18px;
   color: rgba(255,255,255,0.65);
@@ -544,6 +496,5 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
   .heroGrid{ grid-template-columns: 1fr; }
   .controls{ flex-wrap:wrap; }
   .control.grow{ min-width: 220px; flex: 1 1 240px; }
-  .rowLabel{ min-width: 180px; max-width: 180px; }
   .chipTime{ min-width: 78px; }
 }

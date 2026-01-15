@@ -16,13 +16,43 @@ CHANNEL_SHEET_CSV = env_or_default("CHANNEL_SHEET_CSV", DEFAULT_CHANNEL_SHEET_CS
 OUT_PATH = env_or_default("OUT_PATH", "schedule.json")
 YT_API_KEY = (os.environ.get("YT_API_KEY") or "").strip()
 
-USER_AGENT = "Mozilla/5.0 (compatible; sgtv-bot/2.0)"
+USER_AGENT = "Mozilla/5.0 (compatible; sgtv-bot/2.2)"
 REQ_HEADERS = {
     "User-Agent": USER_AGENT,
     "Accept-Language": "en-US,en;q=0.9",
+    # Strongly discourage caches (helps w/ Google/Cloudflare intermediates)
+    "Cache-Control": "no-cache",
+    "Pragma": "no-cache",
 }
 
+# Treat "upcoming" scheduled in the past as junk if it never started.
+# (Example: scheduled 6 months ago, never went live.)
+GHOST_UPCOMING_GRACE_MINUTES = 30
+
+# Only keep upcoming within this horizon (prevents pulling far-future junk)
+UPCOMING_HORIZON_DAYS = 7
+
+# How many recent uploads to scan per channel
+UPLOADS_SCAN_MAX = 25
+
+
 # --------- HTTP helpers ---------
+def add_cache_buster(url: str) -> str:
+    """
+    Adds a cache-busting query param to help ensure we always read the latest sheet.
+    This is especially important for the published Google Sheet CSV.
+    """
+    try:
+        u = urllib.parse.urlparse(url)
+        q = dict(urllib.parse.parse_qsl(u.query, keep_blank_values=True))
+        q["cb"] = str(int(time.time()))
+        new_query = urllib.parse.urlencode(q)
+        return urllib.parse.urlunparse((u.scheme, u.netloc, u.path, u.params, new_query, u.fragment))
+    except Exception:
+        # If parsing fails, fallback to simple append
+        sep = "&" if "?" in url else "?"
+        return f"{url}{sep}cb={int(time.time())}"
+
 def http_get(url: str) -> str:
     req = urllib.request.Request(url, headers=REQ_HEADERS)
     with urllib.request.urlopen(req, timeout=30) as resp:
@@ -40,6 +70,7 @@ def yt_api(endpoint: str, params: dict) -> dict:
     url = f"https://www.googleapis.com/youtube/v3/{endpoint}?{urllib.parse.urlencode(q)}"
     return http_get_json(url)
 
+
 # --------- CSV sheet -> channels ---------
 def parse_simple_csv(text: str):
     f = io.StringIO(text)
@@ -51,12 +82,15 @@ def load_channels_from_sheet():
       handle, display_name, channel_id, subscribers
     subscribers may be blank (fallback only).
     """
-    csv_text = http_get(CHANNEL_SHEET_CSV)
+    # Cache-bust the sheet fetch so removals reflect quickly.
+    sheet_url = add_cache_buster(CHANNEL_SHEET_CSV)
+    csv_text = http_get(sheet_url)
     rows = parse_simple_csv(csv_text)
     if not rows:
         return []
 
     print("Sheet headers:", list(rows[0].keys()))
+    print("Sheet URL (cache-busted):", sheet_url)
 
     channels = []
     for r in rows:
@@ -80,20 +114,32 @@ def load_channels_from_sheet():
             "sheet_subscribers": sheet_subs
         })
 
+    # Helpful debug so you can confirm removals are truly reflected
+    print("Channel IDs from sheet:", [c["channel_id"] for c in channels])
+
     return channels
+
 
 # --------- Time helpers ---------
 def iso_to_et_fmt(iso: str) -> str:
-    # ISO timestamps from API are UTC with 'Z'
     dt = datetime.fromisoformat(iso.replace("Z", "+00:00")).astimezone(ET_TZ)
     return dt.strftime("%Y-%m-%d %H:%M")
 
 def now_utc() -> datetime:
     return datetime.now(timezone.utc)
 
-# --------- YouTube API strategy (fast + reliable) ---------
+def parse_iso_utc(iso: str) -> datetime | None:
+    if not iso:
+        return None
+    try:
+        return datetime.fromisoformat(iso.replace("Z", "+00:00")).astimezone(timezone.utc)
+    except Exception:
+        return None
+
+
+# --------- YouTube API strategy ---------
 # 1) channels.list (batch): get uploads playlist + subscriber count + channel title
-# 2) playlistItems.list per channel: pull latest N uploads (includes live/upcoming items)
+# 2) playlistItems.list per channel: pull latest N uploads
 # 3) videos.list (batched): read liveStreamingDetails to classify live/upcoming
 
 def chunked(lst, n):
@@ -101,11 +147,6 @@ def chunked(lst, n):
         yield lst[i:i+n]
 
 def fetch_channels_meta(channel_ids: list[str]) -> dict:
-    """
-    Returns map[channel_id] -> {
-      uploads_playlist_id, subscribers, channel_title
-    }
-    """
     meta = {}
     for batch in chunked(channel_ids, 50):
         resp = yt_api("channels", {
@@ -130,7 +171,7 @@ def fetch_channels_meta(channel_ids: list[str]) -> dict:
                 }
     return meta
 
-def fetch_uploads_video_ids(uploads_playlist_id: str, max_results: int = 20) -> list[str]:
+def fetch_uploads_video_ids(uploads_playlist_id: str, max_results: int = UPLOADS_SCAN_MAX) -> list[str]:
     resp = yt_api("playlistItems", {
         "part": "contentDetails",
         "playlistId": uploads_playlist_id,
@@ -144,9 +185,6 @@ def fetch_uploads_video_ids(uploads_playlist_id: str, max_results: int = 20) -> 
     return vids
 
 def fetch_videos_details(video_ids: list[str]) -> dict:
-    """
-    Returns map[video_id] -> video item (snippet + liveStreamingDetails)
-    """
     out = {}
     for batch in chunked(video_ids, 50):
         resp = yt_api("videos", {
@@ -168,11 +206,12 @@ def pick_thumb(snippet: dict) -> str:
             return u
     return ""
 
-def classify_video(item: dict) -> tuple[str | None, str | None]:
+def classify_video(item: dict) -> tuple[str | None, str | None, dict]:
     """
-    Returns (status, start_iso)
+    Returns (status, start_iso, live_details)
       status: "live" | "upcoming" | None
       start_iso: ISO timestamp string or None
+      live_details: liveStreamingDetails dict
     """
     lsd = (item.get("liveStreamingDetails") or {})
     snippet = (item.get("snippet") or {})
@@ -184,19 +223,37 @@ def classify_video(item: dict) -> tuple[str | None, str | None]:
 
     # Live if started and not ended
     if actual_start and not actual_end:
-        return "live", actual_start
+        return "live", actual_start, lsd
 
     # Upcoming if scheduled but not started
     if scheduled_start and not actual_start:
-        return "upcoming", scheduled_start
+        return "upcoming", scheduled_start, lsd
 
-    # Sometimes snippet marks it; keep safe fallbacks
+    # Fallbacks
     if live_content == "live" and actual_start and not actual_end:
-        return "live", actual_start
+        return "live", actual_start, lsd
     if live_content == "upcoming" and scheduled_start:
-        return "upcoming", scheduled_start
+        return "upcoming", scheduled_start, lsd
 
-    return None, None
+    return None, None, lsd
+
+
+def is_ghost_upcoming(start_iso: str, lsd: dict) -> bool:
+    """
+    If it's "upcoming" but its scheduled time is already in the past,
+    and it never actually started, treat it as ghost/junk.
+    """
+    start_dt = parse_iso_utc(start_iso)
+    if not start_dt:
+        return False
+
+    # If it has actualStartTime, it's not ghost.
+    if lsd.get("actualStartTime"):
+        return False
+
+    cutoff = now_utc() - timedelta(minutes=GHOST_UPCOMING_GRACE_MINUTES)
+    return start_dt < cutoff
+
 
 # --------- Main ---------
 def main():
@@ -215,7 +272,7 @@ def main():
     events = []
     seen_video_ids = set()
 
-    # Build a big list of candidate vids from uploads for all channels
+    # Build candidate vids from uploads for all channels
     all_candidate_vids = []
     per_channel_candidate = {}
 
@@ -226,18 +283,17 @@ def main():
             continue
 
         uploads = m["uploads_playlist_id"]
-        vids = fetch_uploads_video_ids(uploads, max_results=20)
+        vids = fetch_uploads_video_ids(uploads, max_results=UPLOADS_SCAN_MAX)
         per_channel_candidate[cid] = vids
         all_candidate_vids.extend(vids)
 
-        # throttle lightly to be nice
+        # small throttle
         time.sleep(0.05)
 
     # Fetch details in batches
     video_details = fetch_videos_details(sorted(set(all_candidate_vids)))
 
-    # Filter to LIVE + upcoming soon
-    upcoming_horizon = now_utc() + timedelta(days=7)
+    upcoming_horizon = now_utc() + timedelta(days=UPCOMING_HORIZON_DAYS)
 
     for cid, vids in per_channel_candidate.items():
         m = meta.get(cid) or {}
@@ -264,19 +320,28 @@ def main():
             if not item:
                 continue
 
-            status, start_iso = classify_video(item)
+            status, start_iso, lsd = classify_video(item)
             if not status or not start_iso:
                 continue
 
-            # Upcoming filter window
-            if status == "upcoming":
+            # Ghost upcoming cleanup (scheduled in the past, never started)
+            if status == "upcoming" and is_ghost_upcoming(start_iso, lsd):
+                # Debug line so you can see it's working
                 try:
-                    start_dt = datetime.fromisoformat(start_iso.replace("Z", "+00:00"))
-                    if start_dt > upcoming_horizon:
-                        continue
+                    et = iso_to_et_fmt(start_iso)
                 except Exception:
-                    pass
+                    et = start_iso
+                title = ((item.get("snippet") or {}).get("title") or "").strip()
+                print(f"SKIP ghost-upcoming: {et} • {title} • https://www.youtube.com/watch?v={vid}")
+                continue
 
+            # Upcoming horizon filter
+            if status == "upcoming":
+                start_dt = parse_iso_utc(start_iso)
+                if start_dt and start_dt > upcoming_horizon:
+                    continue
+
+            # Avoid duplicates
             if vid in seen_video_ids:
                 continue
             seen_video_ids.add(vid)
@@ -285,13 +350,12 @@ def main():
             title = (snippet.get("title") or "").strip()
             thumb = pick_thumb(snippet) or f"https://i.ytimg.com/vi/{vid}/hqdefault.jpg"
 
-            # Mark we found live
             if status == "live":
                 found_live_for_channel = True
 
             events.append({
                 "start_et": iso_to_et_fmt(start_iso),
-                "end_et": "",  # can add later if you want actualEndTime
+                "end_et": "",
                 "title": title,
                 "league": "",
                 "platform": "YouTube",

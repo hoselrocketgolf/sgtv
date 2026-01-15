@@ -148,6 +148,60 @@ def fetch_channel_live_video_id(channel_id: str) -> str:
     except Exception:
         return ""
 
+def parse_subscribers_to_int(text: str) -> int:
+    """
+    Converts strings like '128K subscribers' / '1.2M subscribers' / '12,345 subscribers'
+    into an integer. Returns 0 if unknown.
+    """
+    if not text:
+        return 0
+    t = text.lower().replace("subscribers", "").replace("subscriber", "").strip()
+    t = t.replace(",", "").replace(" ", "")
+
+    m = re.search(r"([0-9]*\.?[0-9]+)([km]?)", t)
+    if not m:
+        return 0
+
+    num = float(m.group(1))
+    suf = m.group(2)
+
+    if suf == "k":
+        return int(num * 1000)
+    if suf == "m":
+        return int(num * 1000000)
+    return int(num)
+
+def fetch_channel_subscribers(channel_id: str) -> int:
+    """
+    Best-effort subscriber scrape (free, no API).
+    Tries multiple patterns because YouTube changes markup.
+    """
+    try:
+        html = http_get(f"https://www.youtube.com/channel/{channel_id}")
+    except Exception:
+        return 0
+
+    # Common patterns in page data
+    patterns = [
+        r'"subscriberCountText":\{"simpleText":"([^"]+)"\}',
+        r'"subscriberCountText":\{"runs":\[\{"text":"([^"]+)"\}\]\}',
+        r'"videoOwnerRenderer".*?"subscriberCountText".*?"simpleText":"([^"]+)"',
+        r'"metadataParts".*?"text":"([^"]*subscribers[^"]*)"',
+    ]
+
+    for pat in patterns:
+        m = re.search(pat, html, re.DOTALL)
+        if m:
+            return parse_subscribers_to_int(m.group(1))
+
+    # last-ditch: look for “123K subscribers” in raw html
+    m2 = re.search(r'([0-9][0-9\.,]*\s*[KM]?)\s+subscribers', html, re.IGNORECASE)
+    if m2:
+        return parse_subscribers_to_int(m2.group(0))
+
+    return 0
+
+
 
 def main():
     if not CHANNEL_IDS:

@@ -305,3 +305,47 @@ tbody tr:hover{
   text-align:center;
   font-weight:800;
 }
+
+/* ===== TV GUIDE THUMBNAILS ===== */
+.thumb{
+  width:120px;
+  height:68px;
+  object-fit:cover;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.04);
+  flex:0 0 auto;
+}
+
+.heroRow{
+  display:flex;
+  gap:12px;
+  align-items:flex-start;
+}
+.heroText .title{
+  font-weight:900;
+  font-size:15px;
+  line-height:1.2;
+  margin-bottom:6px;
+}
+
+/* schedule cards: make them feel more like guide rows */
+.eventTop{
+  display:flex;
+  gap:12px;
+  align-items:flex-start;
+}
+.eventTopText{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  min-width:0;
+}
+.eventTitle{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+}
+

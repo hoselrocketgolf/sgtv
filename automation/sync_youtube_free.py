@@ -305,42 +305,77 @@ def main():
     events = []
     seen = set()
 
-    for ch in channels:
-        cid = ch["channel_id"]
+   for ch in channels:
+    cid = ch["channel_id"]
 
-        scraped_subs = fetch_channel_subscribers(cid)
-        subs = scraped_subs if scraped_subs > 0 else int(ch.get("sheet_subscribers", 0) or 0)
+    # subscriber count: scrape first, fall back to sheet value
+    scraped_subs = fetch_channel_subscribers(cid)
+    subs = scraped_subs if scraped_subs > 0 else int(ch.get("sheet_subscribers", 0) or 0)
 
-        sheet_name = (ch.get("display_name") or "").strip()
-        sheet_handle = (ch.get("handle") or "").strip()
-        preferred_name = sheet_name or (f"@{sheet_handle}" if sheet_handle else "")
+    # display name preference: sheet display_name > @handle > YouTube name from feed
+    sheet_name = (ch.get("display_name") or "").strip()
+    sheet_handle = (ch.get("handle") or "").strip().lstrip("@")
+    preferred_name = sheet_name or (f"@{sheet_handle}" if sheet_handle else "")
 
-        # --- LIVE probe ---
-        live_vid = fetch_channel_live_video_id(cid, sheet_handle)
-if live_vid:
-    print("LIVE candidate:", cid, live_vid, preferred_name, "(handle:", sheet_handle, ")")
+    # 1) Catch currently-live (even if unscheduled)
+    live_vid = fetch_channel_live_video_id(cid, sheet_handle)
+    if live_vid:
+        print("LIVE candidate:", cid, live_vid, preferred_name, "(handle:", sheet_handle, ")")
 
+    if live_vid and live_vid not in seen:
+        time.sleep(0.35)
+        details = fetch_video_details(live_vid)
+        print("LIVE candidate details:", live_vid, details)
 
-        if live_vid and live_vid not in seen:
-            time.sleep(0.35)
-            details = fetch_video_details(live_vid)
-            print("LIVE candidate details:", live_vid, details)
+        if details and details.get("status") == "live":
+            seen.add(live_vid)
+            events.append({
+                "start_et": details.get("start_et", ""),
+                "end_et": details.get("end_et", ""),
+                "title": "LIVE (unscheduled)",
+                "league": "",
+                "platform": "YouTube",
+                "channel": preferred_name,
+                "watch_url": f"https://www.youtube.com/watch?v={live_vid}",
+                "source_id": live_vid,
+                "status": "live",
+                "thumbnail_url": f"https://i.ytimg.com/vi/{live_vid}/hqdefault.jpg",
+                "subscribers": subs,
+            })
 
-            if details and details["status"] == "live":
-                seen.add(live_vid)
-                events.append({
-                    "start_et": details["start_et"],
-                    "end_et": details["end_et"],
-                    "title": "LIVE (unscheduled)",
-                    "league": "",
-                    "platform": "YouTube",
-                    "channel": preferred_name,
-                    "watch_url": f"https://www.youtube.com/watch?v={live_vid}",
-                    "source_id": live_vid,
-                    "status": details["status"],
-                    "thumbnail_url": f"https://i.ytimg.com/vi/{live_vid}/hqdefault.jpg",
-                    "subscribers": subs,
-                })
+    # 2) Scheduled/live from RSS feed (also gives thumbnail + channel name)
+    feed = fetch_rss(cid)
+    for item in feed:
+        vid = item["video_id"]
+        if vid in seen:
+            continue
+
+        time.sleep(0.35)
+        details = fetch_video_details(vid)
+
+        if not details:
+            print("Skipped (no live/upcoming):", item.get("title", ""), item.get("watch_url", ""))
+            continue
+
+        seen.add(vid)
+
+        yt_name = (item.get("channel") or "").strip()
+        final_name = preferred_name or yt_name or ""
+
+        events.append({
+            "start_et": details.get("start_et", ""),
+            "end_et": details.get("end_et", ""),
+            "title": item.get("title", ""),
+            "league": "",
+            "platform": "YouTube",
+            "channel": final_name,
+            "watch_url": item.get("watch_url", ""),
+            "source_id": vid,
+            "status": details.get("status", ""),
+            "thumbnail_url": item.get("thumbnail_url", "") or f"https://i.ytimg.com/vi/{vid}/hqdefault.jpg",
+            "subscribers": subs,
+        })
+
 
         # --- FEED scan ---
         feed = fetch_rss(cid)

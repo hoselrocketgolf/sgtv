@@ -1,5 +1,18 @@
 [
   {
+    "start_et": "2026-01-06 13:52",
+    "end_et": "",
+    "title": "Mid-Day Surprise Stream! Twisted Stroke Play at Red Hawk",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Garbage Garage Golf",
+    "watch_url": "https://www.youtube.com/watch?v=Ctej0QGz_u0",
+    "source_id": "Ctej0QGz_u0",
+    "status": "upcoming",
+    "thumbnail_url": "https://i4.ytimg.com/vi/Ctej0QGz_u0/hqdefault.jpg",
+    "subscribers": 2460
+  },
+  {
     "start_et": "2026-01-15 18:00",
     "end_et": "",
     "title": "Thursday Night Thunder (TNT) 1/15/26",
@@ -10,6 +23,19 @@
     "source_id": "cxo6lgwlKzs",
     "status": "upcoming",
     "thumbnail_url": "https://i4.ytimg.com/vi/cxo6lgwlKzs/hqdefault.jpg",
+    "subscribers": 2460
+  },
+  {
+    "start_et": "2026-01-15 20:45",
+    "end_et": "",
+    "title": "Are we the team to set the course record at Meadow Brook?!",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Garbage Garage Golf",
+    "watch_url": "https://www.youtube.com/watch?v=IdPRZQimZUw",
+    "source_id": "IdPRZQimZUw",
+    "status": "upcoming",
+    "thumbnail_url": "https://i2.ytimg.com/vi/IdPRZQimZUw/hqdefault.jpg",
     "subscribers": 2460
   }
 ]

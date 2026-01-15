@@ -178,19 +178,48 @@ def fetch_video_details(video_id: str):
 
 def fetch_channel_live_video_id(channel_id: str) -> str:
     """
-    Tries to discover a channel's currently-live video (even if it wasn't scheduled),
-    by hitting the /live endpoint and reading the final redirected URL.
-    Returns video_id or "".
+    Best-effort: find currently-live video ID for a channel.
+    1) Try /live redirect URL
+    2) If no redirect, fetch /live HTML and extract videoId when isLiveNow is true
+    3) Fallback: find first /watch?v= in the /live page
     """
+    url = f"https://www.youtube.com/channel/{channel_id}/live"
+
+    # 1) Try redirect URL
     try:
-        url = f"https://www.youtube.com/channel/{channel_id}/live"
         req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
         with urllib.request.urlopen(req, timeout=30) as resp:
-            final_url = resp.geturl()  # after redirects
+            final_url = resp.geturl()
         m = re.search(r"[?&]v=([A-Za-z0-9_-]{6,})", final_url)
-        return m.group(1) if m else ""
+        if m:
+            return m.group(1)
     except Exception:
-        return ""
+        pass
+
+    # 2) Parse HTML for an actual live videoId
+    try:
+        html = http_get(url)
+        if '"isLiveNow":true' in html:
+            # Look for a videoId near live markers
+            m2 = re.search(r'"videoId":"([A-Za-z0-9_-]{6,})".{0,500}"isLiveNow":true', html, re.DOTALL)
+            if m2:
+                return m2.group(1)
+
+            # Another common placement
+            m3 = re.search(r'"isLiveNow":true.{0,800}"videoId":"([A-Za-z0-9_-]{6,})"', html, re.DOTALL)
+            if m3:
+                return m3.group(1)
+
+        # 3) last resort: first watch link on the live page
+        m4 = re.search(r'href="/watch\?v=([A-Za-z0-9_-]{6,})', html)
+        if m4:
+            return m4.group(1)
+
+    except Exception:
+        pass
+
+    return ""
+
 
 def parse_subscribers_to_int(text: str) -> int:
     """

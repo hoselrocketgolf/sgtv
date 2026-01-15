@@ -1,4 +1,4 @@
-name: Sync YouTube (free) -> schedule.json
+name: Sync YouTube -> schedule.json
 
 on:
   schedule:
@@ -22,7 +22,6 @@ jobs:
       - name: Run sync
         env:
           YT_API_KEY: ${{ secrets.YT_API_KEY }}
-          CHANNEL_SHEET_CSV: ${{ secrets.CHANNEL_SHEET_CSV }}
           OUT_PATH: schedule.json
         run: |
           python automation/sync_youtube_free.py

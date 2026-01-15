@@ -1,16 +1,5 @@
 [
   {
-    "start_et": "2026-01-14 19:30",
-    "end_et": "",
-    "title": "FREE Golf Mini Games for Any Launch Monitor (Shanktuary Live)",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Hosel Rocket Golf",
-    "watch_url": "https://www.youtube.com/watch?v=_0PMqmEw1lI",
-    "source_id": "_0PMqmEw1lI",
-    "status": "upcoming"
-  },
-  {
     "start_et": "2026-01-15 18:00",
     "end_et": "",
     "title": "Thursday Night Thunder (TNT) 1/15/26",
@@ -19,6 +8,7 @@
     "channel": "Hosel Rocket Golf",
     "watch_url": "https://www.youtube.com/watch?v=cxo6lgwlKzs",
     "source_id": "cxo6lgwlKzs",
-    "status": "upcoming"
+    "status": "upcoming",
+    "thumbnail_url": "https://i4.ytimg.com/vi/cxo6lgwlKzs/hqdefault.jpg"
   }
 ]

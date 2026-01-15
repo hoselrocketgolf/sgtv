@@ -1,17 +1,8 @@
-// SimGolf TV Guide - TV Guide style timeline + thumbnails
-// Reads schedule.json produced by your GitHub Action / script.
-//
-// Expected fields per event:
-//  - start_et "YYYY-MM-DD HH:MM" (Eastern)
-//  - end_et "" or same format
-//  - title, platform, channel, league, watch_url
-//  - status: "live" | "upcoming"
-//  - thumbnail_url (optional)
-//  - subscribers (number, optional)
-
+// SimGolf TV Guide - resilient (won't crash if some DOM elements are missing)
 const SCHEDULE_URL = "schedule.json";
 
 const $ = (id) => document.getElementById(id);
+const on = (el, evt, fn) => { if (el) el.addEventListener(evt, fn); };
 
 const leagueFilter = $("leagueFilter");
 const platformFilter = $("platformFilter");
@@ -22,9 +13,8 @@ const nowOn = $("nowOn");
 const upNext = $("upNext");
 const lastUpdated = $("lastUpdated");
 
-// Right tile body (Guide tile)
+// Optional guide elements (may not exist depending on your HTML)
 const infoTileBody = document.querySelector("#infoTile .tileBody");
-
 const timeRow = $("timeRow");
 const rowsEl = $("rows");
 const emptyState = $("emptyState");
@@ -34,10 +24,8 @@ const nextWindow = $("nextWindow");
 const jumpNowBtn = $("jumpNow");
 const windowLabel = $("windowLabel");
 
-// --- Time helpers (treat input as Eastern local time) ---
+// --- Time helpers ---
 function parseET(str) {
-  // "YYYY-MM-DD HH:MM"
-  // Treated as "ET-like local" for consistent ordering + display
   if (!str) return null;
   const [d, t] = str.split(" ");
   if (!d || !t) return null;
@@ -45,7 +33,12 @@ function parseET(str) {
   const [h, m] = t.split(":").map(Number);
   return new Date(Y, (M - 1), D, h, m, 0, 0);
 }
-
+function sameDay(a, b) {
+  return a && b &&
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
+}
 function fmtTime(dt) {
   if (!dt) return "";
   const h = dt.getHours();
@@ -54,18 +47,13 @@ function fmtTime(dt) {
   const hr = ((h + 11) % 12) + 1;
   return `${hr}:${m} ${ampm} ET`;
 }
-
 function fmtDay(dt) {
   if (!dt) return "";
   const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
   const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   return `${days[dt.getDay()]}, ${months[dt.getMonth()]} ${dt.getDate()}`;
 }
-
-function clamp(n, a, b) {
-  return Math.max(a, Math.min(b, n));
-}
-
+function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
 function escapeHtml(s) {
   return String(s ?? "")
     .replaceAll("&", "&amp;")
@@ -78,25 +66,20 @@ function escapeHtml(s) {
 // --- State ---
 let allEvents = [];
 let filteredEvents = [];
-let windowStart = null; // Date
+let windowStart = null;
 
-// Window settings
-let windowMins = 240;   // 4 hours window
-let tickMins = 30;      // 30 min ticks
-
-// IMPORTANT: keep in sync with CSS tick width
-let pxPerTick = 140;    // matches --tickW in CSS
+// Guide window settings
+let windowMins = 240;
+let tickMins = 30;
+let pxPerTick = 140;
 let pxPerMin = pxPerTick / tickMins;
 
-// ---- helpers ----
 function eventEnd(e) {
   const end = parseET(e.end_et);
   if (end) return end;
-
   const start = parseET(e.start_et);
   if (!start) return null;
-
-  // Default duration 2 hours when no end time
+  // default 2 hours
   return new Date(start.getTime() + 120 * 60000);
 }
 
@@ -117,9 +100,10 @@ function sortEvents(events) {
 }
 
 function rebuildFilters(events) {
+  if (!leagueFilter || !platformFilter) return;
+
   const leagues = new Set();
   const platforms = new Set();
-
   events.forEach(e => {
     if (e.league) leagues.add(e.league);
     if (e.platform) platforms.add(e.platform);
@@ -141,9 +125,9 @@ function rebuildFilters(events) {
 }
 
 function applyFilters() {
-  const l = leagueFilter.value;
-  const p = platformFilter.value;
-  const q = searchInput.value.trim().toLowerCase();
+  const l = leagueFilter ? leagueFilter.value : "all";
+  const p = platformFilter ? platformFilter.value : "all";
+  const q = searchInput ? searchInput.value.trim().toLowerCase() : "";
 
   filteredEvents = allEvents.filter(e => {
     if (l !== "all" && (e.league || "") !== l) return false;
@@ -158,15 +142,15 @@ function applyFilters() {
   filteredEvents = sortEvents(filteredEvents);
 
   renderNowNext();
-  renderRightTileTodayList();
-  renderGuide();
+  renderRightTileTodayList();  // safe if tile missing
+  renderGuide();               // safe if guide missing
 }
 
-// --- UI: Now + Next cards ---
-function renderCard(e, showLiveBadge = false) {
+// --- Now/Next cards ---
+function renderCard(e, forceLiveBadge = false) {
   const start = parseET(e.start_et);
   const media = e.thumbnail_url ? `style="background-image:url('${encodeURI(e.thumbnail_url)}')"` : "";
-  const badge = showLiveBadge || e.status === "live" ? `<span class="pill live">LIVE</span>` : "";
+  const badge = (forceLiveBadge || e.status === "live") ? `<span class="pill live">LIVE</span>` : "";
   const subs = e.subscribers ? `${Number(e.subscribers).toLocaleString()} subs` : "";
 
   return `
@@ -192,6 +176,8 @@ function renderCard(e, showLiveBadge = false) {
 }
 
 function renderNowNext() {
+  if (!nowOn || !upNext) return;
+
   const live = filteredEvents.find(e => e.status === "live");
   const upcoming = filteredEvents.find(e => e.status !== "live");
 
@@ -204,7 +190,7 @@ function renderNowNext() {
     : `<div class="muted">No upcoming events found.</div>`;
 }
 
-// --- Right tile: Today's lineup chips (ONLY channel name in bold white) ---
+// --- Right tile chips (channel name bold only) ---
 function renderRightTileTodayList() {
   if (!infoTileBody) return;
 
@@ -217,10 +203,7 @@ function renderRightTileTodayList() {
     .sort((a, b) => (parseET(a.start_et)?.getTime() ?? 0) - (parseET(b.start_et)?.getTime() ?? 0));
 
   if (!todays.length) {
-    infoTileBody.innerHTML = `
-      <div class="muted">No events scheduled for today.</div>
-      <div class="muted" style="margin-top:10px;">Try clearing filters or check back later.</div>
-    `;
+    infoTileBody.innerHTML = `<div class="muted">No events scheduled for today.</div>`;
     return;
   }
 
@@ -228,12 +211,12 @@ function renderRightTileTodayList() {
     const s = parseET(e.start_et);
     const t = fmtTime(s).replace(" ET", "");
     const isLive = e.status === "live";
-    const ch = e.channel || "";
     const badge = isLive ? `<span class="chipBadge">LIVE</span>` : "";
+
     return `
       <a class="chip" href="${escapeHtml(e.watch_url)}" target="_blank" rel="noreferrer">
         <span class="chipTime">${escapeHtml(t)}</span>
-        <span class="chipChanStrong">${escapeHtml(ch)}</span>
+        <span class="chipChanStrong">${escapeHtml(e.channel || "")}</span>
         ${badge}
       </a>
     `;
@@ -250,63 +233,20 @@ function renderRightTileTodayList() {
     </div>
 
     <style>
-      .chipList{
-        display:flex;
-        flex-direction:column;
-        gap:8px;
-        max-height: 360px;
-        overflow:auto;
-        padding-right: 4px;
-      }
-      .chip{
-        display:flex;
-        align-items:center;
-        gap:10px;
-        padding:10px 12px;
-        border-radius: 999px;
-        border:1px solid rgba(255,255,255,.12);
-        background: rgba(0,0,0,.20);
-        transition: filter .12s ease, transform .12s ease;
-      }
-      .chip:hover{
-        filter: brightness(1.07);
-        transform: translateY(-1px);
-      }
-      .chipTime{
-        font-weight:900;
-        font-size:12px;
-        color: rgba(255,255,255,.90);
-        min-width: 86px;
-        white-space: nowrap;
-      }
-      /* Bold white channel name */
-      .chipChanStrong{
-        font-weight:900;
-        font-size:13px;
-        color: rgba(255,255,255,.94);
-        overflow:hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        flex:1;
-      }
-      .chipBadge{
-        margin-left:auto;
-        font-size:11px;
-        padding:4px 9px;
-        border-radius: 999px;
-        color: rgba(46,229,157,.95);
-        background: rgba(46,229,157,.10);
-        border:1px solid rgba(46,229,157,.30);
-        white-space: nowrap;
-      }
-      @media (max-width: 980px){
-        .chipTime{min-width: 78px;}
-      }
+      .chipList{display:flex; flex-direction:column; gap:8px; max-height:360px; overflow:auto; padding-right:4px;}
+      .chip{display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:999px;
+        border:1px solid rgba(255,255,255,.12); background:rgba(0,0,0,.20); transition:filter .12s ease, transform .12s ease;}
+      .chip:hover{filter:brightness(1.07); transform:translateY(-1px);}
+      .chipTime{font-weight:900; font-size:12px; color:rgba(255,255,255,.90); min-width:86px; white-space:nowrap;}
+      .chipChanStrong{font-weight:900; font-size:13px; color:rgba(255,255,255,.94); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;}
+      .chipBadge{margin-left:auto; font-size:11px; padding:4px 9px; border-radius:999px; color:rgba(46,229,157,.95);
+        background:rgba(46,229,157,.10); border:1px solid rgba(46,229,157,.30); white-space:nowrap;}
+      @media (max-width: 980px){.chipTime{min-width:78px;}}
     </style>
   `;
 }
 
-// --- TV Guide rendering ---
+// --- Guide rendering (only if your HTML has the guide elements) ---
 function roundToTick(dt) {
   const mins = dt.getMinutes();
   const rounded = Math.floor(mins / tickMins) * tickMins;
@@ -315,27 +255,14 @@ function roundToTick(dt) {
 
 function ensureWindowStart() {
   if (windowStart) return;
-
   const live = filteredEvents.find(e => e.status === "live");
   const next = filteredEvents.find(e => e.status !== "live");
-
   let base = parseET(live?.start_et) || parseET(next?.start_et) || new Date();
   windowStart = roundToTick(base);
 }
 
-function jumpToNow() {
-  windowStart = roundToTick(new Date());
-  renderGuide();
-  if (rowsEl) rowsEl.scrollTop = 0;
-}
-
-function shiftWindow(dir) {
-  ensureWindowStart();
-  windowStart = new Date(windowStart.getTime() + dir * windowMins * 60000);
-  renderGuide();
-}
-
 function renderTimeRow() {
+  if (!timeRow || !windowLabel) return;
   ensureWindowStart();
 
   const ticks = Math.ceil(windowMins / tickMins) + 1;
@@ -345,7 +272,6 @@ function renderTimeRow() {
     const dt = new Date(windowStart.getTime() + i * tickMins * 60000);
     parts.push(`<div class="timeTick" style="min-width:${pxPerTick}px">${fmtTime(dt).replace(" ET","")}</div>`);
   }
-
   timeRow.innerHTML = parts.join("");
 
   const end = new Date(windowStart.getTime() + windowMins * 60000);
@@ -376,6 +302,9 @@ function groupByChannel(events) {
 }
 
 function renderGuide() {
+  // If your HTML doesn't have guide elements, skip.
+  if (!rowsEl || !emptyState) return;
+
   ensureWindowStart();
   renderTimeRow();
 
@@ -406,11 +335,8 @@ function renderGuide() {
       const ee = eventEnd(e);
       if (!s || !ee) return "";
 
-      const sMs = s.getTime();
-      const eMs = ee.getTime();
-
-      const leftMin = (sMs - startMs) / 60000;
-      const rightMin = (eMs - startMs) / 60000;
+      const leftMin = (s.getTime() - startMs) / 60000;
+      const rightMin = (ee.getTime() - startMs) / 60000;
 
       const left = clamp(leftMin * pxPerMin, -9999, 9999);
       const width = clamp((rightMin - leftMin) * pxPerMin, 120, 9999);
@@ -454,12 +380,24 @@ function renderGuide() {
   }).join("");
 }
 
+function shiftWindow(dir) {
+  ensureWindowStart();
+  windowStart = new Date(windowStart.getTime() + dir * windowMins * 60000);
+  renderGuide();
+  if (rowsEl) rowsEl.scrollTop = 0;
+}
+function jumpToNow() {
+  windowStart = roundToTick(new Date());
+  renderGuide();
+  if (rowsEl) rowsEl.scrollTop = 0;
+}
+
 // --- Fetch schedule.json ---
 async function loadSchedule() {
-  nowOn.textContent = "Loading…";
-  upNext.textContent = "Loading…";
-  rowsEl.innerHTML = "";
-  emptyState.style.display = "none";
+  if (nowOn) nowOn.textContent = "Loading…";
+  if (upNext) upNext.textContent = "Loading…";
+  if (rowsEl) rowsEl.innerHTML = "";
+  if (emptyState) emptyState.style.display = "none";
 
   const bust = `${SCHEDULE_URL}?v=${Date.now()}`;
   const res = await fetch(bust, { cache: "no-store" });
@@ -487,29 +425,29 @@ async function loadSchedule() {
   windowStart = null;
 
   const now = new Date();
-  lastUpdated.textContent = `Last updated: ${fmtDay(now)} ${fmtTime(now)}`;
+  if (lastUpdated) lastUpdated.textContent = `Last updated: ${fmtDay(now)} ${fmtTime(now)}`;
 
   applyFilters();
 }
 
-// --- Wire up ---
-leagueFilter.addEventListener("change", applyFilters);
-platformFilter.addEventListener("change", applyFilters);
-searchInput.addEventListener("input", applyFilters);
+// --- Wire up (null-safe) ---
+on(leagueFilter, "change", applyFilters);
+on(platformFilter, "change", applyFilters);
+on(searchInput, "input", applyFilters);
 
-refreshBtn.addEventListener("click", () => loadSchedule().catch(err => {
+on(refreshBtn, "click", () => loadSchedule().catch(err => {
   console.error(err);
-  nowOn.innerHTML = `<div class="muted">Error loading schedule.</div>`;
-  upNext.innerHTML = `<div class="muted">${escapeHtml(err.message)}</div>`;
+  if (nowOn) nowOn.innerHTML = `<div class="muted">Error loading schedule.</div>`;
+  if (upNext) upNext.innerHTML = `<div class="muted">${escapeHtml(err.message)}</div>`;
 }));
 
-prevWindow.addEventListener("click", () => shiftWindow(-1));
-nextWindow.addEventListener("click", () => shiftWindow(1));
-jumpNowBtn.addEventListener("click", jumpToNow);
+on(prevWindow, "click", () => shiftWindow(-1));
+on(nextWindow, "click", () => shiftWindow(1));
+on(jumpNowBtn, "click", jumpToNow);
 
 // initial
 loadSchedule().catch(err => {
   console.error(err);
-  nowOn.innerHTML = `<div class="muted">Error loading schedule.</div>`;
-  upNext.innerHTML = `<div class="muted">${escapeHtml(err.message)}</div>`;
+  if (nowOn) nowOn.innerHTML = `<div class="muted">Error loading schedule.</div>`;
+  if (upNext) upNext.innerHTML = `<div class="muted">${escapeHtml(err.message)}</div>`;
 });

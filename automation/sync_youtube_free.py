@@ -3,6 +3,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 import urllib.request
 import xml.etree.ElementTree as ET
+import csv, io
 
 ET_TZ = ZoneInfo("America/New_York")
 
@@ -10,362 +11,160 @@ CHANNEL_SHEET_CSV = os.environ.get(
     "CHANNEL_SHEET_CSV",
     "https://docs.google.com/spreadsheets/d/e/2PACX-1vR5DMZYPLgP64WZYcE1H0PMOQyjD2Rf67NUM1kRkC3dCPVwZJ0kNcj6dUbugO-LOaSNSx798fPA27tK/pub?gid=0&single=true&output=csv"
 )
-OUT_PATH = os.environ.get("OUT_PATH", "schedule.json")
+OUT_PATH = "schedule.json"
 
 USER_AGENT = "Mozilla/5.0 (compatible; sgtv-bot/1.0)"
 
+# ---------------- helpers ----------------
 
 def http_get(url: str) -> str:
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        return resp.read().decode("utf-8", errors="ignore")
+    with urllib.request.urlopen(req, timeout=30) as r:
+        return r.read().decode("utf-8", errors="ignore")
 
+def parse_csv(text: str):
+    return list(csv.DictReader(io.StringIO(text)))
 
-def parse_simple_csv(text: str):
-    import csv, io
-    f = io.StringIO(text)
-    return list(csv.DictReader(f))
+def iso_to_et(iso: str) -> str:
+    return datetime.fromisoformat(iso.replace("Z","+00:00")).astimezone(ET_TZ).strftime("%Y-%m-%d %H:%M")
 
-
-def load_channels_from_sheet():
-    """
-    Sheet headers expected:
-      handle, display_name, channel_id, subscribers
-    """
-    csv_text = http_get(CHANNEL_SHEET_CSV)
-    rows = parse_simple_csv(csv_text)
-
-    channels = []
-    for r in rows:
-        cid = (r.get("channel_id") or "").strip()
-        if not cid:
-            continue
-
-        handle = (r.get("handle") or "").strip().lstrip("@")
-        display = (r.get("display_name") or "").strip()
-
-        sub_raw = (r.get("subscribers") or "").strip().replace(",", "")
-        try:
-            sheet_subs = int(float(sub_raw)) if sub_raw else 0
-        except Exception:
-            sheet_subs = 0
-
-        channels.append({
-            "channel_id": cid,
-            "handle": handle,
-            "display_name": display,
-            "sheet_subscribers": sheet_subs
-        })
-
-    return channels
-
-
-def iso_to_et_fmt(iso: str) -> str:
-    dt = datetime.fromisoformat(iso.replace("Z", "+00:00")).astimezone(ET_TZ)
-    return dt.strftime("%Y-%m-%d %H:%M")
-
+# ---------------- youtube ----------------
 
 def fetch_rss(channel_id: str):
-    url = f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}"
-    xml_text = http_get(url)
-    root = ET.fromstring(xml_text)
+    xml = http_get(f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}")
+    root = ET.fromstring(xml)
 
     ns = {
-        "atom": "http://www.w3.org/2005/Atom",
-        "yt": "http://www.youtube.com/xml/schemas/2015",
-        "media": "http://search.yahoo.com/mrss/",
+        "atom":"http://www.w3.org/2005/Atom",
+        "yt":"http://www.youtube.com/xml/schemas/2015",
+        "media":"http://search.yahoo.com/mrss/"
     }
 
-    entries = []
-    for entry in root.findall("atom:entry", ns):
-        vid = entry.findtext("yt:videoId", default="", namespaces=ns)
-        title = entry.findtext("atom:title", default="", namespaces=ns)
+    out = []
+    for e in root.findall("atom:entry", ns):
+        vid = e.findtext("yt:videoId", "", ns)
+        if not vid:
+            continue
 
-        link_el = entry.find("atom:link", ns)
-        link = link_el.attrib.get("href", "") if link_el is not None else ""
+        out.append({
+            "video_id": vid,
+            "title": e.findtext("atom:title","",ns),
+            "url": e.find("atom:link",ns).attrib.get("href",""),
+            "thumb": f"https://i.ytimg.com/vi/{vid}/hqdefault.jpg"
+        })
+    return out[:40]
 
-        published = entry.findtext("atom:published", default="", namespaces=ns)
-        author_name = entry.findtext("atom:author/atom:name", default="", namespaces=ns)
+def fetch_live_video(channel_id: str):
+    try:
+        req = urllib.request.Request(
+            f"https://www.youtube.com/channel/{channel_id}/live",
+            headers={"User-Agent": USER_AGENT}
+        )
+        with urllib.request.urlopen(req, timeout=30) as r:
+            final = r.geturl()
+        m = re.search(r"v=([A-Za-z0-9_-]{6,})", final)
+        return m.group(1) if m else ""
+    except:
+        return ""
 
-        thumb = ""
-        thumb_el = entry.find("media:group/media:thumbnail", ns)
-        if thumb_el is not None:
-            thumb = thumb_el.attrib.get("url", "") or ""
-
-        if vid and link:
-            entries.append({
-                "video_id": vid,
-                "title": title,
-                "watch_url": link,
-                "published": published,
-                "channel": author_name,
-                "thumbnail_url": thumb
-            })
-
-    entries.sort(key=lambda x: x.get("published", ""), reverse=True)
-    return entries[:60]
-
-
-def extract_player_response(html: str):
-    patterns = [
-        r"ytInitialPlayerResponse\s*=\s*(\{.*?\})\s*;",
-        r"var\s+ytInitialPlayerResponse\s*=\s*(\{.*?\})\s*;",
-    ]
-    for pat in patterns:
-        m = re.search(pat, html, re.DOTALL)
-        if m:
-            try:
-                return json.loads(m.group(1))
-            except Exception:
-                return None
-    return None
-
-
-def get_live_status(player):
-    vd = (player or {}).get("videoDetails", {}) or {}
-    micro = (((player or {}).get("microformat", {}) or {}).get("playerMicroformatRenderer", {}) or {})
-    live_details = (micro.get("liveBroadcastDetails", {}) or {})
-
-    is_live_now = live_details.get("isLiveNow")
-    start_ts = live_details.get("startTimestamp")
-    end_ts = live_details.get("endTimestamp")
-
-    is_live = vd.get("isLive")
-    is_upcoming = vd.get("isUpcoming")
-    is_live_content = vd.get("isLiveContent")
-
-    if is_live_now is True or is_live is True:
-        status = "live"
-    elif is_upcoming is True or (is_live_content is True and start_ts and is_live_now is False):
-        status = "upcoming"
-    else:
-        status = None
-
-    return status, start_ts, end_ts
-
-
-def fetch_video_details(video_id: str):
+def video_status(video_id: str):
     html = http_get(f"https://www.youtube.com/watch?v={video_id}")
-
-    player = extract_player_response(html)
-    if player:
-        status, start_ts, end_ts = get_live_status(player)
-        if status in ("live", "upcoming"):
-            if status == "live" and not start_ts:
-                now_et = datetime.now(ET_TZ).strftime("%Y-%m-%d %H:%M")
-                return {"status": "live", "start_et": now_et, "end_et": ""}
-            if start_ts:
-                return {
-                    "status": status,
-                    "start_et": iso_to_et_fmt(start_ts),
-                    "end_et": iso_to_et_fmt(end_ts) if end_ts else ""
-                }
 
     if '"isLiveNow":true' in html:
         m = re.search(r'"startTimestamp":"([^"]+)"', html)
-        if m:
-            return {"status": "live", "start_et": iso_to_et_fmt(m.group(1)), "end_et": ""}
-        now_et = datetime.now(ET_TZ).strftime("%Y-%m-%d %H:%M")
-        return {"status": "live", "start_et": now_et, "end_et": ""}
+        return {
+            "status":"live",
+            "start": iso_to_et(m.group(1)) if m else datetime.now(ET_TZ).strftime("%Y-%m-%d %H:%M")
+        }
 
-    if ('"isUpcoming":true' in html) or ('"upcomingEventData"' in html):
+    if '"isUpcoming":true' in html:
         m = re.search(r'"startTimestamp":"([^"]+)"', html)
         if m:
-            return {"status": "upcoming", "start_et": iso_to_et_fmt(m.group(1)), "end_et": ""}
+            return {"status":"upcoming","start":iso_to_et(m.group(1))}
 
     return None
 
-
-def fetch_channel_live_video_id(channel_id: str, handle: str = "") -> str:
-    """
-    Robust free live detection:
-      - /channel/<id>/live (redirect)
-      - /channel/<id>/streams (HTML isLiveNow:true)
-      - /@<handle>/live (redirect)
-      - /@<handle>/streams (HTML isLiveNow:true)
-    """
-    def try_redirect(url: str) -> str:
-        try:
-            req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-            with urllib.request.urlopen(req, timeout=30) as resp:
-                final_url = resp.geturl()
-            m = re.search(r"[?&]v=([A-Za-z0-9_-]{6,})", final_url)
-            return m.group(1) if m else ""
-        except Exception:
-            return ""
-
-    def try_html_for_live(url: str) -> str:
-        try:
-            html = http_get(url)
-            m1 = re.search(r'"videoId":"([A-Za-z0-9_-]{6,})".{0,800}"isLiveNow":true', html, re.DOTALL)
-            if m1:
-                return m1.group(1)
-            m2 = re.search(r'"isLiveNow":true.{0,800}"videoId":"([A-Za-z0-9_-]{6,})"', html, re.DOTALL)
-            if m2:
-                return m2.group(1)
-            return ""
-        except Exception:
-            return ""
-
-    h = (handle or "").strip().lstrip("@")
-
-    urls_live = [f"https://www.youtube.com/channel/{channel_id}/live"]
-    urls_streams = [f"https://www.youtube.com/channel/{channel_id}/streams"]
-
-    if h:
-        urls_live.append(f"https://www.youtube.com/@{h}/live")
-        urls_streams.append(f"https://www.youtube.com/@{h}/streams")
-
-    for u in urls_live:
-        vid = try_redirect(u)
-        if vid:
-            return vid
-
-    for u in urls_streams:
-        vid = try_html_for_live(u)
-        if vid:
-            return vid
-
-    return ""
-
-
-def parse_subscribers_to_int(text: str) -> int:
-    if not text:
-        return 0
-    t = text.lower().replace("subscribers", "").replace("subscriber", "").strip()
-    t = t.replace(",", "").replace(" ", "")
-
-    m = re.search(r"([0-9]*\.?[0-9]+)([km]?)", t)
-    if not m:
-        return 0
-
-    num = float(m.group(1))
-    suf = m.group(2)
-
-    if suf == "k":
-        return int(num * 1000)
-    if suf == "m":
-        return int(num * 1000000)
-    return int(num)
-
-
-def fetch_channel_subscribers(channel_id: str) -> int:
+def fetch_subs(channel_id: str) -> int:
     try:
         html = http_get(f"https://www.youtube.com/channel/{channel_id}")
-    except Exception:
+        m = re.search(r'([0-9\.]+)([KM])\s+subscribers', html)
+        if not m:
+            return 0
+        n = float(m.group(1))
+        return int(n*1000) if m.group(2)=="K" else int(n*1_000_000)
+    except:
         return 0
 
-    patterns = [
-        r'"subscriberCountText":\{"simpleText":"([^"]+)"\}',
-        r'"subscriberCountText":\{"runs":\[\{"text":"([^"]+)"\}\]\}',
-        r'"videoOwnerRenderer".*?"subscriberCountText".*?"simpleText":"([^"]+)"',
-        r'"metadataParts".*?"text":"([^"]*subscribers[^"]*)"',
-    ]
-
-    for pat in patterns:
-        m = re.search(pat, html, re.DOTALL)
-        if m:
-            return parse_subscribers_to_int(m.group(1))
-
-    m2 = re.search(r'([0-9][0-9\.,]*\s*[KM]?)\s+subscribers', html, re.IGNORECASE)
-    if m2:
-        return parse_subscribers_to_int(m2.group(0))
-
-    return 0
-
+# ---------------- main ----------------
 
 def main():
-    channels = load_channels_from_sheet()
-    if not channels:
-        raise SystemExit("No channels found in channel sheet CSV (check headers + publish link).")
-
-    print("Loaded channels from sheet:", len(channels))
-    print("Channel IDs:", [c["channel_id"] for c in channels])
-
+    channels = parse_csv(http_get(CHANNEL_SHEET_CSV))
     events = []
     seen = set()
 
+    print("Loaded channels:", len(channels))
+
     for ch in channels:
-        cid = ch["channel_id"]
+        cid = ch.get("channel_id","").strip()
+        if not cid:
+            continue
 
-        scraped_subs = fetch_channel_subscribers(cid)
-        subs = scraped_subs if scraped_subs > 0 else int(ch.get("sheet_subscribers", 0) or 0)
+        name = ch.get("display_name") or ch.get("handle") or ""
+        subs = fetch_subs(cid)
+        time.sleep(0.4)
 
-        sheet_name = (ch.get("display_name") or "").strip()
-        sheet_handle = (ch.get("handle") or "").strip().lstrip("@")
-        preferred_name = sheet_name or (f"@{sheet_handle}" if sheet_handle else "")
-
-        # 1) Unscheduled live
-        live_vid = fetch_channel_live_video_id(cid, sheet_handle)
-        if live_vid:
-            print("LIVE candidate:", cid, live_vid, preferred_name, "(handle:", sheet_handle, ")")
-
+        # ---- live first ----
+        live_vid = fetch_live_video(cid)
         if live_vid and live_vid not in seen:
-            time.sleep(0.35)
-            details = fetch_video_details(live_vid)
-            print("LIVE candidate details:", live_vid, details)
-
-            if details and details.get("status") == "live":
+            s = video_status(live_vid)
+            if s and s["status"]=="live":
                 seen.add(live_vid)
                 events.append({
-                    "start_et": details.get("start_et", ""),
-                    "end_et": details.get("end_et", ""),
-                    "title": "LIVE (unscheduled)",
-                    "league": "",
-                    "platform": "YouTube",
-                    "channel": preferred_name,
+                    "start_et": s["start"],
+                    "end_et": "",
+                    "title": "LIVE",
+                    "league":"",
+                    "platform":"YouTube",
+                    "channel": name,
                     "watch_url": f"https://www.youtube.com/watch?v={live_vid}",
                     "source_id": live_vid,
-                    "status": "live",
+                    "status":"live",
                     "thumbnail_url": f"https://i.ytimg.com/vi/{live_vid}/hqdefault.jpg",
-                    "subscribers": subs,
+                    "subscribers": subs
                 })
 
-        # 2) RSS scheduled/upcoming/live
-        feed = fetch_rss(cid)
-        for item in feed:
+        # ---- rss scan ----
+        for item in fetch_rss(cid):
             vid = item["video_id"]
             if vid in seen:
                 continue
 
-            time.sleep(0.35)
-            details = fetch_video_details(vid)
-
-            if not details:
-                print("Skipped (no live/upcoming):", item.get("title", ""), item.get("watch_url", ""))
+            time.sleep(0.4)
+            s = video_status(vid)
+            if not s:
                 continue
 
             seen.add(vid)
-
-            yt_name = (item.get("channel") or "").strip()
-            final_name = preferred_name or yt_name or ""
-
             events.append({
-                "start_et": details.get("start_et", ""),
-                "end_et": details.get("end_et", ""),
-                "title": item.get("title", ""),
-                "league": "",
-                "platform": "YouTube",
-                "channel": final_name,
-                "watch_url": item.get("watch_url", ""),
+                "start_et": s["start"],
+                "end_et":"",
+                "title": item["title"],
+                "league":"",
+                "platform":"YouTube",
+                "channel": name,
+                "watch_url": item["url"],
                 "source_id": vid,
-                "status": details.get("status", ""),
-                "thumbnail_url": item.get("thumbnail_url", "") or f"https://i.ytimg.com/vi/{vid}/hqdefault.jpg",
-                "subscribers": subs,
+                "status": s["status"],
+                "thumbnail_url": item["thumb"],
+                "subscribers": subs
             })
 
-    # Ensure thumbnails for any missing (safe default)
-    for e in events:
-        if not e.get("thumbnail_url") and e.get("source_id"):
-            e["thumbnail_url"] = f"https://i.ytimg.com/vi/{e['source_id']}/hqdefault.jpg"
+    events.sort(key=lambda x: (x["status"]!="live", -x["subscribers"], x["start_et"]))
 
-    events.sort(key=lambda x: x["start_et"])
+    with open(OUT_PATH,"w",encoding="utf-8") as f:
+        json.dump(events,f,indent=2)
 
-    with open(OUT_PATH, "w", encoding="utf-8") as f:
-        json.dump(events, f, indent=2)
-
-    print(f"Wrote {len(events)} events to {OUT_PATH}")
-
+    print("Wrote",len(events),"events")
 
 if __name__ == "__main__":
     main()

@@ -1,56 +1,58 @@
-import os
-import json
-import time
-import urllib.parse
-import urllib.request
-from datetime import datetime
+import os, csv, io, json, time
+from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
-
-import xml.etree.ElementTree as ET  # kept in case you still want RSS later
-import re  # kept in case you still want scraping later
-
+import urllib.request
+import urllib.parse
 
 ET_TZ = ZoneInfo("America/New_York")
 
-CHANNEL_SHEET_CSV = os.environ.get(
-    "CHANNEL_SHEET_CSV",
-    "https://docs.google.com/spreadsheets/d/e/2PACX-1vR5DMZYPLgP64WZYcE1H0PMOQyjD2Rf67NUM1kRkC3dCPVwZJ0kNcj6dUbugO-LOaSNSx798fPA27tK/pub?gid=0&single=true&output=csv",
-)
-OUT_PATH = os.environ.get("OUT_PATH", "schedule.json")
+DEFAULT_CHANNEL_SHEET_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR5DMZYPLgP64WZYcE1H0PMOQyjD2Rf67NUM1kRkC3dCPVwZJ0kNcj6dUbugO-LOaSNSx798fPA27tK/pub?gid=0&single=true&output=csv"
 
-# REQUIRED: set this in GitHub repo secrets
-YT_API_KEY = os.environ.get("YT_API_KEY", "").strip()
+def env_or_default(name: str, default: str) -> str:
+    v = (os.environ.get(name) or "").strip()
+    return v if v else default
 
-USER_AGENT = "Mozilla/5.0 (compatible; sgtv-bot/1.0)"
+CHANNEL_SHEET_CSV = env_or_default("CHANNEL_SHEET_CSV", DEFAULT_CHANNEL_SHEET_CSV)
+OUT_PATH = env_or_default("OUT_PATH", "schedule.json")
+YT_API_KEY = (os.environ.get("YT_API_KEY") or "").strip()
+
+USER_AGENT = "Mozilla/5.0 (compatible; sgtv-bot/2.0)"
 REQ_HEADERS = {
     "User-Agent": USER_AGENT,
     "Accept-Language": "en-US,en;q=0.9",
 }
 
-
+# --------- HTTP helpers ---------
 def http_get(url: str) -> str:
     req = urllib.request.Request(url, headers=REQ_HEADERS)
-    with urllib.request.urlopen(req, timeout=45) as resp:
+    with urllib.request.urlopen(req, timeout=30) as resp:
         return resp.read().decode("utf-8", errors="ignore")
 
+def http_get_json(url: str) -> dict:
+    txt = http_get(url)
+    return json.loads(txt)
 
+def yt_api(endpoint: str, params: dict) -> dict:
+    if not YT_API_KEY:
+        raise SystemExit("Missing YT_API_KEY env var (add it to GitHub Secrets).")
+    q = dict(params)
+    q["key"] = YT_API_KEY
+    url = f"https://www.googleapis.com/youtube/v3/{endpoint}?{urllib.parse.urlencode(q)}"
+    return http_get_json(url)
+
+# --------- CSV sheet -> channels ---------
 def parse_simple_csv(text: str):
-    import csv
-    import io
-
     f = io.StringIO(text)
     return list(csv.DictReader(f))
-
 
 def load_channels_from_sheet():
     """
     Sheet headers expected:
       handle, display_name, channel_id, subscribers
-    subscribers optional (fallback only)
+    subscribers may be blank (fallback only).
     """
     csv_text = http_get(CHANNEL_SHEET_CSV)
     rows = parse_simple_csv(csv_text)
-
     if not rows:
         return []
 
@@ -71,243 +73,254 @@ def load_channels_from_sheet():
         except Exception:
             sheet_subs = 0
 
-        channels.append(
-            {
-                "channel_id": cid,
-                "handle": handle,
-                "display_name": display,
-                "sheet_subscribers": sheet_subs,
-            }
-        )
+        channels.append({
+            "channel_id": cid,
+            "handle": handle,
+            "display_name": display,
+            "sheet_subscribers": sheet_subs
+        })
 
     return channels
 
-
+# --------- Time helpers ---------
 def iso_to_et_fmt(iso: str) -> str:
-    # YouTube returns RFC3339, e.g. 2026-01-15T22:00:00Z
+    # ISO timestamps from API are UTC with 'Z'
     dt = datetime.fromisoformat(iso.replace("Z", "+00:00")).astimezone(ET_TZ)
     return dt.strftime("%Y-%m-%d %H:%M")
 
+def now_utc() -> datetime:
+    return datetime.now(timezone.utc)
 
-# -------------------- YouTube Data API helpers --------------------
-API_BASE = "https://www.googleapis.com/youtube/v3"
+# --------- YouTube API strategy (fast + reliable) ---------
+# 1) channels.list (batch): get uploads playlist + subscriber count + channel title
+# 2) playlistItems.list per channel: pull latest N uploads (includes live/upcoming items)
+# 3) videos.list (batched): read liveStreamingDetails to classify live/upcoming
 
+def chunked(lst, n):
+    for i in range(0, len(lst), n):
+        yield lst[i:i+n]
 
-def yt_get(path: str, params: dict) -> dict:
-    if not YT_API_KEY:
-        raise SystemExit("Missing YT_API_KEY env var (add it to GitHub Secrets).")
+def fetch_channels_meta(channel_ids: list[str]) -> dict:
+    """
+    Returns map[channel_id] -> {
+      uploads_playlist_id, subscribers, channel_title
+    }
+    """
+    meta = {}
+    for batch in chunked(channel_ids, 50):
+        resp = yt_api("channels", {
+            "part": "contentDetails,statistics,snippet",
+            "id": ",".join(batch),
+            "maxResults": 50
+        })
+        for item in resp.get("items", []):
+            cid = item.get("id", "")
+            uploads = (((item.get("contentDetails") or {}).get("relatedPlaylists") or {}).get("uploads")) or ""
+            subs_raw = ((item.get("statistics") or {}).get("subscriberCount")) or "0"
+            try:
+                subs = int(subs_raw)
+            except Exception:
+                subs = 0
+            title = ((item.get("snippet") or {}).get("title")) or ""
+            if cid and uploads:
+                meta[cid] = {
+                    "uploads_playlist_id": uploads,
+                    "subscribers": subs,
+                    "channel_title": title
+                }
+    return meta
 
-    q = dict(params or {})
-    q["key"] = YT_API_KEY
-    url = f"{API_BASE}/{path}?{urllib.parse.urlencode(q)}"
-
-    req = urllib.request.Request(url, headers=REQ_HEADERS)
-    with urllib.request.urlopen(req, timeout=45) as resp:
-        raw = resp.read().decode("utf-8", errors="ignore")
-    try:
-        return json.loads(raw)
-    except Exception:
-        return {}
-
-
-def yt_channels_list(channel_id: str) -> dict:
-    # part=contentDetails for uploads playlist, part=statistics for subscriberCount
-    data = yt_get(
-        "channels",
-        {
-            "part": "contentDetails,statistics",
-            "id": channel_id,
-            "maxResults": 1,
-        },
-    )
-    items = data.get("items") or []
-    return items[0] if items else {}
-
-
-def yt_playlistitems_latest(playlist_id: str, max_results: int = 3) -> list[str]:
-    data = yt_get(
-        "playlistItems",
-        {
-            "part": "contentDetails",
-            "playlistId": playlist_id,
-            "maxResults": max_results,
-        },
-    )
-    items = data.get("items") or []
+def fetch_uploads_video_ids(uploads_playlist_id: str, max_results: int = 20) -> list[str]:
+    resp = yt_api("playlistItems", {
+        "part": "contentDetails",
+        "playlistId": uploads_playlist_id,
+        "maxResults": max_results
+    })
     vids = []
-    for it in items:
-        cd = it.get("contentDetails") or {}
-        vid = cd.get("videoId")
+    for it in resp.get("items", []):
+        vid = (((it.get("contentDetails") or {}).get("videoId")) or "").strip()
         if vid:
             vids.append(vid)
     return vids
 
-
-def yt_videos_details(video_ids: list[str]) -> list[dict]:
-    if not video_ids:
-        return []
-    data = yt_get(
-        "videos",
-        {
+def fetch_videos_details(video_ids: list[str]) -> dict:
+    """
+    Returns map[video_id] -> video item (snippet + liveStreamingDetails)
+    """
+    out = {}
+    for batch in chunked(video_ids, 50):
+        resp = yt_api("videos", {
             "part": "snippet,liveStreamingDetails",
-            "id": ",".join(video_ids),
-            "maxResults": len(video_ids),
-        },
-    )
-    return data.get("items") or []
+            "id": ",".join(batch),
+            "maxResults": 50
+        })
+        for item in resp.get("items", []):
+            vid = item.get("id", "")
+            if vid:
+                out[vid] = item
+    return out
 
+def pick_thumb(snippet: dict) -> str:
+    thumbs = (snippet or {}).get("thumbnails") or {}
+    for k in ["maxres", "standard", "high", "medium", "default"]:
+        u = ((thumbs.get(k) or {}).get("url")) or ""
+        if u:
+            return u
+    return ""
 
-def classify_video(item: dict) -> dict | None:
+def classify_video(item: dict) -> tuple[str | None, str | None]:
     """
-    Returns event dict for live or upcoming, else None.
+    Returns (status, start_iso)
+      status: "live" | "upcoming" | None
+      start_iso: ISO timestamp string or None
     """
-    vid = item.get("id", "")
-    snippet = item.get("snippet") or {}
-    live = item.get("liveStreamingDetails") or {}
+    lsd = (item.get("liveStreamingDetails") or {})
+    snippet = (item.get("snippet") or {})
+    live_content = (snippet.get("liveBroadcastContent") or "").lower()
 
-    title = snippet.get("title") or ""
-    thumbs = snippet.get("thumbnails") or {}
-    thumb_url = (
-        (thumbs.get("maxres") or {}).get("url")
-        or (thumbs.get("standard") or {}).get("url")
-        or (thumbs.get("high") or {}).get("url")
-        or (thumbs.get("medium") or {}).get("url")
-        or (thumbs.get("default") or {}).get("url")
-        or ""
-    )
+    actual_start = lsd.get("actualStartTime")
+    actual_end = lsd.get("actualEndTime")
+    scheduled_start = lsd.get("scheduledStartTime")
 
-    # liveStreamingDetails keys:
-    # scheduledStartTime, actualStartTime, actualEndTime
-    scheduled = live.get("scheduledStartTime")
-    actual_start = live.get("actualStartTime")
-    actual_end = live.get("actualEndTime")
-
-    status = None
-    start_iso = None
-    end_iso = None
-
+    # Live if started and not ended
     if actual_start and not actual_end:
-        status = "live"
-        start_iso = actual_start
-        end_iso = actual_end
-    elif scheduled and not actual_start:
-        status = "upcoming"
-        start_iso = scheduled
-        end_iso = actual_end
+        return "live", actual_start
 
-    if not status or not start_iso:
-        return None
+    # Upcoming if scheduled but not started
+    if scheduled_start and not actual_start:
+        return "upcoming", scheduled_start
 
-    return {
-        "start_et": iso_to_et_fmt(start_iso),
-        "end_et": iso_to_et_fmt(end_iso) if end_iso else "",
-        "title": title,
-        "league": "",
-        "platform": "YouTube",
-        "channel": "",  # filled by caller
-        "watch_url": f"https://www.youtube.com/watch?v={vid}",
-        "source_id": vid,
-        "status": status,
-        "thumbnail_url": thumb_url or f"https://i.ytimg.com/vi/{vid}/hqdefault.jpg",
-        "subscribers": 0,  # filled by caller
-    }
+    # Sometimes snippet marks it; keep safe fallbacks
+    if live_content == "live" and actual_start and not actual_end:
+        return "live", actual_start
+    if live_content == "upcoming" and scheduled_start:
+        return "upcoming", scheduled_start
 
+    return None, None
 
-# -------------------- Main --------------------
+# --------- Main ---------
 def main():
     channels = load_channels_from_sheet()
     if not channels:
-        raise SystemExit("No channels found in channel sheet CSV (check headers + publish link).")
+        raise SystemExit("No channels found in channel sheet CSV (check publish link + headers).")
 
     print("Loaded channels from sheet:", len(channels))
 
-    events: list[dict] = []
-    seen: set[str] = set()
+    channel_ids = [c["channel_id"] for c in channels]
+    meta = fetch_channels_meta(channel_ids)
 
-    # Throttle a bit to be polite
-    def nap():
-        time.sleep(0.12)
+    # Map for quick lookup of sheet fields
+    sheet_by_id = {c["channel_id"]: c for c in channels}
 
-    for ch in channels:
-        cid = ch["channel_id"]
-        handle = (ch.get("handle") or "").strip().lstrip("@")
-        sheet_name = (ch.get("display_name") or "").strip()
-        preferred_name = sheet_name or (f"@{handle}" if handle else cid)
+    events = []
+    seen_video_ids = set()
+
+    # Build a big list of candidate vids from uploads for all channels
+    all_candidate_vids = []
+    per_channel_candidate = {}
+
+    for cid in channel_ids:
+        m = meta.get(cid)
+        if not m:
+            print("WARN: channel meta missing (bad channel_id?):", cid)
+            continue
+
+        uploads = m["uploads_playlist_id"]
+        vids = fetch_uploads_video_ids(uploads, max_results=20)
+        per_channel_candidate[cid] = vids
+        all_candidate_vids.extend(vids)
+
+        # throttle lightly to be nice
+        time.sleep(0.05)
+
+    # Fetch details in batches
+    video_details = fetch_videos_details(sorted(set(all_candidate_vids)))
+
+    # Filter to LIVE + upcoming soon
+    upcoming_horizon = now_utc() + timedelta(days=7)
+
+    for cid, vids in per_channel_candidate.items():
+        m = meta.get(cid) or {}
+        sheet = sheet_by_id.get(cid) or {}
+
+        # subscribers: API first, fallback to sheet
+        subs_api = int(m.get("subscribers") or 0)
+        subs_sheet = int(sheet.get("sheet_subscribers") or 0)
+        subs = subs_api if subs_api > 0 else subs_sheet
+
+        # channel name: sheet display_name > @handle > youtube title
+        handle = (sheet.get("handle") or "").strip().lstrip("@")
+        sheet_name = (sheet.get("display_name") or "").strip()
+        yt_title = (m.get("channel_title") or "").strip()
+        channel_name = sheet_name or (f"@{handle}" if handle else "") or yt_title or ""
 
         print("-----")
-        print("Channel:", cid, "handle:", handle, "name:", preferred_name)
+        print(f"Channel: {cid} name: {channel_name} subs(api): {subs_api} subs(sheet): {subs_sheet}")
 
-        ch_info = yt_channels_list(cid)
-        nap()
+        found_live_for_channel = False
 
-        # uploads playlist
-        uploads = (
-            ((ch_info.get("contentDetails") or {}).get("relatedPlaylists") or {}).get("uploads")
-            or ""
-        )
-
-        # subs
-        subs_str = ((ch_info.get("statistics") or {}).get("subscriberCount") or "").strip()
-        try:
-            subs = int(subs_str) if subs_str else 0
-        except Exception:
-            subs = 0
-
-        if subs <= 0:
-            subs = int(ch.get("sheet_subscribers") or 0)
-
-        if not uploads:
-            print("No uploads playlist found for channel (skipping).")
-            continue
-
-        # Pull latest few uploads, then check only first 2 for live/upcoming
-        latest_video_ids = yt_playlistitems_latest(uploads, max_results=4)
-        nap()
-
-        if not latest_video_ids:
-            print("No playlist items found (skipping).")
-            continue
-
-        # Keep quota low: inspect only first 2 videos
-        inspect_ids = latest_video_ids[:2]
-        video_items = yt_videos_details(inspect_ids)
-        nap()
-
-        found_live_here = False
-        for it in video_items:
-            ev = classify_video(it)
-            if not ev:
+        for vid in vids:
+            item = video_details.get(vid)
+            if not item:
                 continue
 
-            vid = ev["source_id"]
-            if vid in seen:
+            status, start_iso = classify_video(item)
+            if not status or not start_iso:
                 continue
 
-            ev["channel"] = preferred_name
-            ev["subscribers"] = subs
+            # Upcoming filter window
+            if status == "upcoming":
+                try:
+                    start_dt = datetime.fromisoformat(start_iso.replace("Z", "+00:00"))
+                    if start_dt > upcoming_horizon:
+                        continue
+                except Exception:
+                    pass
 
-            seen.add(vid)
-            events.append(ev)
+            if vid in seen_video_ids:
+                continue
+            seen_video_ids.add(vid)
 
-            if ev["status"] == "live":
-                found_live_here = True
+            snippet = item.get("snippet") or {}
+            title = (snippet.get("title") or "").strip()
+            thumb = pick_thumb(snippet) or f"https://i.ytimg.com/vi/{vid}/hqdefault.jpg"
 
-        if not found_live_here:
-            print("No LIVE detected right now (via API).")
+            # Mark we found live
+            if status == "live":
+                found_live_for_channel = True
 
-    # sort: live first, then by time, tie by subs desc
-    def sort_key(e: dict):
+            events.append({
+                "start_et": iso_to_et_fmt(start_iso),
+                "end_et": "",  # can add later if you want actualEndTime
+                "title": title,
+                "league": "",
+                "platform": "YouTube",
+                "channel": channel_name,
+                "watch_url": f"https://www.youtube.com/watch?v={vid}",
+                "source_id": vid,
+                "status": status,
+                "thumbnail_url": thumb,
+                "subscribers": subs
+            })
+
+        if not found_live_for_channel:
+            print("No LIVE detected right now.")
+
+    # Sort: live first, then by time, tie by subs desc
+    def sort_key(e):
         live_rank = 0 if e.get("status") == "live" else 1
-        # start_et is already YYYY-MM-DD HH:MM, lexicographic sort works
-        return (live_rank, e.get("start_et", "9999-99-99 99:99"), -(int(e.get("subscribers") or 0)))
+        return (
+            live_rank,
+            e.get("start_et", "9999-99-99 99:99"),
+            -(int(e.get("subscribers") or 0))
+        )
 
     events.sort(key=sort_key)
 
     with open(OUT_PATH, "w", encoding="utf-8") as f:
         json.dump(events, f, indent=2)
 
-    print(f"Wrote {len(events)} events to {OUT_PATH}")
-
+    print(f"-----\nWrote {len(events)} events to {OUT_PATH}")
 
 if __name__ == "__main__":
     main()

@@ -4,7 +4,6 @@
   --bg1:#0a1020;
 
   --card: rgba(255,255,255,0.06);
-  --card2: rgba(255,255,255,0.08);
   --border: rgba(255,255,255,0.12);
 
   --text: rgba(255,255,255,0.92);
@@ -19,11 +18,9 @@
   --accentB: rgba(140,90,255,0.22);
 
   --live: rgba(70, 240, 170, 0.95);
-  --liveBg: rgba(50, 240, 160, 0.14);
 
-  --rowH: 76px;
-  --cellH: 64px;
-  --gutter: 18px;
+  --rowH: 84px;
+  --cellH: 72px;
 }
 
 *{ box-sizing:border-box; }
@@ -39,7 +36,7 @@ body{
 }
 
 a{ color: inherit; text-decoration: none; }
-a:hover{ text-decoration: underline; }
+a:hover{ text-decoration: none; }
 
 /* ========= Top / Header ========= */
 .top{
@@ -69,7 +66,7 @@ h1{
   font-size: 13px;
 }
 
-/* ========= CRISP Logo Badge (SVG mask) ========= */
+/* ========= Logo Badge (sharp) ========= */
 .brandLogo{
   width: 52px;
   height: 52px;
@@ -86,43 +83,21 @@ h1{
     radial-gradient(120% 120% at 70% 70%, var(--accentB), rgba(0,0,0,0) 60%),
     rgba(255,255,255,0.03);
   transition: transform 160ms ease, box-shadow 200ms ease, border-color 200ms ease;
+  padding: 0;
 }
-
-.brandLogo::before{
-  content:"";
-  position:absolute;
-  inset: 7px;
-  background:
-    radial-gradient(100% 120% at 30% 25%, rgba(120,220,255,0.95), rgba(0,0,0,0) 55%),
-    radial-gradient(100% 120% at 70% 70%, rgba(160,110,255,0.95), rgba(0,0,0,0) 58%),
-    rgba(255,255,255,0.92);
-  -webkit-mask: url("assets/sgtv-logo.svg") center / contain no-repeat;
-  mask: url("assets/sgtv-logo.svg") center / contain no-repeat;
-  filter: drop-shadow(0 10px 18px rgba(0,0,0,0.55));
-  opacity: 0.98;
-}
-
-.brandLogo::after{
-  content:"";
-  position:absolute;
-  inset:-40%;
-  background: linear-gradient(110deg, rgba(255,255,255,0), rgba(255,255,255,0.16), rgba(255,255,255,0));
-  transform: translateX(-55%) rotate(10deg);
-  transition: transform 420ms ease;
-  pointer-events:none;
-  mix-blend-mode: screen;
-  opacity: 0.55;
-}
-
-.brandLogo:hover{
-  transform: translateY(-1px);
-  border-color: rgba(255,255,255,0.2);
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,0.08),
-    0 18px 44px rgba(0,0,0,0.48);
-}
-.brandLogo:hover::after{ transform: translateX(25%) rotate(10deg); }
+.brandLogo:hover{ transform: translateY(-1px); border-color: rgba(255,255,255,0.2); }
 .brandLogo:active{ transform: translateY(0px) scale(0.99); }
+
+.brandLogoImg{
+  width: 100%;
+  height: 100%;
+  display:block;
+  object-fit: contain;
+  /* crispness */
+  image-rendering: -webkit-optimize-contrast;
+  filter: drop-shadow(0 10px 18px rgba(0,0,0,0.55));
+  transform: translateZ(0);
+}
 
 .brandLogo__fallback{
   position:absolute;
@@ -137,7 +112,7 @@ h1{
   opacity: 0;
 }
 
-/* Optional: pulse when live exists (if JS toggles it) */
+/* Pulse when live exists */
 .brandLogo.isLive{
   animation: livePulse 1.8s ease-in-out infinite;
 }
@@ -177,14 +152,10 @@ h1{
   gap:8px;
   min-width: 130px;
 }
-
 .control.grow{ flex:1; min-width: 280px; }
 .control.refresh{ min-width: 140px; align-items:flex-end; }
 
-label{
-  font-size: 12px;
-  color: var(--muted2);
-}
+label{ font-size: 12px; color: var(--muted2); }
 
 select, input{
   height: 40px;
@@ -237,15 +208,9 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
   justify-content:space-between;
   padding: 16px 18px 10px;
 }
+.tileHeader h2{ margin:0; font-size: 16px; }
 
-.tileHeader h2{
-  margin:0;
-  font-size: 16px;
-}
-
-.tileBody{
-  padding: 0 18px 18px;
-}
+.tileBody{ padding: 0 18px 18px; }
 
 /* Pills */
 .pill{
@@ -265,8 +230,7 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
   background: rgba(50,240,160,0.12);
 }
 
-/* ========= HERO cards (Now On / Up Next thumbnails) ========= */
-/* These are intentionally flexible to match whatever app.js is outputting. */
+/* ========= HERO cards (Now On / Up Next) ========= */
 .card{
   border-radius: var(--radius2);
   border: 1px solid rgba(255,255,255,0.10);
@@ -274,70 +238,31 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
   overflow:hidden;
 }
 
-.cardThumb,
-.thumb,
-.thumbnail,
-.thumbWrap{
+.cardMedia{
   width: 100%;
-  border-radius: 14px;
-  overflow:hidden;
-  background: rgba(255,255,255,0.05);
-}
-
-/* If app.js uses a DIV with background-image */
-.cardThumb,
-.thumb,
-.thumbnail{
   aspect-ratio: 16 / 9;
   background-size: cover;
   background-position: center;
+  background-color: rgba(255,255,255,0.05);
 }
 
-/* If app.js uses an IMG tag */
-.tileBody img,
-.card img,
-.thumb img,
-.thumbnail img{
-  width: 100%;
-  height: auto;
-  display:block;
-}
-
-/* Prevent “invisible image” collapse if it’s absolutely positioned */
-.thumb img,
-.thumbnail img{
-  object-fit: cover;
-}
-
-/* Content under thumbnail */
-.cardBody,
-.meta,
-.details,
-.infoRow{
-  padding-top: 12px;
-}
-
-.title{
-  font-weight: 700;
+.cardBody{ padding: 12px 12px 14px; }
+.cardTitle{
+  font-weight: 800;
   font-size: 14px;
-  line-height: 1.2;
-  margin: 10px 0 6px;
+  line-height: 1.25;
+  margin-bottom: 8px;
 }
-
-.metaLine,
-.subline,
-.small{
-  color: rgba(255,255,255,0.70);
+.cardMeta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
   font-size: 12px;
+  color: rgba(255,255,255,0.70);
 }
+.cardActions{ margin-top: 10px; }
 
-/* Watch button styling (covers <a> or <button>) */
-.watch,
-.watchBtn,
-a.watchBtn,
-button.watchBtn,
-.tileBody a[href*="youtube"],
-.tileBody a.watchLink{
+.watchBtn{
   display:inline-flex;
   align-items:center;
   justify-content:center;
@@ -348,14 +273,9 @@ button.watchBtn,
   background: rgba(140,90,255,0.14);
   color: rgba(255,255,255,0.92);
   cursor:pointer;
-  margin-top: 10px;
   text-decoration:none;
 }
-.watch:hover,
-.watchBtn:hover{
-  filter: brightness(1.06);
-  text-decoration:none;
-}
+.watchBtn:hover{ filter: brightness(1.06); }
 
 /* ========= Info tile ========= */
 .tileBody.info{
@@ -363,81 +283,35 @@ button.watchBtn,
   font-size: 13px;
   line-height: 1.45;
 }
-.tileBody.info .muted{
-  color: rgba(255,255,255,0.62);
-  margin-bottom: 10px;
-}
+.muted{ color: rgba(255,255,255,0.62); }
+
 .tileBody.info ul{
   margin: 10px 0 0 18px;
   padding: 0;
 }
 
-/* ========= Right Guide list (top-right tile) ========= */
-.guideList{
+/* ===== Right Guide chip list (rendered by JS) ===== */
+.chipHead{
   display:flex;
-  flex-direction:column;
+  align-items:center;
+  justify-content:space-between;
   gap:10px;
-}
-
-.guideHead{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
+  margin-bottom:10px;
   color: rgba(255,255,255,0.70);
-  font-size: 12px;
-  margin-bottom: 10px;
+  font-size:12px;
 }
-
-.guideItem{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(0,0,0,0.18);
-  cursor:pointer;
+.chipList{display:flex; flex-direction:column; gap:8px; max-height:360px; overflow:auto; padding-right:4px;}
+.chip{
+  display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:999px;
+  border:1px solid rgba(255,255,255,.12); background:rgba(0,0,0,.20);
+  transition:filter .12s ease, transform .12s ease;
 }
-.guideItem:hover{
-  background: rgba(255,255,255,0.06);
-}
-
-.guideTime{
-  min-width: 78px;
-  font-weight: 800;
-  font-size: 12px;
-  color: rgba(255,255,255,0.90);
-}
-
-.guideChan{
-  flex: 1;
-  text-align:left;
-  font-weight: 800;
-  font-size: 12px;
-  color: rgba(255,255,255,0.92);
-  white-space: nowrap;
-  overflow:hidden;
-  text-overflow: ellipsis;
-}
-
-.guideRight{
-  display:flex;
-  align-items:center;
-  gap:8px;
-}
-
-.badgeLive{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  padding: 5px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(70,240,170,0.34);
-  background: rgba(50,240,160,0.12);
-  color: rgba(70,240,170,0.95);
-  font-size: 12px;
-  font-weight: 700;
+.chip:hover{filter:brightness(1.07); transform:translateY(-1px);}
+.chipTime{font-weight:900; font-size:12px; color:rgba(255,255,255,.90); min-width:86px; white-space:nowrap;}
+.chipChanStrong{font-weight:900; font-size:13px; color:rgba(255,255,255,.94); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;}
+.chipBadge{
+  margin-left:auto; font-size:11px; padding:4px 9px; border-radius:999px; color:rgba(46,229,157,.95);
+  background:rgba(46,229,157,.10); border:1px solid rgba(46,229,157,.30); white-space:nowrap;
 }
 
 /* ========= Schedule Section ========= */
@@ -457,11 +331,7 @@ button.watchBtn,
   padding: 16px 18px;
   gap: 16px;
 }
-
-.scheduleHeader h2{
-  margin:0;
-  font-size: 16px;
-}
+.scheduleHeader h2{ margin:0; font-size: 16px; }
 
 .scheduleTools{
   display:flex;
@@ -509,21 +379,18 @@ button.watchBtn,
 
 /* Time header row */
 .timeRow{
-  display:grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 160px;
-  gap: 0;
-  padding: 0;
+  display:flex;
   overflow:auto;
   white-space:nowrap;
   border-bottom: 1px solid rgba(255,255,255,0.08);
 }
-.timeCell{
+.timeTick{
   padding: 12px 14px;
   font-weight: 800;
   font-size: 12px;
   color: rgba(255,255,255,0.78);
   border-right: 1px solid rgba(255,255,255,0.06);
+  flex: 0 0 auto;
 }
 
 /* Rows container */
@@ -534,36 +401,36 @@ button.watchBtn,
 
 /* One channel row */
 .row{
-  display:grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 160px;
+  display:flex;
   align-items:stretch;
   min-height: var(--rowH);
   border-bottom: 1px solid rgba(255,255,255,0.06);
-  overflow:auto;
+  overflow:hidden;
 }
+
 .rowLabel{
   position: sticky;
   left: 0;
   z-index: 2;
   display:flex;
-  align-items:center;
-  gap:10px;
+  flex-direction:column;
+  justify-content:center;
+  gap:6px;
   padding: 10px 14px;
   min-width: 220px;
   max-width: 220px;
   background: linear-gradient(90deg, rgba(0,0,0,0.36), rgba(0,0,0,0.18));
   border-right: 1px solid rgba(255,255,255,0.08);
 }
-.rowLabel .rowChan{
-  font-weight: 800;
+.rowLabel .name{
+  font-weight: 900;
   font-size: 12px;
-  color: rgba(255,255,255,0.90);
+  color: rgba(255,255,255,0.92);
   white-space:nowrap;
   overflow:hidden;
   text-overflow: ellipsis;
 }
-.rowLabel .rowMeta{
+.rowLabel .subs{
   color: rgba(255,255,255,0.55);
   font-size: 11px;
   white-space:nowrap;
@@ -571,75 +438,97 @@ button.watchBtn,
   text-overflow: ellipsis;
 }
 
-/* Show blocks in the grid */
-.block{
+/* The timeline lane */
+.lane{
   position: relative;
-  margin: 8px 8px;
-  height: var(--cellH);
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(0,0,0,0.22);
-  overflow:hidden;
-  cursor:pointer;
-  display:flex;
-  align-items:stretch;
-}
-.block:hover{
-  background: rgba(255,255,255,0.06);
-  border-color: rgba(255,255,255,0.14);
+  flex: 1 1 auto;
+  min-height: var(--rowH);
+  overflow-x: auto;
+  overflow-y: hidden;
+  background-image: linear-gradient(to right, rgba(255,255,255,0.06) 1px, rgba(0,0,0,0) 1px);
+  background-size: 140px 1px; /* matches pxPerTick in JS */
 }
 
-/* Thumbnail inside block (if app.js uses it) */
-.blockThumb{
-  width: 96px;
-  flex: 0 0 96px;
+/* Show blocks */
+.block{
+  position:absolute;
+  top: 6px;
+  height: var(--cellH);
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.24);
+  overflow:hidden;
+  cursor:pointer;
+  display:block;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.35);
+}
+.block:hover{ filter: brightness(1.06); }
+
+.blockMedia{
+  position:absolute;
+  inset:0;
   background-size: cover;
   background-position:center;
   background-color: rgba(255,255,255,0.05);
-}
-.blockThumb img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  display:block;
+  transform: scale(1.02);
 }
 
-.blockBody{
+.blockOverlay{
+  position:absolute;
+  inset:0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.10), rgba(0,0,0,0.72));
+}
+
+.blockContent{
+  position:absolute;
+  inset:0;
   padding: 10px 10px;
-  min-width: 0;
   display:flex;
   flex-direction:column;
-  justify-content:center;
-  gap:6px;
-}
-.blockTitle{
-  font-weight: 800;
-  font-size: 12px;
-  color: rgba(255,255,255,0.92);
-  white-space: nowrap;
-  overflow:hidden;
-  text-overflow: ellipsis;
-}
-.blockMeta{
-  font-size: 11px;
-  color: rgba(255,255,255,0.60);
-  white-space: nowrap;
-  overflow:hidden;
-  text-overflow: ellipsis;
+  justify-content:space-between;
+  gap:8px;
 }
 
-.blockLive{
-  position:absolute;
-  top: 10px;
-  right: 10px;
+.blockTop{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+}
+.blockTitle{
+  font-weight: 900;
+  font-size: 12px;
+  color: rgba(255,255,255,0.95);
+  overflow:hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.badgeLiveMini{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
   padding: 4px 10px;
   border-radius: 999px;
-  font-size: 11px;
-  font-weight: 800;
   border: 1px solid rgba(70,240,170,0.34);
   background: rgba(50,240,160,0.12);
   color: rgba(70,240,170,0.95);
+  font-size: 11px;
+  font-weight: 800;
+  flex: 0 0 auto;
 }
+
+.blockBottom{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  font-size: 11px;
+  color: rgba(255,255,255,0.72);
+}
+.blockTime{ font-weight: 800; color: rgba(255,255,255,0.82); }
+.blockPlat{ color: rgba(255,255,255,0.70); }
 
 /* empty */
 .empty{
@@ -656,5 +545,5 @@ button.watchBtn,
   .controls{ flex-wrap:wrap; }
   .control.grow{ min-width: 220px; flex: 1 1 240px; }
   .rowLabel{ min-width: 180px; max-width: 180px; }
-  .timeRow, .row{ grid-auto-columns: 140px; }
+  .chipTime{ min-width: 78px; }
 }

@@ -273,16 +273,18 @@ async function load(){
 
     if (!start) continue;
 
-    events.push({
-      start, end,
-      title: r.title || "",
-      league: r.league || "",
-      platform: r.platform || "YouTube",
-      channel: r.channel || "",
-      watch_url: r.watch_url || "",
-      source_id: r.source_id || "",
-      status: r.status || ""
-    });
+ events.push({
+  start, end,
+  title: r.title || "",
+  league: r.league || "",
+  platform: r.platform || "YouTube",
+  channel: r.channel || "",
+  watch_url: r.watch_url || "",
+  source_id: r.source_id || "",
+  status: r.status || "",
+  thumbnail_url: r.thumbnail_url || ""
+});
+
   }
 
   allEvents = events;

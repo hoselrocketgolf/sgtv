@@ -276,26 +276,32 @@ def main():
     if not channels:
         raise SystemExit("No channels found in channel sheet CSV (check headers + publish link).")
 
+    print("Loaded channels from sheet:", len(channels))
+    print("Channel IDs:", [c["channel_id"] for c in channels])
+
     events = []
     seen = set()
 
     for ch in channels:
         cid = ch["channel_id"]
 
-        # subscriber count: scrape first, fall back to sheet value
         scraped_subs = fetch_channel_subscribers(cid)
         subs = scraped_subs if scraped_subs > 0 else int(ch.get("sheet_subscribers", 0) or 0)
 
-        # display name preference: sheet display_name > @handle > YouTube name from feed
         sheet_name = (ch.get("display_name") or "").strip()
         sheet_handle = (ch.get("handle") or "").strip()
         preferred_name = sheet_name or (f"@{sheet_handle}" if sheet_handle else "")
 
-        # 1) Catch currently-live (even if unscheduled)
+        # --- LIVE probe ---
         live_vid = fetch_channel_live_video_id(cid)
+        if live_vid:
+            print("LIVE candidate:", cid, live_vid, preferred_name)
+
         if live_vid and live_vid not in seen:
             time.sleep(0.35)
             details = fetch_video_details(live_vid)
+            print("LIVE candidate details:", live_vid, details)
+
             if details and details["status"] == "live":
                 seen.add(live_vid)
                 events.append({
@@ -304,15 +310,15 @@ def main():
                     "title": "LIVE (unscheduled)",
                     "league": "",
                     "platform": "YouTube",
-                    "channel": preferred_name,  # best effort label
+                    "channel": preferred_name,
                     "watch_url": f"https://www.youtube.com/watch?v={live_vid}",
                     "source_id": live_vid,
                     "status": details["status"],
-                    "thumbnail_url": "",
+                    "thumbnail_url": f"https://i.ytimg.com/vi/{live_vid}/hqdefault.jpg",
                     "subscribers": subs,
                 })
 
-        # 2) Scheduled/live from RSS feed (also gives best thumbnail + YouTube channel name)
+        # --- FEED scan ---
         feed = fetch_rss(cid)
         for item in feed:
             vid = item["video_id"]
@@ -320,10 +326,9 @@ def main():
                 continue
 
             time.sleep(0.35)
-
             details = fetch_video_details(vid)
+
             if not details:
-                # keep debug
                 print("Skipped (no live/upcoming):", item.get("title", ""), item.get("watch_url", ""))
                 continue
 
@@ -342,14 +347,9 @@ def main():
                 "watch_url": item.get("watch_url", ""),
                 "source_id": vid,
                 "status": details["status"],
-                "thumbnail_url": item.get("thumbnail_url", ""),
+                "thumbnail_url": item.get("thumbnail_url", "") or f"https://i.ytimg.com/vi/{vid}/hqdefault.jpg",
                 "subscribers": subs,
             })
-
-    # If any unscheduled lives are missing thumbnails, try a safe default
-    for e in events:
-        if not e.get("thumbnail_url") and e.get("source_id"):
-            e["thumbnail_url"] = f"https://i.ytimg.com/vi/{e['source_id']}/hqdefault.jpg"
 
     events.sort(key=lambda x: x["start_et"])
 

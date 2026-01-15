@@ -11,8 +11,13 @@
   --shadow: 0 12px 40px rgba(0,0,0,.35);
   --radius:18px;
   --radius2:24px;
-  --rowH: 92px;
+
+  /* Bigger timeline tiles */
+  --rowH: 128px;
   --labelW: 220px;
+
+  /* Timeline scale */
+  --tickW: 140px;
 }
 
 *{box-sizing:border-box}
@@ -113,23 +118,28 @@ h1{margin:0; font-size:22px;}
   overflow:hidden;
 }
 .cardMedia{
-  height:180px;
+  height:240px; /* bigger */
   background: rgba(255,255,255,.06);
   background-size:cover;
   background-position:center;
 }
 .cardBody{padding:12px;}
-.cardTitle{font-size:15px; font-weight:800; line-height:1.2; margin-bottom:6px;}
+.cardTitle{
+  font-size:16px;
+  font-weight:900;
+  line-height:1.2;
+  margin-bottom:8px;
+}
 .cardMeta{font-size:12px; color:var(--muted); display:flex; gap:10px; flex-wrap:wrap;}
 .cardActions{padding: 0 12px 12px;}
 .watchBtn{
   display:inline-flex;
-  padding:8px 12px;
+  padding:9px 14px;
   border-radius:12px;
   border:1px solid rgba(124,92,255,.45);
   background: rgba(124,92,255,.14);
   color: var(--text);
-  font-weight:800;
+  font-weight:900;
   cursor:pointer;
 }
 .watchBtn:hover{filter:brightness(1.07);}
@@ -156,7 +166,20 @@ h1{margin:0; font-size:22px;}
   cursor:pointer;
 }
 .iconBtn:hover{filter:brightness(1.08);}
-.windowLabel{color:var(--muted); font-size:12px; min-width:220px; text-align:center;}
+
+.nowBtn{
+  height:34px;
+  padding:0 12px;
+  border-radius:12px;
+  border:1px solid rgba(46,229,157,.32);
+  background: rgba(46,229,157,.10);
+  color: rgba(46,229,157,.95);
+  font-weight:900;
+  cursor:pointer;
+}
+.nowBtn:hover{filter:brightness(1.08);}
+
+.windowLabel{color:var(--muted); font-size:12px; min-width:260px; text-align:center;}
 .updated{color:var(--muted2); font-size:12px;}
 
 .guide{
@@ -178,7 +201,7 @@ h1{margin:0; font-size:22px;}
 }
 
 .timeTick{
-  min-width:120px;
+  min-width:var(--tickW);
   padding:10px 10px;
   color: var(--muted);
   font-size:12px;
@@ -187,7 +210,7 @@ h1{margin:0; font-size:22px;}
 .timeTick:first-child{border-left:0;}
 
 .rows{
-  max-height: 520px;
+  max-height: 560px;
   overflow:auto;
 }
 
@@ -207,7 +230,7 @@ h1{margin:0; font-size:22px;}
   justify-content:center;
   gap:6px;
 }
-.rowLabel .name{font-weight:900; font-size:13px;}
+.rowLabel .name{font-weight:950; font-size:13px;}
 .rowLabel .subs{color:var(--muted); font-size:12px;}
 
 .lane{
@@ -217,14 +240,14 @@ h1{margin:0; font-size:22px;}
   overflow:hidden;
   background:
     linear-gradient(to right, rgba(255,255,255,.04) 1px, transparent 1px);
-  background-size: 120px 1px;
+  background-size: var(--tickW) 1px;
 }
 
 .block{
   position:absolute;
   top:10px;
   height: calc(var(--rowH) - 20px);
-  border-radius: 16px;
+  border-radius: 18px;
   border:1px solid rgba(255,255,255,.14);
   overflow:hidden;
   background: rgba(255,255,255,.06);
@@ -238,34 +261,34 @@ h1{margin:0; font-size:22px;}
   background-size:cover;
   background-position:center;
   filter:saturate(1.05) contrast(1.05);
-  opacity:.65;
+  opacity:.82; /* more thumbnail */
 }
 .blockOverlay{
   position:absolute; inset:0;
-  background: linear-gradient(180deg, rgba(0,0,0,.15), rgba(0,0,0,.78));
+  background: linear-gradient(180deg, rgba(0,0,0,.06), rgba(0,0,0,.82));
 }
 .blockContent{
   position:relative;
   height:100%;
-  padding:10px 10px;
+  padding:12px 12px;
   display:flex;
   flex-direction:column;
   justify-content:space-between;
-  gap:8px;
+  gap:10px;
 }
 .blockTop{
-  display:flex; justify-content:space-between; align-items:flex-start; gap:8px;
+  display:flex; justify-content:space-between; align-items:flex-start; gap:10px;
 }
 .blockTitle{
-  font-weight:900;
-  font-size:12px;
+  font-weight:950;
+  font-size:14px;
   line-height:1.15;
-  max-height: 2.4em;
+  max-height: 3.6em; /* ~3 lines */
   overflow:hidden;
 }
 .badgeLive{
-  font-size:10px;
-  padding:4px 8px;
+  font-size:11px;
+  padding:5px 9px;
   border-radius:999px;
   color: rgba(46,229,157,.95);
   background: rgba(46,229,157,.10);
@@ -276,9 +299,9 @@ h1{margin:0; font-size:22px;}
   display:flex;
   justify-content:space-between;
   align-items:center;
-  color: var(--muted);
-  font-size:11px;
-  gap:8px;
+  color: rgba(255,255,255,.78);
+  font-size:12px;
+  gap:10px;
 }
 .blockTime{white-space:nowrap;}
 
@@ -303,4 +326,5 @@ h1{margin:0; font-size:22px;}
   .controls{flex-wrap:wrap;}
   .control.grow{min-width: 100%;}
   :root{ --labelW: 180px; }
+  .windowLabel{min-width: 180px;}
 }

@@ -15,6 +15,7 @@ const upNext = $("upNext");
 const lastUpdated = $("lastUpdated");
 
 const infoTileBody = document.querySelector("#infoTile .tileBody");
+const guideEl = document.querySelector(".guide");
 const timeRow = $("timeRow");
 const rowsEl = $("rows");
 const emptyState = $("emptyState");
@@ -69,10 +70,20 @@ let filteredEvents = [];
 let windowStart = null;
 
 // Guide window settings
-let windowMins = 240; // 4 hours shown
+let windowMins = 240; // 4 hours visible
 let tickMins = 30;
 let pxPerTick = 140;
 let pxPerMin = pxPerTick / tickMins;
+
+// Sticky left column width must match CSS
+const LABEL_W = 220;
+
+function getTicksCount() {
+  return Math.ceil(windowMins / tickMins) + 1;
+}
+function getGridWidthPx() {
+  return getTicksCount() * pxPerTick;
+}
 
 function eventEnd(e) {
   const end = parseET(e.end_et);
@@ -194,7 +205,7 @@ function renderNowNext() {
     : `<div class="muted">No upcoming events found.</div>`;
 }
 
-// --- Right tile chips (channel name bold only) ---
+// --- Right tile chips ---
 function renderRightTileTodayList() {
   if (!infoTileBody) return;
 
@@ -214,8 +225,7 @@ function renderRightTileTodayList() {
   const items = todays.map(e => {
     const s = parseET(e.start_et);
     const t = fmtTime(s).replace(" ET", "");
-    const isLive = e.status === "live";
-    const badge = isLive ? `<span class="chipBadge">LIVE</span>` : "";
+    const badge = e.status === "live" ? `<span class="chipBadge">LIVE</span>` : "";
 
     return `
       <a class="chip" href="${escapeHtml(e.watch_url)}" target="_blank" rel="noreferrer">
@@ -254,8 +264,17 @@ function renderTimeRow() {
   if (!timeRow || !windowLabel) return;
   ensureWindowStart();
 
-  const ticks = Math.ceil(windowMins / tickMins) + 1;
+  const ticks = getTicksCount();
+  const gridW = getGridWidthPx();
+
+  // tell CSS how wide the grid is + sticky label width
+  if (guideEl) {
+    guideEl.style.setProperty("--gridW", `${gridW}px`);
+    guideEl.style.setProperty("--labelW", `${LABEL_W}px`);
+  }
+
   const parts = [];
+  parts.push(`<div class="timeSpacer" style="min-width:${LABEL_W}px"></div>`);
 
   for (let i = 0; i < ticks; i++) {
     const dt = new Date(windowStart.getTime() + i * tickMins * 60000);
@@ -295,6 +314,8 @@ function renderGuide() {
 
   ensureWindowStart();
   renderTimeRow();
+
+  const gridW = getGridWidthPx();
 
   const startMs = windowStart.getTime();
   const endMs = startMs + windowMins * 60000;
@@ -356,11 +377,11 @@ function renderGuide() {
 
     return `
       <div class="row">
-        <div class="rowLabel">
+        <div class="rowLabel" style="min-width:${LABEL_W}px; max-width:${LABEL_W}px;">
           <div class="name">${escapeHtml(r.channel)}</div>
           <div class="subs">${subs}</div>
         </div>
-        <div class="lane">
+        <div class="lane" style="width:${gridW}px">
           ${blocks}
         </div>
       </div>
@@ -372,12 +393,13 @@ function shiftWindow(dir) {
   ensureWindowStart();
   windowStart = new Date(windowStart.getTime() + dir * windowMins * 60000);
   renderGuide();
-  if (rowsEl) rowsEl.scrollTop = 0;
+  // keep scroll position reasonable
+  if (guideEl) guideEl.scrollLeft = 0;
 }
 function jumpToNow() {
   windowStart = roundToTick(new Date());
   renderGuide();
-  if (rowsEl) rowsEl.scrollTop = 0;
+  if (guideEl) guideEl.scrollLeft = 0;
 }
 
 // --- Fetch schedule.json ---

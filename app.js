@@ -28,15 +28,13 @@ const emptyState = $("emptyState");
 
 const prevWindow = $("prevWindow");
 const nextWindow = $("nextWindow");
+const jumpNowBtn = $("jumpNow");
 const windowLabel = $("windowLabel");
 
 // --- Time helpers (treat input as Eastern local time) ---
 function parseET(str) {
   // "YYYY-MM-DD HH:MM"
-  // We treat it as "local ET" but JS Date has no ET without libs.
-  // So we parse as if it's local, but since you are displaying ET and your source is ET,
-  // it's consistent for ordering + rendering within the guide window.
-  // (If you later want true timezone correctness, we can add Luxon.)
+  // Treated as "ET-like local" for consistent ordering + display
   if (!str) return null;
   const [d, t] = str.split(" ");
   if (!d || !t) return null;
@@ -65,29 +63,38 @@ function clamp(n, a, b) {
   return Math.max(a, Math.min(b, n));
 }
 
-function contains(hay, needle) {
-  return (hay || "").toLowerCase().includes((needle || "").toLowerCase());
+function escapeHtml(s) {
+  return String(s ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
 // --- State ---
 let allEvents = [];
 let filteredEvents = [];
 let windowStart = null; // Date
+
+// Window settings
 let windowMins = 240;   // 4 hours window
 let tickMins = 30;      // 30 min ticks
-let pxPerTick = 120;    // matches CSS background + tick width
 
+// IMPORTANT: keep in sync with CSS tick width
+let pxPerTick = 140;    // matches --tickW in CSS
+let pxPerMin = pxPerTick / tickMins;
+
+// ---- helpers ----
 function eventEnd(e) {
   const end = parseET(e.end_et);
   if (end) return end;
 
-  // No end time -> default durations:
-  // live: 90 mins visual
-  // upcoming: 60 mins visual
   const start = parseET(e.start_et);
   if (!start) return null;
 
-  const mins = e.status === "live" ? 90 : 60;
+  // defaults
+  const mins = e.status === "live" ? 110 : 70;
   return new Date(start.getTime() + mins * 60000);
 }
 
@@ -95,7 +102,6 @@ function sortEvents(events) {
   return [...events].sort((a, b) => {
     const aLive = a.status === "live" ? 0 : 1;
     const bLive = b.status === "live" ? 0 : 1;
-
     if (aLive !== bLive) return aLive - bLive;
 
     const at = parseET(a.start_et)?.getTime() ?? Number.MAX_SAFE_INTEGER;
@@ -120,8 +126,13 @@ function rebuildFilters(events) {
   const keepLeague = leagueFilter.value;
   const keepPlat = platformFilter.value;
 
-  leagueFilter.innerHTML = `<option value="all">All</option>` + [...leagues].sort().map(x => `<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join("");
-  platformFilter.innerHTML = `<option value="all">All</option>` + [...platforms].sort().map(x => `<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join("");
+  leagueFilter.innerHTML =
+    `<option value="all">All</option>` +
+    [...leagues].sort().map(x => `<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join("");
+
+  platformFilter.innerHTML =
+    `<option value="all">All</option>` +
+    [...platforms].sort().map(x => `<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join("");
 
   if ([...leagues].includes(keepLeague)) leagueFilter.value = keepLeague;
   if ([...platforms].includes(keepPlat)) platformFilter.value = keepPlat;
@@ -136,8 +147,8 @@ function applyFilters() {
     if (l !== "all" && (e.league || "") !== l) return false;
     if (p !== "all" && (e.platform || "") !== p) return false;
     if (q) {
-      const blob = `${e.title || ""} ${e.league || ""} ${e.platform || ""} ${e.channel || ""}`;
-      if (!blob.toLowerCase().includes(q)) return false;
+      const blob = `${e.title || ""} ${e.league || ""} ${e.platform || ""} ${e.channel || ""}`.toLowerCase();
+      if (!blob.includes(q)) return false;
     }
     return true;
   });
@@ -146,15 +157,6 @@ function applyFilters() {
 
   renderNowNext();
   renderGuide();
-}
-
-function escapeHtml(s) {
-  return String(s ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
 }
 
 // --- UI: Now + Next cards ---
@@ -200,23 +202,29 @@ function renderNowNext() {
 }
 
 // --- TV Guide rendering ---
+function roundToTick(dt) {
+  const mins = dt.getMinutes();
+  const rounded = Math.floor(mins / tickMins) * tickMins;
+  return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), dt.getHours(), rounded, 0, 0);
+}
+
 function ensureWindowStart() {
   if (windowStart) return;
 
-  // base on earliest of:
-  // - a live event start
-  // - next upcoming
-  // - otherwise "now"
+  // anchor on: live start OR next upcoming OR now
   const live = filteredEvents.find(e => e.status === "live");
   const next = filteredEvents.find(e => e.status !== "live");
 
   let base = parseET(live?.start_et) || parseET(next?.start_et) || new Date();
+  windowStart = roundToTick(base);
+}
 
-  // round down to nearest tick
-  const mins = base.getMinutes();
-  const rounded = Math.floor(mins / tickMins) * tickMins;
-  base = new Date(base.getFullYear(), base.getMonth(), base.getDate(), base.getHours(), rounded, 0, 0);
-  windowStart = base;
+function jumpToNow() {
+  windowStart = roundToTick(new Date());
+  renderGuide();
+
+  // Optional: nudges the rows scroller to top so user "feels" reset
+  if (rowsEl) rowsEl.scrollTop = 0;
 }
 
 function shiftWindow(dir) {
@@ -250,7 +258,6 @@ function groupByChannel(events) {
     map.get(key).push(e);
   }
 
-  // sort rows by: has live first, then subscriber desc
   const rows = [...map.entries()].map(([channel, list]) => {
     const hasLive = list.some(x => x.status === "live");
     const maxSubs = Math.max(...list.map(x => Number(x.subscribers || 0)));
@@ -272,9 +279,8 @@ function renderGuide() {
 
   const startMs = windowStart.getTime();
   const endMs = startMs + windowMins * 60000;
-  const pxPerMin = pxPerTick / tickMins;
 
-  // Only show events that intersect the window at all
+  // Only show events that intersect the window
   const windowEvents = filteredEvents.filter(e => {
     const s = parseET(e.start_et)?.getTime();
     if (!s) return false;
@@ -294,7 +300,6 @@ function renderGuide() {
   rowsEl.innerHTML = rows.map(r => {
     const subs = r.maxSubs ? `${Number(r.maxSubs).toLocaleString()} subs` : "";
 
-    // lane width = windowMins * pxPerMin (auto via flex; we rely on absolute positions)
     const blocks = r.list.map(e => {
       const s = parseET(e.start_et);
       const ee = eventEnd(e);
@@ -307,7 +312,7 @@ function renderGuide() {
       const rightMin = (eMs - startMs) / 60000;
 
       const left = clamp(leftMin * pxPerMin, -9999, 9999);
-      const width = clamp((rightMin - leftMin) * pxPerMin, 90, 9999);
+      const width = clamp((rightMin - leftMin) * pxPerMin, 120, 9999);
 
       const thumb = e.thumbnail_url || (e.source_id ? `https://i.ytimg.com/vi/${e.source_id}/hqdefault.jpg` : "");
       const liveBadge = e.status === "live" ? `<span class="badgeLive">LIVE</span>` : "";
@@ -378,7 +383,7 @@ async function loadSchedule() {
 
   rebuildFilters(allEvents);
 
-  // reset window so it follows "live/next" after refresh
+  // reset window so it follows live/next again
   windowStart = null;
 
   const now = new Date();
@@ -390,10 +395,7 @@ async function loadSchedule() {
 // --- Wire up ---
 leagueFilter.addEventListener("change", applyFilters);
 platformFilter.addEventListener("change", applyFilters);
-searchInput.addEventListener("input", () => {
-  // small debounce feel without timers
-  applyFilters();
-});
+searchInput.addEventListener("input", applyFilters);
 
 refreshBtn.addEventListener("click", () => loadSchedule().catch(err => {
   console.error(err);
@@ -403,6 +405,7 @@ refreshBtn.addEventListener("click", () => loadSchedule().catch(err => {
 
 prevWindow.addEventListener("click", () => shiftWindow(-1));
 nextWindow.addEventListener("click", () => shiftWindow(1));
+jumpNowBtn.addEventListener("click", jumpToNow);
 
 // initial
 loadSchedule().catch(err => {

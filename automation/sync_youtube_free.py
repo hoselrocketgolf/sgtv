@@ -6,8 +6,52 @@ import xml.etree.ElementTree as ET
 
 ET_TZ = ZoneInfo("America/New_York")
 
-CHANNEL_IDS = [c.strip() for c in os.environ.get("CHANNEL_IDS","").split(",") if c.strip()]
+CHANNEL_SHEET_CSV = os.environ.get(
+    "CHANNEL_SHEET_CSV",
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vR5DMZYPLgP64WZYcE1H0PMOQyjD2Rf67NUM1kRkC3dCPVwZJ0kNcj6dUbugO-LOaSNSx798fPA27tK/pub?gid=0&single=true&output=csv"
+)
 OUT_PATH = os.environ.get("OUT_PATH", "schedule.json")
+
+def parse_simple_csv(text: str):
+    # minimal CSV parser that handles quoted commas
+    import csv, io
+    f = io.StringIO(text)
+    return list(csv.DictReader(f))
+
+def load_channels_from_sheet():
+    """
+    Sheet headers expected:
+      handle, display_name, channel_id, subscribers
+    subscribers can be blank; it will be used only as fallback.
+    """
+    csv_text = http_get(CHANNEL_SHEET_CSV)
+    rows = parse_simple_csv(csv_text)
+
+    channels = []
+    for r in rows:
+        cid = (r.get("channel_id") or "").strip()
+        if not cid:
+            continue
+
+        handle = (r.get("handle") or "").strip()
+        display = (r.get("display_name") or "").strip()
+
+        # fallback subscribers from sheet (optional)
+        sub_raw = (r.get("subscribers") or "").strip().replace(",", "")
+        try:
+            sheet_subs = int(float(sub_raw)) if sub_raw else 0
+        except Exception:
+            sheet_subs = 0
+
+        channels.append({
+            "channel_id": cid,
+            "handle": handle,
+            "display_name": display,
+            "sheet_subscribers": sheet_subs
+        })
+
+    return channels
+
 
 USER_AGENT = "Mozilla/5.0 (compatible; sgtv-bot/1.0)"
 

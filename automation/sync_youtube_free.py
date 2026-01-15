@@ -216,22 +216,11 @@ def fetch_video_details(video_id: str):
 # ----------------- Live detection per channel -----------------
 def fetch_channel_live_video_id(channel_id: str, handle: str = "") -> str:
     """
-    More robust free live detection.
+    Find a channel's currently-live video id (ONLY if actually live).
 
-    Tries these endpoints (some channels only work on one of them):
-      - /@handle/live
-      - /channel/<id>/live
-      - /@handle/streams?live_view=501
-      - /channel/<id>/streams?live_view=501
-
-    Strategy:
-      1) Try redirect URL (sometimes includes ?v=)
-      2) If not, fetch HTML and extract a watch videoId from:
-         - <link rel="canonical" href="...watch?v=...">
-         - "urlCanonical":"https://www.youtube.com/watch?v=..."
-         - "watchEndpoint":{"videoId":"..."}
-      3) Only accept if page strongly indicates live now:
-         - isLiveNow true (raw or escaped)
+    IMPORTANT:
+    - /live often redirects to a video even when NOT live.
+    - So: we extract a candidate videoId, then confirm via fetch_video_details(...).
     """
     def try_get_final_and_html(url: str):
         try:
@@ -248,53 +237,69 @@ def fetch_channel_live_video_id(channel_id: str, handle: str = "") -> str:
         return m.group(1) if m else ""
 
     def extract_vid_from_html(html: str) -> str:
+        # canonical watch url
         m = re.search(r'rel="canonical"\s+href="https://www\.youtube\.com/watch\?v=([A-Za-z0-9_-]{6,})"', html)
         if m:
             return m.group(1)
 
+        # urlCanonical in JSON
         m = re.search(r'"urlCanonical":"https:\\/\\/www\\.youtube\\.com\\/watch\\?v=([A-Za-z0-9_-]{6,})"', html)
         if m:
             return m.group(1)
 
+        # watchEndpoint videoId
         m = re.search(r'"watchEndpoint":\{"videoId":"([A-Za-z0-9_-]{6,})"', html)
         if m:
             return m.group(1)
 
+        # escaped version
         m = re.search(r'\\"watchEndpoint\\":\{\\"videoId\\":\\"([A-Za-z0-9_-]{6,})\\"', html)
         if m:
             return m.group(1)
 
         return ""
 
-    def page_says_live(html: str) -> bool:
-        return (
-            '"isLiveNow":true' in html
-            or '\\"isLiveNow\\":true' in html
-            or 'isLiveNow\\":true' in html
-        )
-
     h = (handle or "").strip().lstrip("@")
 
     urls = []
+    # try handle first (often best)
     if h:
         urls.append(f"https://www.youtube.com/@{h}/live")
         urls.append(f"https://www.youtube.com/@{h}/streams?live_view=501")
+        urls.append(f"https://www.youtube.com/@{h}/streams")
+    # channel id variants
     urls.append(f"https://www.youtube.com/channel/{channel_id}/live")
     urls.append(f"https://www.youtube.com/channel/{channel_id}/streams?live_view=501")
+    urls.append(f"https://www.youtube.com/channel/{channel_id}/streams")
+
+    # extract candidates, then confirm actually LIVE
+    checked = set()
 
     for url in urls:
         final_url, html = try_get_final_and_html(url)
 
+        candidates = []
         vid = extract_vid_from_url(final_url)
         if vid:
-            return vid
+            candidates.append(vid)
+        if html:
+            vid2 = extract_vid_from_html(html)
+            if vid2:
+                candidates.append(vid2)
 
-        if html and page_says_live(html):
-            vid = extract_vid_from_html(html)
-            if vid:
-                return vid
+        for cand in candidates:
+            if not cand or cand in checked:
+                continue
+            checked.add(cand)
+
+            # confirm live via details (this is the key)
+            time.sleep(0.15)
+            details = fetch_video_details(cand)
+            if details and details.get("status") == "live":
+                return cand
 
     return ""
+
 
 
 # ----------------- Subscribers -----------------

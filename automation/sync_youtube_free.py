@@ -236,33 +236,53 @@ def fetch_channel_live_video_id(channel_id: str, handle: str = "") -> str:
         m = re.search(r"[?&]v=([A-Za-z0-9_-]{6,})", u)
         return m.group(1) if m else ""
 
-        def extract_vid_from_html(html: str) -> str:
+           def extract_vid_from_html(html: str) -> str:
         # BEST: videoId near isLiveNow:true (both directions)
-        m = re.search(r'"videoId":"([A-Za-z0-9_-]{6,})".{0,1200}"isLiveNow":true', html, re.DOTALL)
+        m = re.search(
+            r'"videoId":"([A-Za-z0-9_-]{6,})".{0,1200}"isLiveNow":true',
+            html,
+            re.DOTALL
+        )
         if m:
             return m.group(1)
 
-        m = re.search(r'"isLiveNow":true.{0,1200}"videoId":"([A-Za-z0-9_-]{6,})"', html, re.DOTALL)
+        m = re.search(
+            r'"isLiveNow":true.{0,1200}"videoId":"([A-Za-z0-9_-]{6,})"',
+            html,
+            re.DOTALL
+        )
         if m:
             return m.group(1)
 
         # canonical watch url
-        m = re.search(r'rel="canonical"\s+href="https://www\.youtube\.com/watch\?v=([A-Za-z0-9_-]{6,})"', html)
+        m = re.search(
+            r'rel="canonical"\s+href="https://www\.youtube\.com/watch\?v=([A-Za-z0-9_-]{6,})"',
+            html
+        )
         if m:
             return m.group(1)
 
         # urlCanonical in JSON
-        m = re.search(r'"urlCanonical":"https:\\/\\/www\\.youtube\\.com\\/watch\\?v=([A-Za-z0-9_-]{6,})"', html)
+        m = re.search(
+            r'"urlCanonical":"https:\\/\\/www\\.youtube\\.com\\/watch\\?v=([A-Za-z0-9_-]{6,})"',
+            html
+        )
         if m:
             return m.group(1)
 
         # watchEndpoint videoId
-        m = re.search(r'"watchEndpoint":\{"videoId":"([A-Za-z0-9_-]{6,})"', html)
+        m = re.search(
+            r'"watchEndpoint":\{"videoId":"([A-Za-z0-9_-]{6,})"',
+            html
+        )
         if m:
             return m.group(1)
 
         # escaped version
-        m = re.search(r'\\"watchEndpoint\\":\{\\"videoId\\":\\"([A-Za-z0-9_-]{6,})\\"', html)
+        m = re.search(
+            r'\\"watchEndpoint\\":\{\\"videoId\\":\\"([A-Za-z0-9_-]{6,})\\"',
+            html
+        )
         if m:
             return m.group(1)
 

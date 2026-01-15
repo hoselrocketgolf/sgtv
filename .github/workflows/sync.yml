@@ -22,6 +22,7 @@ jobs:
       - name: Run sync
         env:
           YT_API_KEY: ${{ secrets.YT_API_KEY }}
+          CHANNEL_SHEET_CSV: "https://docs.google.com/spreadsheets/d/e/2PACX-1vR5DMZYPLgP64WZYcE1H0PMOQyjD2Rf67NUM1kRkC3dCPVwZJ0kNcj6dUbugO-LOaSNSx798fPA27tK/pub?gid=0&single=true&output=csv"
           OUT_PATH: schedule.json
         run: |
           python automation/sync_youtube_free.py

@@ -4,12 +4,12 @@
 */
 
 const JSON_URL = "./schedule.json";
-
 const { DateTime } = luxon;
 const TZ = "America/New_York";
 
 // ---- Helpers ----
 function norm(s){ return (s ?? "").toString().trim(); }
+
 function escapeHtml(s){
   return norm(s)
     .replaceAll("&","&amp;")
@@ -18,20 +18,22 @@ function escapeHtml(s){
     .replaceAll('"',"&quot;")
     .replaceAll("'","&#039;");
 }
+
 function parseDateET(value){
   const v = norm(value);
   if (!v) return null;
 
-  // ISO-like
-  let dt = DateTime.fromISO(v, { zone: TZ });
+  // schedule.json uses "yyyy-MM-dd HH:mm" (NOT ISO)
+  let dt = DateTime.fromFormat(v, "yyyy-MM-dd HH:mm", { zone: TZ });
   if (dt.isValid) return dt;
 
-  // our format: yyyy-LL-dd HH:mm
-  dt = DateTime.fromFormat(v, "yyyy-LL-dd HH:mm", { zone: TZ });
+  // fallback: try ISO just in case
+  dt = DateTime.fromISO(v, { zone: TZ });
   if (dt.isValid) return dt;
 
   return null;
 }
+
 function fmtTime(dt){ return dt.setZone(TZ).toFormat("h:mm a"); }
 function fmtDate(dt){ return dt.setZone(TZ).toFormat("ccc, LLL d"); }
 
@@ -51,7 +53,6 @@ const lastUpdated = document.getElementById("lastUpdated");
 
 let allEvents = [];
 
-// ---- Filters ----
 function buildOption(selectEl, values){
   const current = selectEl.value;
   while (selectEl.options.length > 1) selectEl.remove(1);
@@ -62,6 +63,17 @@ function buildOption(selectEl, values){
     selectEl.appendChild(opt);
   });
   if ([...selectEl.options].some(o=>o.value===current)) selectEl.value = current;
+}
+
+function isLiveNow(evt){
+  // Primary truth: status from schedule.json
+  if (norm(evt.status).toLowerCase() === "live") return true;
+
+  // Fallback time-window if status missing
+  const now = DateTime.now().setZone(TZ);
+  if (!evt.start) return false;
+  const end = evt.end ?? evt.start.plus({ hours: 6 });
+  return now >= evt.start && now <= end;
 }
 
 function rowMatchesFilters(evt){
@@ -80,8 +92,7 @@ function rowMatchesFilters(evt){
   return true;
 }
 
-// ---- Cards ----
-function setCard(el, evt, label){
+function setHeroCard(el, evt, label){
   if (!evt){
     el.innerHTML = `<p class="muted">No ${label.toLowerCase()} event.</p>`;
     return;
@@ -89,128 +100,108 @@ function setCard(el, evt, label){
 
   const start = evt.start;
   const end = evt.end;
-  const timeLine = end ? `${fmtTime(start)}–${fmtTime(end)} ET` : `${fmtTime(start)} ET`;
-  const subLine = `${fmtDate(start)} • ${escapeHtml(evt.platform || "—")} • ${escapeHtml(evt.channel || "—")}`;
+  const timeLine = (end && end.isValid)
+    ? `${fmtTime(start)}–${fmtTime(end)} ET`
+    : `${fmtTime(start)} ET`;
 
-  const thumb = evt.thumbnail_url
-    ? `<img src="${evt.thumbnail_url}" alt="" style="width:100%;border-radius:14px;border:1px solid rgba(255,255,255,0.08);margin-bottom:10px;">`
-    : "";
-
+  const subLine = `${fmtDate(start)} • ${escapeHtml(evt.league || "—")} • ${escapeHtml(evt.platform || "—")}`;
   const watch = evt.watch_url
     ? `<a href="${evt.watch_url}" target="_blank" rel="noopener">Watch</a>`
     : `<span class="muted">No link</span>`;
 
-  const livePill = evt.status === "live"
-    ? `<span class="pill live" style="margin-left:8px;">LIVE</span>`
-    : "";
+  const thumb = evt.thumbnail_url
+    ? `<img src="${evt.thumbnail_url}" alt="" style="width:100%;border-radius:14px;margin:10px 0 12px;border:1px solid rgba(255,255,255,0.10);" loading="lazy" />`
+    : ``;
 
   el.innerHTML = `
+    <div class="title" style="font-weight:900;font-size:15px;margin-bottom:6px;">${escapeHtml(evt.title || "Untitled")}</div>
+    <div class="muted" style="margin-bottom:8px;">${timeLine}</div>
     ${thumb}
-    <div class="title" style="font-weight:900;font-size:15px;margin-bottom:6px;">
-      ${escapeHtml(evt.title || "Untitled")} ${livePill}
-    </div>
-    <div class="muted" style="margin-bottom:10px;">${timeLine}</div>
-    <div class="muted small" style="margin-bottom:10px;">${subLine}</div>
+    <div class="muted small" style="margin-bottom:10px;">${subLine}${evt.channel ? ` • ${escapeHtml(evt.channel)}` : ""}</div>
     <div class="watch">${watch}</div>
   `;
 }
 
-// ---- Sorting / selecting ----
 function computeNowNext(events){
   const now = DateTime.now().setZone(TZ);
 
-  // live if status says live OR within [start, start+2h] fallback
-  const live = events.filter(e=>{
-    if (!e.start) return false;
-    if (e.status === "live") return true;
-    const end = e.end ?? e.start.plus({ hours: 2 });
-    return now >= e.start && now <= end;
-  });
+  // LIVE: sort by subs desc so biggest live wins
+  const live = [...events]
+    .filter(e => isLiveNow(e))
+    .sort((a,b)=>(b.subscribers||0)-(a.subscribers||0));
 
-  // prefer higher subs if multiple live
-  live.sort((a,b)=> (b.subscribers||0)-(a.subscribers||0));
+  // UPCOMING: soonest
+  const upcoming = [...events]
+    .filter(e => e.start && e.start > now)
+    .sort((a,b)=>a.start.toMillis()-b.start.toMillis());
 
-  const upcoming = events.filter(e=>e.start && e.start > now && e.status !== "live");
-  upcoming.sort((a,b)=>{
-    const d = a.start.toMillis() - b.start.toMillis();
-    if (d !== 0) return d;
-    return (b.subscribers||0)-(a.subscribers||0);
-  });
+  const nowEvt = live[0] || null;
+  const nextEvt = upcoming[0] || null;
 
-  return {
-    nowEvt: live[0] || null,
-    nextEvt: upcoming[0] || null,
-    isLive: live.length > 0
-  };
+  return { nowEvt, nextEvt, isLive: !!nowEvt };
 }
 
-// ---- Render ----
 function render(){
   const filtered = allEvents.filter(rowMatchesFilters);
 
   const { nowEvt, nextEvt, isLive } = computeNowNext(filtered);
   nowPill.hidden = !isLive;
 
-  setCard(nowBody, nowEvt, "Now");
-  setCard(nextBody, nextEvt, "Next");
+  setHeroCard(nowBody, nowEvt, "Now");
+  setHeroCard(nextBody, nextEvt, "Next");
 
-  // Guide: LIVE first, then next 50 upcoming
+  // TV Guide list: show ALL live + next 24h upcoming (easier to navigate than “today only”)
   const now = DateTime.now().setZone(TZ);
+  const horizon = now.plus({ hours: 24 });
 
-  const live = filtered
-    .filter(e => e.status === "live")
-    .sort((a,b)=> (b.subscribers||0)-(a.subscribers||0));
-
-  const upcoming = filtered
-    .filter(e => e.start && e.start > now && e.status !== "live")
+  const guide = filtered
+    .filter(e => e.start)
+    .filter(e => isLiveNow(e) || (e.start >= now.minus({ hours: 6 }) && e.start <= horizon))
     .sort((a,b)=>{
-      const d = a.start.toMillis() - b.start.toMillis();
-      if (d !== 0) return d;
-      return (b.subscribers||0)-(a.subscribers||0);
-    })
-    .slice(0, 50);
-
-  const guide = [...live, ...upcoming];
+      const aLive = isLiveNow(a) ? 0 : 1;
+      const bLive = isLiveNow(b) ? 0 : 1;
+      if (aLive !== bLive) return aLive - bLive;
+      return a.start.toMillis() - b.start.toMillis();
+    });
 
   scheduleCards.innerHTML = "";
 
   if (guide.length === 0){
     emptyMsg.hidden = false;
-    scheduleCards.innerHTML = `<div class="muted">No LIVE or upcoming events found (try clearing filters).</div>`;
+    scheduleCards.innerHTML = `<div class="muted">No events match your filters.</div>`;
     return;
   }
 
   emptyMsg.hidden = true;
 
   guide.forEach(evt => {
+    const live = isLiveNow(evt);
+
     const card = document.createElement("div");
-    card.className = `eventCard ${evt.status === "live" ? "live" : ""}`;
+    card.className = `eventCard ${live ? "live" : ""}`;
 
-    const timeLine = evt.start
-      ? `${fmtTime(evt.start)} ET • ${fmtDate(evt.start)}`
-      : "";
-
-    const subsLine = evt.subscribers
-      ? `<span class="metaPill">${evt.subscribers.toLocaleString()} subs</span>`
-      : "";
+    const timeLine = evt.end
+      ? `${fmtTime(evt.start)}–${fmtTime(evt.end)} ET`
+      : `${fmtTime(evt.start)} ET`;
 
     const watch = evt.watch_url
       ? `<a href="${evt.watch_url}" target="_blank" rel="noopener">Watch</a>`
       : `<span class="muted">No link</span>`;
 
     const thumb = evt.thumbnail_url
-      ? `<img src="${evt.thumbnail_url}" alt="" style="width:100%;border-radius:14px;border:1px solid rgba(255,255,255,0.08);">`
-      : "";
+      ? `<img src="${evt.thumbnail_url}" alt="" style="width:100%;border-radius:14px;border:1px solid rgba(255,255,255,0.10);" loading="lazy" />`
+      : ``;
 
     card.innerHTML = `
       ${thumb}
       <div class="eventTime">${escapeHtml(timeLine)}</div>
       <div class="eventTitle">${escapeHtml(evt.title || "Untitled")}</div>
       <div class="eventMeta">
-        ${evt.status === "live" ? `<span class="metaPill live">LIVE</span>` : ``}
+        ${live ? `<span class="metaPill live">LIVE</span>` : ``}
+        ${evt.league ? `<span class="metaPill">${escapeHtml(evt.league)}</span>` : ``}
         ${evt.platform ? `<span class="metaPill">${escapeHtml(evt.platform)}</span>` : ``}
         ${evt.channel ? `<span class="metaPill">${escapeHtml(evt.channel)}</span>` : ``}
-        ${subsLine}
+        ${evt.subscribers ? `<span class="metaPill">${escapeHtml(String(evt.subscribers))} subs</span>` : ``}
       </div>
       <div class="eventActions">${watch}</div>
     `;
@@ -223,7 +214,10 @@ async function load(){
   scheduleCards.innerHTML = `<div class="muted">Loading…</div>`;
   emptyMsg.hidden = true;
 
-  const res = await fetch(JSON_URL, { cache: "no-store" });
+  // cache-bust so you ALWAYS see latest schedule.json on Cloudflare
+  const url = `${JSON_URL}?v=${Date.now()}`;
+
+  const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) throw new Error(`Failed to load schedule.json (${res.status})`);
 
   const data = await res.json();
@@ -264,10 +258,12 @@ async function load(){
 function wire(){
   leagueFilter.addEventListener("change", render);
   platformFilter.addEventListener("change", render);
+
   searchBox.addEventListener("input", () => {
     window.clearTimeout(window.__qT);
     window.__qT = window.setTimeout(render, 120);
   });
+
   refreshBtn.addEventListener("click", () => {
     refreshBtn.textContent = "Updating…";
     refreshBtn.disabled = true;

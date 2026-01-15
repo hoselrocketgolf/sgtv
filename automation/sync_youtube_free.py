@@ -18,11 +18,13 @@ REQ_HEADERS = {
     "Accept-Language": "en-US,en;q=0.9",
 }
 
+# ----------------- HTTP -----------------
 def http_get(url: str) -> str:
     req = urllib.request.Request(url, headers=REQ_HEADERS)
     with urllib.request.urlopen(req, timeout=30) as resp:
         return resp.read().decode("utf-8", errors="ignore")
 
+# ----------------- Sheet (channels) -----------------
 def parse_simple_csv(text: str):
     import csv, io
     f = io.StringIO(text)
@@ -35,11 +37,9 @@ def load_channels_from_sheet():
     """
     csv_text = http_get(CHANNEL_SHEET_CSV)
     rows = parse_simple_csv(csv_text)
-
     if not rows:
         return []
 
-    # show headers we actually got (helps debugging)
     print("Sheet headers:", list(rows[0].keys()))
 
     channels = []
@@ -66,6 +66,7 @@ def load_channels_from_sheet():
 
     return channels
 
+# ----------------- Time helpers -----------------
 def iso_to_et_fmt(iso: str) -> str:
     dt = datetime.fromisoformat(iso.replace("Z", "+00:00")).astimezone(ET_TZ)
     return dt.strftime("%Y-%m-%d %H:%M")
@@ -108,16 +109,14 @@ def fetch_rss(channel_id: str):
                 "thumbnail_url": thumb
             })
 
-    entries.sort(key=lambda x: x.get("published",""), reverse=True)
+    entries.sort(key=lambda x: x.get("published", ""), reverse=True)
     return entries[:60]
 
-# ----------------- Player Response Parsing (more robust) -----------------
+# ----------------- Player Response Parsing -----------------
 def extract_player_response(html: str):
     """
-    Attempts to extract ytInitialPlayerResponse JSON using a brace-balance scan.
-    Much more robust than regex-only.
+    Extract ytInitialPlayerResponse JSON using a brace-balance scan.
     """
-    # common anchors
     anchors = ["ytInitialPlayerResponse", "var ytInitialPlayerResponse"]
     idx = -1
     for a in anchors:
@@ -127,7 +126,6 @@ def extract_player_response(html: str):
     if idx == -1:
         return None
 
-    # find first '{' after anchor
     start = html.find("{", idx)
     if start == -1:
         return None
@@ -168,7 +166,6 @@ def get_live_status(player):
     start_ts = live_details.get("startTimestamp")
     end_ts = live_details.get("endTimestamp")
 
-    # sometimes these exist instead
     is_live = vd.get("isLive")
     is_upcoming = vd.get("isUpcoming")
     is_live_content = vd.get("isLiveContent")
@@ -218,10 +215,10 @@ def fetch_channel_live_video_id(channel_id: str, handle: str = "") -> str:
     """
     Find a channel's currently-live video id (ONLY if actually live).
 
-    IMPORTANT:
-    - /live often redirects to a video even when NOT live.
-    - So: we extract a candidate videoId, then confirm via fetch_video_details(...).
+    We extract candidate videoIds from live/streams pages,
+    then CONFIRM the candidate is actually live via fetch_video_details().
     """
+
     def try_get_final_and_html(url: str):
         try:
             req = urllib.request.Request(url, headers=REQ_HEADERS)
@@ -236,7 +233,7 @@ def fetch_channel_live_video_id(channel_id: str, handle: str = "") -> str:
         m = re.search(r"[?&]v=([A-Za-z0-9_-]{6,})", u)
         return m.group(1) if m else ""
 
-           def extract_vid_from_html(html: str) -> str:
+    def extract_vid_from_html(html: str) -> str:
         # BEST: videoId near isLiveNow:true (both directions)
         m = re.search(
             r'"videoId":"([A-Za-z0-9_-]{6,})".{0,1200}"isLiveNow":true',
@@ -288,21 +285,17 @@ def fetch_channel_live_video_id(channel_id: str, handle: str = "") -> str:
 
         return ""
 
-
     h = (handle or "").strip().lstrip("@")
 
     urls = []
-    # try handle first (often best)
     if h:
         urls.append(f"https://www.youtube.com/@{h}/live")
         urls.append(f"https://www.youtube.com/@{h}/streams?live_view=501")
         urls.append(f"https://www.youtube.com/@{h}/streams")
-    # channel id variants
     urls.append(f"https://www.youtube.com/channel/{channel_id}/live")
     urls.append(f"https://www.youtube.com/channel/{channel_id}/streams?live_view=501")
     urls.append(f"https://www.youtube.com/channel/{channel_id}/streams")
 
-    # extract candidates, then confirm actually LIVE
     checked = set()
 
     for url in urls:
@@ -312,6 +305,7 @@ def fetch_channel_live_video_id(channel_id: str, handle: str = "") -> str:
         vid = extract_vid_from_url(final_url)
         if vid:
             candidates.append(vid)
+
         if html:
             vid2 = extract_vid_from_html(html)
             if vid2:
@@ -322,15 +316,12 @@ def fetch_channel_live_video_id(channel_id: str, handle: str = "") -> str:
                 continue
             checked.add(cand)
 
-            # confirm live via details (this is the key)
             time.sleep(0.15)
             details = fetch_video_details(cand)
             if details and details.get("status") == "live":
                 return cand
 
     return ""
-
-
 
 # ----------------- Subscribers -----------------
 def parse_subscribers_to_int(text: str) -> int:
@@ -444,7 +435,6 @@ def main():
             time.sleep(0.25)
             details = fetch_video_details(vid)
             if not details:
-                # debug: shows why it’s skipping
                 print("Skipped (no live/upcoming):", item.get("title", ""), item.get("watch_url", ""))
                 continue
 

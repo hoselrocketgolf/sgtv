@@ -24,29 +24,44 @@ def fetch_rss(channel_id: str):
     url = f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}"
     xml_text = http_get(url)
     root = ET.fromstring(xml_text)
+
     ns = {
         "atom": "http://www.w3.org/2005/Atom",
         "yt": "http://www.youtube.com/xml/schemas/2015",
+        "media": "http://search.yahoo.com/mrss/",
     }
 
     entries = []
     for entry in root.findall("atom:entry", ns):
         vid = entry.findtext("yt:videoId", default="", namespaces=ns)
         title = entry.findtext("atom:title", default="", namespaces=ns)
+
         link_el = entry.find("atom:link", ns)
         link = link_el.attrib.get("href", "") if link_el is not None else ""
+
         published = entry.findtext("atom:published", default="", namespaces=ns)
         author_name = entry.findtext("atom:author/atom:name", default="", namespaces=ns)
+
+        # Thumbnail (best-effort)
+        thumb = ""
+        thumb_el = entry.find("media:group/media:thumbnail", ns)
+        if thumb_el is not None:
+            thumb = thumb_el.attrib.get("url", "") or ""
+
         if vid and link:
             entries.append({
                 "video_id": vid,
                 "title": title,
                 "watch_url": link,
                 "published": published,
-                "channel": author_name
+                "channel": author_name,
+                "thumbnail_url": thumb
             })
+
     entries.sort(key=lambda x: x.get("published",""), reverse=True)
+    # scan deeper so we catch scheduled lives that aren’t among the newest few uploads
     return entries[:60]
+
 
 def extract_player_response(html: str):
     patterns = [
@@ -116,6 +131,23 @@ def fetch_video_details(video_id: str):
             }
 
     return None
+
+def fetch_channel_live_video_id(channel_id: str) -> str:
+    """
+    Tries to discover a channel's currently-live video (even if it wasn't scheduled),
+    by hitting the /live endpoint and reading the final redirected URL.
+    Returns video_id or "".
+    """
+    try:
+        url = f"https://www.youtube.com/channel/{channel_id}/live"
+        req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            final_url = resp.geturl()  # after redirects
+        m = re.search(r"[?&]v=([A-Za-z0-9_-]{6,})", final_url)
+        return m.group(1) if m else ""
+    except Exception:
+        return ""
+
 
 
 def main():

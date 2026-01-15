@@ -1,7 +1,8 @@
-import os, re, json, time
+import os, re, json, time, csv, io
 from datetime import datetime
 from zoneinfo import ZoneInfo
 import urllib.request
+import urllib.error
 import xml.etree.ElementTree as ET
 
 ET_TZ = ZoneInfo("America/New_York")
@@ -12,34 +13,33 @@ CHANNEL_SHEET_CSV = os.environ.get(
 )
 OUT_PATH = os.environ.get("OUT_PATH", "schedule.json")
 
-# ---- Request headers tuned for YouTube scraping on GitHub Actions ----
-USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36"
+USER_AGENT = "Mozilla/5.0 (compatible; sgtv-bot/1.0)"
 REQ_HEADERS = {
     "User-Agent": USER_AGENT,
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Accept-Language": "en-US,en;q=0.9",
-    # Key fix: bypass many EU/consent interstitials that hide ytInitialPlayerResponse
-    "Cookie": "CONSENT=YES+1; SOCS=CAI;",
+    "Cache-Control": "no-cache",
+    "Pragma": "no-cache",
 }
 
-# Tune these to control runtime
-RSS_SCAN_LIMIT = int(os.environ.get("RSS_SCAN_LIMIT", "25"))   # was 60
-SLEEP_BETWEEN = float(os.environ.get("SLEEP_BETWEEN", "0.08")) # keep small to avoid throttling
-
+# ---------- HTTP ----------
 def http_get(url: str) -> str:
-    req = urllib.request.Request(url, headers=REQ_HEADERS)
+    req = urllib.request.Request(url, headers=REQ_HEADERS, method="GET")
     with urllib.request.urlopen(req, timeout=30) as resp:
         return resp.read().decode("utf-8", errors="ignore")
 
-def http_get_final_and_html(url: str):
-    """Returns (final_url_after_redirects, html)."""
-    req = urllib.request.Request(url, headers=REQ_HEADERS)
+def safe_get(url: str) -> tuple[str, str]:
+    """
+    Returns (final_url, html). urllib follows redirects automatically.
+    """
+    req = urllib.request.Request(url, headers=REQ_HEADERS, method="GET")
     with urllib.request.urlopen(req, timeout=30) as resp:
         final_url = resp.geturl()
         html = resp.read().decode("utf-8", errors="ignore")
-    return final_url, html
+        return final_url, html
 
+# ---------- CSV ----------
 def parse_simple_csv(text: str):
-    import csv, io
     f = io.StringIO(text)
     return list(csv.DictReader(f))
 
@@ -50,6 +50,7 @@ def load_channels_from_sheet():
     """
     csv_text = http_get(CHANNEL_SHEET_CSV)
     rows = parse_simple_csv(csv_text)
+
     if not rows:
         return []
 
@@ -79,11 +80,15 @@ def load_channels_from_sheet():
 
     return channels
 
+# ---------- Time ----------
 def iso_to_et_fmt(iso: str) -> str:
     dt = datetime.fromisoformat(iso.replace("Z", "+00:00")).astimezone(ET_TZ)
     return dt.strftime("%Y-%m-%d %H:%M")
 
-# ----------------- RSS -----------------
+def now_et_fmt() -> str:
+    return datetime.now(ET_TZ).strftime("%Y-%m-%d %H:%M")
+
+# ---------- RSS ----------
 def fetch_rss(channel_id: str):
     url = f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}"
     xml_text = http_get(url)
@@ -121,149 +126,98 @@ def fetch_rss(channel_id: str):
                 "thumbnail_url": thumb
             })
 
-    entries.sort(key=lambda x: x.get("published",""), reverse=True)
-    return entries[:RSS_SCAN_LIMIT]
+    entries.sort(key=lambda x: x.get("published", ""), reverse=True)
+    return entries[:80]
 
-# ----------------- Player Response Parsing (brace-balance) -----------------
-def extract_player_response(html: str):
-    """
-    Extract ytInitialPlayerResponse JSON via brace-balance scan.
-    Works even when YouTube minifies scripts.
-    """
-    idx = html.find("ytInitialPlayerResponse")
-    if idx == -1:
-        return None
-
-    start = html.find("{", idx)
-    if start == -1:
-        return None
-
-    depth = 0
-    in_str = False
-    esc = False
-    for i in range(start, len(html)):
-        c = html[i]
-        if in_str:
-            if esc:
-                esc = False
-            elif c == "\\":
-                esc = True
-            elif c == '"':
-                in_str = False
-        else:
-            if c == '"':
-                in_str = True
-            elif c == "{":
-                depth += 1
-            elif c == "}":
-                depth -= 1
-                if depth == 0:
-                    blob = html[start:i+1]
-                    try:
-                        return json.loads(blob)
-                    except Exception:
-                        return None
-    return None
-
-def get_live_status(player):
-    vd = (player or {}).get("videoDetails", {}) or {}
-    micro = (((player or {}).get("microformat", {}) or {}).get("playerMicroformatRenderer", {}) or {})
-    live_details = (micro.get("liveBroadcastDetails", {}) or {})
-
-    is_live_now = live_details.get("isLiveNow")
-    start_ts = live_details.get("startTimestamp")
-    end_ts = live_details.get("endTimestamp")
-
-    # sometimes these exist instead
-    is_live = vd.get("isLive")
-    is_upcoming = vd.get("isUpcoming")
-    is_live_content = vd.get("isLiveContent")
-
-    if is_live_now is True or is_live is True:
-        return "live", start_ts, end_ts
-    if is_upcoming is True or (is_live_content is True and start_ts and is_live_now is False):
-        return "upcoming", start_ts, end_ts
-    return None, None, None
-
+# ---------- Watch page (video status) ----------
 def fetch_video_details(video_id: str):
     """
-    Returns {status, start_et, end_et} if live/upcoming, else None.
-    Uses consent-friendly URL params too.
+    Returns:
+      {"status": "live"/"upcoming", "start_et": "...", "end_et": "..."}
+    or None.
     """
-    url = f"https://www.youtube.com/watch?v={video_id}&bpctr=9999999999&has_verified=1"
-    html = http_get(url)
+    html = http_get(f"https://www.youtube.com/watch?v={video_id}")
 
-    # If we got an interstitial / consent wall, this catches it quickly
-    if "consent.youtube.com" in html or "Before you continue" in html:
-        # try again with same cookies/headers (sometimes first response is cached)
-        html = http_get(url)
+    # If YouTube serves a consent / blocked page, this catches it in logs
+    if "consent.youtube.com" in html.lower() or "before you continue" in html.lower():
+        print("WARN: Consent/blocked page for watch:", video_id)
+        return None
 
-    player = extract_player_response(html)
-    if player:
-        status, start_ts, end_ts = get_live_status(player)
-        if status in ("live", "upcoming"):
-            if status == "live" and not start_ts:
-                now_et = datetime.now(ET_TZ).strftime("%Y-%m-%d %H:%M")
-                return {"status": "live", "start_et": now_et, "end_et": ""}
-            if start_ts:
-                return {
-                    "status": status,
-                    "start_et": iso_to_et_fmt(start_ts),
-                    "end_et": iso_to_et_fmt(end_ts) if end_ts else ""
-                }
+    # LIVE NOW check (raw or escaped)
+    live_now = (
+        '"isLiveNow":true' in html
+        or '\\"isLiveNow\\":true' in html
+        or 'isLiveNow\\":true' in html
+        or "isLiveNow\":true" in html
+    )
+    upcoming = (
+        '"isUpcoming":true' in html
+        or '\\"isUpcoming\\":true' in html
+        or "upcomingEventData" in html
+    )
 
-    # fallback string checks (covers some cases where JSON parse fails)
-    live_markers = [
-        '"isLiveNow":true',
-        '\\"isLiveNow\\":true',
-        'isLiveNow\\":true',
-    ]
-    if any(m in html for m in live_markers):
-        m = re.search(r'"startTimestamp":"([^"]+)"', html)
-        if m:
-            return {"status": "live", "start_et": iso_to_et_fmt(m.group(1)), "end_et": ""}
-        now_et = datetime.now(ET_TZ).strftime("%Y-%m-%d %H:%M")
-        return {"status": "live", "start_et": now_et, "end_et": ""}
+    # start / end timestamps (often present for both live and upcoming)
+    m_start = re.search(r'"startTimestamp":"([^"]+)"', html)
+    m_end = re.search(r'"endTimestamp":"([^"]+)"', html)
 
-    if ('"isUpcoming":true' in html) or ('"upcomingEventData"' in html) or ("upcomingEventData" in html):
-        m = re.search(r'"startTimestamp":"([^"]+)"', html)
-        if m:
-            return {"status": "upcoming", "start_et": iso_to_et_fmt(m.group(1)), "end_et": ""}
+    start_ts = m_start.group(1) if m_start else ""
+    end_ts = m_end.group(1) if m_end else ""
+
+    if live_now:
+        return {
+            "status": "live",
+            "start_et": iso_to_et_fmt(start_ts) if start_ts else now_et_fmt(),
+            "end_et": iso_to_et_fmt(end_ts) if end_ts else ""
+        }
+
+    if upcoming and start_ts:
+        return {
+            "status": "upcoming",
+            "start_et": iso_to_et_fmt(start_ts),
+            "end_et": iso_to_et_fmt(end_ts) if end_ts else ""
+        }
 
     return None
 
-# ----------------- Live detection per channel -----------------
-def extract_video_ids_from_html(html: str):
+# ---------- Channel LIVE discovery ----------
+def extract_video_id_candidates(html: str) -> list[str]:
     """
-    Pull candidate videoIds from a channel page / streams page.
-    We return a small unique list (order preserved).
+    Pull possible videoIds from channel pages.
+    We return multiple; caller confirms via fetch_video_details(...).
     """
-    found = []
-    seen = set()
+    cands = []
 
-    # Strongest signal: videoId close to isLiveNow:true
-    patterns = [
-        r'"videoId":"([A-Za-z0-9_-]{6,})".{0,1500}"isLiveNow":true',
-        r'"isLiveNow":true.{0,1500}"videoId":"([A-Za-z0-9_-]{6,})"',
-        r'"urlCanonical":"https:\\/\\/www\\.youtube\\.com\\/watch\\?v=([A-Za-z0-9_-]{6,})"',
-        r'rel="canonical"\s+href="https://www\.youtube\.com/watch\?v=([A-Za-z0-9_-]{6,})"',
-        r'"watchEndpoint":\{"videoId":"([A-Za-z0-9_-]{6,})"',
-        r'\\"watchEndpoint\\":\{\\"videoId\\":\\"([A-Za-z0-9_-]{6,})\\"',
-    ]
-    for pat in patterns:
-        for m in re.finditer(pat, html, re.DOTALL):
-            vid = m.group(1)
-            if vid and vid not in seen:
-                seen.add(vid)
-                found.append(vid)
-            if len(found) >= 6:
-                return found
-    return found
+    # canonical watch url
+    m = re.search(r'rel="canonical"\s+href="https://www\.youtube\.com/watch\?v=([A-Za-z0-9_-]{6,})"', html)
+    if m:
+        cands.append(m.group(1))
+
+    # urlCanonical inside JSON
+    m = re.search(r'"urlCanonical":"https:\\/\\/www\\.youtube\\.com\\/watch\\?v=([A-Za-z0-9_-]{6,})"', html)
+    if m:
+        cands.append(m.group(1))
+
+    # watchEndpoint videoId (common)
+    for mm in re.finditer(r'"watchEndpoint":\{"videoId":"([A-Za-z0-9_-]{6,})"', html):
+        cands.append(mm.group(1))
+
+    # escaped watchEndpoint
+    for mm in re.finditer(r'\\"watchEndpoint\\":\{\\"videoId\\":\\"([A-Za-z0-9_-]{6,})\\"', html):
+        cands.append(mm.group(1))
+
+    # de-dupe preserve order
+    out = []
+    seen = set()
+    for v in cands:
+        if v and v not in seen:
+            seen.add(v)
+            out.append(v)
+    return out
 
 def fetch_channel_live_video_id(channel_id: str, handle: str = "") -> str:
     """
-    IMPORTANT: /live can redirect to a *recent upload* even when not live.
-    So we gather candidates from multiple endpoints, then confirm using fetch_video_details(...).
+    Goal: find a candidate video id from channel pages, then CONFIRM it's live.
+    This avoids /live redirect lying.
     """
     h = (handle or "").strip().lstrip("@")
 
@@ -271,46 +225,50 @@ def fetch_channel_live_video_id(channel_id: str, handle: str = "") -> str:
     if h:
         urls.extend([
             f"https://www.youtube.com/@{h}/live",
-            f"https://www.youtube.com/@{h}/streams?live_view=501",
             f"https://www.youtube.com/@{h}/streams",
+            f"https://www.youtube.com/@{h}/streams?live_view=501",
+            f"https://www.youtube.com/@{h}",
         ])
     urls.extend([
         f"https://www.youtube.com/channel/{channel_id}/live",
-        f"https://www.youtube.com/channel/{channel_id}/streams?live_view=501",
         f"https://www.youtube.com/channel/{channel_id}/streams",
+        f"https://www.youtube.com/channel/{channel_id}/streams?live_view=501",
+        f"https://www.youtube.com/channel/{channel_id}",
     ])
 
     checked = set()
 
     for url in urls:
         try:
-            final_url, html = http_get_final_and_html(url)
+            final_url, html = safe_get(url)
         except Exception:
             continue
 
-        # candidate from redirect
-        m = re.search(r"[?&]v=([A-Za-z0-9_-]{6,})", final_url or "")
-        candidates = []
+        # If redirect URL has ?v=..., try it too
+        m = re.search(r"[?&]v=([A-Za-z0-9_-]{6,})", final_url)
         if m:
-            candidates.append(m.group(1))
+            vid = m.group(1)
+            if vid not in checked:
+                checked.add(vid)
+                time.sleep(0.2)
+                d = fetch_video_details(vid)
+                if d and d.get("status") == "live":
+                    return vid
 
-        # candidates from html
-        if html:
-            candidates.extend(extract_video_ids_from_html(html))
-
-        for cand in candidates:
-            if not cand or cand in checked:
+        # Otherwise pull candidates from the HTML
+        cands = extract_video_id_candidates(html)
+        for vid in cands[:12]:  # don't go crazy
+            if vid in checked:
                 continue
-            checked.add(cand)
-
-            time.sleep(SLEEP_BETWEEN)
-            details = fetch_video_details(cand)
-            if details and details.get("status") == "live":
-                return cand
+            checked.add(vid)
+            time.sleep(0.2)
+            d = fetch_video_details(vid)
+            if d and d.get("status") == "live":
+                return vid
 
     return ""
 
-# ----------------- Subscribers -----------------
+# ---------- Subscribers (best effort) ----------
 def parse_subscribers_to_int(text: str) -> int:
     if not text:
         return 0
@@ -324,7 +282,7 @@ def parse_subscribers_to_int(text: str) -> int:
     if suf == "k":
         return int(num * 1000)
     if suf == "m":
-        return int(num * 1_000_000)
+        return int(num * 1000000)
     return int(num)
 
 def scrape_subscribers_from_html(html: str) -> int:
@@ -340,36 +298,38 @@ def scrape_subscribers_from_html(html: str) -> int:
             return parse_subscribers_to_int(m.group(1) if m.groups() else m.group(0))
     return 0
 
-def fetch_channel_subscribers(channel_id: str, handle: str = "") -> int:
+def fetch_channel_subscribers(channel_id: str, handle: str = "", sheet_fallback: int = 0) -> int:
     h = (handle or "").strip().lstrip("@")
     urls = []
     if h:
-        urls.extend([
-            f"https://www.youtube.com/@{h}/about",
-            f"https://www.youtube.com/@{h}",
-        ])
-    urls.extend([
-        f"https://www.youtube.com/channel/{channel_id}/about",
-        f"https://www.youtube.com/channel/{channel_id}",
-    ])
+        urls.append(f"https://www.youtube.com/@{h}/about")
+        urls.append(f"https://www.youtube.com/@{h}")
+    urls.append(f"https://www.youtube.com/channel/{channel_id}/about")
+    urls.append(f"https://www.youtube.com/channel/{channel_id}")
 
     for u in urls:
         try:
-            html = http_get(u + ("?bpctr=9999999999&has_verified=1" if "youtube.com/" in u else ""))
+            html = http_get(u)
             subs = scrape_subscribers_from_html(html)
             if subs > 0:
+                # sanity: if scrape returns tiny junk (like 1-9) but sheet has real value, prefer sheet
+                if subs < 10 and sheet_fallback >= 10:
+                    return sheet_fallback
                 return subs
         except Exception:
             continue
-    return 0
 
-# ----------------- Main -----------------
+    return sheet_fallback if sheet_fallback > 0 else 0
+
+# ---------- Main ----------
 def main():
     channels = load_channels_from_sheet()
     if not channels:
         raise SystemExit("No channels found in channel sheet CSV (check headers + publish link).")
 
     print("Loaded channels from sheet:", len(channels))
+    print("Channel IDs:", [c["channel_id"] for c in channels])
+    print("-----")
 
     events = []
     seen = set()
@@ -377,57 +337,61 @@ def main():
     for ch in channels:
         cid = ch["channel_id"]
         handle = (ch.get("handle") or "").strip().lstrip("@")
-
-        scraped_subs = fetch_channel_subscribers(cid, handle)
-        subs = scraped_subs if scraped_subs > 0 else int(ch.get("sheet_subscribers", 0) or 0)
-
         sheet_name = (ch.get("display_name") or "").strip()
-        preferred_name = sheet_name or (f"@{handle}" if handle else "")
+        sheet_subs = int(ch.get("sheet_subscribers") or 0)
 
-        print("-----")
-        print("Channel:", cid, "handle:", handle, "name:", preferred_name, "subs:", subs)
+        subs = fetch_channel_subscribers(cid, handle, sheet_fallback=sheet_subs)
 
-        # 1) Live RIGHT NOW (even if unscheduled)
+        display_name = sheet_name or (f"@{handle}" if handle else "")
+
+        print("Channel:", cid, "handle:", handle, "name:", display_name, "subs:", subs)
+
+        # 1) CURRENT LIVE (unscheduled)
         live_vid = fetch_channel_live_video_id(cid, handle)
-        if live_vid:
-            print("LIVE CONFIRMED:", live_vid)
-
-            if live_vid not in seen:
-                details = fetch_video_details(live_vid)  # should be live
-                if details and details.get("status") == "live":
-                    seen.add(live_vid)
-                    events.append({
-                        "start_et": details.get("start_et", ""),
-                        "end_et": details.get("end_et", ""),
-                        "title": "LIVE (right now)",
-                        "league": "",
-                        "platform": "YouTube",
-                        "channel": preferred_name,
-                        "watch_url": f"https://www.youtube.com/watch?v={live_vid}",
-                        "source_id": live_vid,
-                        "status": "live",
-                        "thumbnail_url": f"https://i.ytimg.com/vi/{live_vid}/hqdefault.jpg",
-                        "subscribers": subs,
-                    })
-        else:
+        if not live_vid:
             print("No LIVE detected right now.")
+        else:
+            print("LIVE detected:", live_vid)
 
-        # 2) Upcoming/live from RSS
+        if live_vid and live_vid not in seen:
+            time.sleep(0.25)
+            details = fetch_video_details(live_vid)
+            print("LIVE details:", details)
+
+            if details and details.get("status") == "live":
+                seen.add(live_vid)
+                events.append({
+                    "start_et": details.get("start_et", ""),
+                    "end_et": details.get("end_et", ""),
+                    "title": "LIVE (unscheduled)",
+                    "league": "",
+                    "platform": "YouTube",
+                    "channel": display_name,
+                    "watch_url": f"https://www.youtube.com/watch?v={live_vid}",
+                    "source_id": live_vid,
+                    "status": "live",
+                    "thumbnail_url": f"https://i.ytimg.com/vi/{live_vid}/hqdefault.jpg",
+                    "subscribers": subs,
+                })
+
+        # 2) UPCOMING/LIVE from RSS (scheduled streams often show here)
         feed = fetch_rss(cid)
         for item in feed:
             vid = item["video_id"]
             if vid in seen:
                 continue
 
-            time.sleep(SLEEP_BETWEEN)
+            time.sleep(0.25)
             details = fetch_video_details(vid)
             if not details:
+                # useful debug
+                print("Skipped (no live/upcoming):", item.get("title", ""), item.get("watch_url", ""))
                 continue
 
             seen.add(vid)
 
             yt_name = (item.get("channel") or "").strip()
-            final_name = preferred_name or yt_name or ""
+            final_name = display_name or yt_name or ""
 
             events.append({
                 "start_et": details.get("start_et", ""),
@@ -443,22 +407,26 @@ def main():
                 "subscribers": subs,
             })
 
-    # Ensure thumbs for everything
+        print("-----")
+
+    # ensure thumbs
     for e in events:
         if not e.get("thumbnail_url") and e.get("source_id"):
             e["thumbnail_url"] = f"https://i.ytimg.com/vi/{e['source_id']}/hqdefault.jpg"
 
-    # Sort: live first, then time, tie-break by subs desc
+    # Sort: LIVE first, then soonest start, tie-break subs desc
     def sort_key(e):
-        live_rank = 0 if e.get("status") == "live" else 1
-        return (live_rank, e.get("start_et", "9999-99-99 99:99"), -(int(e.get("subscribers") or 0)))
+        live_rank = 0 if (e.get("status") == "live") else 1
+        start = e.get("start_et") or "9999-99-99 99:99"
+        subs = int(e.get("subscribers") or 0)
+        return (live_rank, start, -subs)
 
     events.sort(key=sort_key)
 
     with open(OUT_PATH, "w", encoding="utf-8") as f:
         json.dump(events, f, indent=2)
 
-    print(f"-----\nWrote {len(events)} events to {OUT_PATH}")
+    print(f"Wrote {len(events)} events to {OUT_PATH}")
 
 if __name__ == "__main__":
     main()

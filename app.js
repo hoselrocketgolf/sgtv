@@ -22,6 +22,9 @@ const nowOn = $("nowOn");
 const upNext = $("upNext");
 const lastUpdated = $("lastUpdated");
 
+// Right tile body (Guide tile)
+const infoTileBody = document.querySelector("#infoTile .tileBody");
+
 const timeRow = $("timeRow");
 const rowsEl = $("rows");
 const emptyState = $("emptyState");
@@ -59,6 +62,18 @@ function fmtDay(dt) {
   return `${days[dt.getDay()]}, ${months[dt.getMonth()]} ${dt.getDate()}`;
 }
 
+function pad2(n){ return String(n).padStart(2,"0"); }
+
+function sameDay(a, b) {
+  return (
+    a &&
+    b &&
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
 function clamp(n, a, b) {
   return Math.max(a, Math.min(b, n));
 }
@@ -93,8 +108,10 @@ function eventEnd(e) {
   const start = parseET(e.start_et);
   if (!start) return null;
 
-  // defaults
-  const mins = e.status === "live" ? 110 : 70;
+  // CHANGE #1: Default duration 2 hours when no end time
+  // - Live streams commonly run ~2 hours
+  // - Upcoming scheduled streams often ~2 hours too
+  const mins = 120;
   return new Date(start.getTime() + mins * 60000);
 }
 
@@ -156,6 +173,7 @@ function applyFilters() {
   filteredEvents = sortEvents(filteredEvents);
 
   renderNowNext();
+  renderRightTileTodayList(); // CHANGE #2
   renderGuide();
 }
 
@@ -201,6 +219,119 @@ function renderNowNext() {
     : `<div class="muted">No upcoming events found.</div>`;
 }
 
+// --- CHANGE #2: Right tile becomes "Today's lineup" clickable chips ---
+function renderRightTileTodayList() {
+  if (!infoTileBody) return;
+
+  const now = new Date();
+  const todays = filteredEvents
+    .filter(e => {
+      const s = parseET(e.start_et);
+      return s && sameDay(s, now);
+    })
+    .sort((a, b) => (parseET(a.start_et)?.getTime() ?? 0) - (parseET(b.start_et)?.getTime() ?? 0));
+
+  if (!todays.length) {
+    infoTileBody.innerHTML = `
+      <div class="muted">No events scheduled for today.</div>
+      <div class="muted" style="margin-top:10px;">Try clearing filters or check back later.</div>
+    `;
+    return;
+  }
+
+  const items = todays.map(e => {
+    const s = parseET(e.start_et);
+    const t = fmtTime(s).replace(" ET", "");
+    const isLive = e.status === "live";
+    const title = e.title || "";
+    const ch = e.channel || "";
+    const badge = isLive ? `<span class="chipBadge">LIVE</span>` : "";
+    return `
+      <a class="chip" href="${escapeHtml(e.watch_url)}" target="_blank" rel="noreferrer" title="${escapeHtml(title)}">
+        <span class="chipTime">${escapeHtml(t)}</span>
+        <span class="chipTitle">${escapeHtml(title)}</span>
+        <span class="chipChan">${escapeHtml(ch)}</span>
+        ${badge}
+      </a>
+    `;
+  }).join("");
+
+  // Inline styles so you don't have to touch CSS unless you want to later
+  infoTileBody.innerHTML = `
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;">
+      <div class="muted">Today • ${fmtDay(now)}</div>
+      <div class="muted" style="font-size:12px;">${todays.length} shows</div>
+    </div>
+
+    <div class="chipList">
+      ${items}
+    </div>
+
+    <style>
+      .chipList{
+        display:flex;
+        flex-direction:column;
+        gap:8px;
+        max-height: 360px;
+        overflow:auto;
+        padding-right: 4px;
+      }
+      .chip{
+        display:flex;
+        align-items:center;
+        gap:10px;
+        padding:10px 12px;
+        border-radius: 999px;
+        border:1px solid rgba(255,255,255,.12);
+        background: rgba(0,0,0,.20);
+        transition: filter .12s ease, transform .12s ease;
+      }
+      .chip:hover{
+        filter: brightness(1.07);
+        transform: translateY(-1px);
+      }
+      .chipTime{
+        font-weight:900;
+        font-size:12px;
+        color: rgba(255,255,255,.90);
+        min-width: 86px;
+        white-space: nowrap;
+      }
+      .chipTitle{
+        font-weight:800;
+        font-size:12.5px;
+        color: rgba(255,255,255,.92);
+        overflow:hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        flex:1;
+      }
+      .chipChan{
+        font-size:12px;
+        color: rgba(255,255,255,.65);
+        white-space: nowrap;
+        max-width: 160px;
+        overflow:hidden;
+        text-overflow: ellipsis;
+      }
+      .chipBadge{
+        margin-left:auto;
+        font-size:11px;
+        padding:4px 9px;
+        border-radius: 999px;
+        color: rgba(46,229,157,.95);
+        background: rgba(46,229,157,.10);
+        border:1px solid rgba(46,229,157,.30);
+        white-space: nowrap;
+      }
+      @media (max-width: 980px){
+        .chipChan{display:none;}
+        .chipTime{min-width: 78px;}
+      }
+    </style>
+  `;
+}
+
 // --- TV Guide rendering ---
 function roundToTick(dt) {
   const mins = dt.getMinutes();
@@ -223,7 +354,6 @@ function jumpToNow() {
   windowStart = roundToTick(new Date());
   renderGuide();
 
-  // Optional: nudges the rows scroller to top so user "feels" reset
   if (rowsEl) rowsEl.scrollTop = 0;
 }
 

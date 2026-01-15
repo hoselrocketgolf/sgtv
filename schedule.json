@@ -1,18 +1,5 @@
 [
   {
-    "start_et": "2025-09-29 19:17",
-    "end_et": "",
-    "title": "SGT Cup: Singles Match",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Mike Murphy",
-    "watch_url": "https://www.youtube.com/watch?v=cFdJI99Ukz8",
-    "source_id": "cFdJI99Ukz8",
-    "status": "upcoming",
-    "thumbnail_url": "https://i.ytimg.com/vi/cFdJI99Ukz8/maxresdefault_live.jpg",
-    "subscribers": 21
-  },
-  {
     "start_et": "2025-12-21 19:07",
     "end_et": "",
     "title": "GSPro - SGT Blitz 2 Man Shamble Fall 2025 Round 7",
@@ -76,6 +63,19 @@
     "status": "upcoming",
     "thumbnail_url": "https://i.ytimg.com/vi/HJa0AUeS5lE/maxresdefault_live.jpg",
     "subscribers": 12
+  },
+  {
+    "start_et": "2026-01-16 13:00",
+    "end_et": "",
+    "title": "SticeGolf vs Hosel Rocket Golf",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Hosel Rocket Golf",
+    "watch_url": "https://www.youtube.com/watch?v=oYAnobNwkrc",
+    "source_id": "oYAnobNwkrc",
+    "status": "upcoming",
+    "thumbnail_url": "https://i.ytimg.com/vi/oYAnobNwkrc/maxresdefault_live.jpg",
+    "subscribers": 2460
   },
   {
     "start_et": "2026-01-17 16:00",

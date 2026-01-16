@@ -9,7 +9,6 @@
   <body>
     <header class="top">
       <div class="brand">
-        <!-- Logo badge (click = refresh) -->
         <button id="brandBtn" class="brandLogo" type="button" aria-label="Refresh" title="Refresh">
           <img class="brandLogoImg" src="assets/sgtv-logo.svg" alt="SGTV" />
         </button>
@@ -68,11 +67,10 @@
 
         <div class="tile" id="infoTile">
           <div class="tileHeader">
-            <h2>Guide</h2>
+            <h2>Today's Guide</h2>
           </div>
-          <div class="tileBody info">
-            <div class="muted">Loading…</div>
-          </div>
+          <!-- JS will fully render this -->
+          <div class="tileBody" id="guideTileBody">Loading…</div>
         </div>
       </section>
 
@@ -106,7 +104,6 @@
     </main>
 
     <script src="app.js"></script>
-
     <script>
       document.getElementById("brandBtn").addEventListener("click", () => {
         const refresh = document.getElementById("refreshBtn");

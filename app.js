@@ -33,12 +33,6 @@ function parseET(str) {
   const [h, m] = t.split(":").map(Number);
   return new Date(Y, (M - 1), D, h, m, 0, 0);
 }
-function sameDay(a, b) {
-  return a && b &&
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate();
-}
 function fmtTime(dt) {
   if (!dt) return "";
   const h = dt.getHours();
@@ -74,13 +68,25 @@ let tickMins = 30;
 let pxPerTick = 140;
 let pxPerMin = pxPerTick / tickMins;
 
+// ✅ End-time logic
+// - If end_et exists: use it
+// - Else: default to start + 2h
+// - If LIVE: extend to at least (now + 20min) so it stays visible in the grid
 function eventEnd(e) {
   const end = parseET(e.end_et);
   if (end) return end;
+
   const start = parseET(e.start_et);
   if (!start) return null;
-  // default 2 hours
-  return new Date(start.getTime() + 120 * 60000);
+
+  const defaultEnd = new Date(start.getTime() + 120 * 60000);
+
+  if (e.status === "live") {
+    const nowPlus20 = new Date(Date.now() + 20 * 60000);
+    return new Date(Math.max(defaultEnd.getTime(), nowPlus20.getTime()));
+  }
+
+  return defaultEnd;
 }
 
 function sortEvents(events) {
@@ -142,8 +148,8 @@ function applyFilters() {
   filteredEvents = sortEvents(filteredEvents);
 
   renderNowNext();
-  renderTodaysGuideAllDay();  // NEW behavior
-  renderGuide();              // safe if guide missing
+  renderTodaysGuideAllDay();
+  renderGuide();
 }
 
 // --- Now/Next cards ---
@@ -191,7 +197,7 @@ function renderNowNext() {
 }
 
 /**
- * ✅ Today's Guide (right tile): ENTIRE DAY, resets at midnight ET.
+ * Today's Guide (right tile): ENTIRE DAY, resets at midnight ET.
  * - Includes LIVE always (even if started yesterday).
  * - Includes all events whose start_et is today.
  * - Sorted: LIVE first, then by start time.
@@ -207,7 +213,7 @@ function renderTodaysGuideAllDay() {
   const todays = filteredEvents
     .filter(e => {
       const s = parseET(e.start_et);
-      if (e.status === "live") return true; // always include live
+      if (e.status === "live") return true;
       if (!s) return false;
       return s >= startOfDay && s < endOfDay;
     })
@@ -273,8 +279,7 @@ function roundToTick(dt) {
 
 function ensureWindowStart() {
   if (windowStart) return;
-  // ✅ Always default to NOW (not "next up")
-  windowStart = roundToTick(new Date());
+  windowStart = roundToTick(new Date()); // default to NOW
 }
 
 function renderTimeRow() {
@@ -330,8 +335,6 @@ function renderGuide() {
     const s = parseET(e.start_et)?.getTime();
     if (!s) return false;
     const ee = eventEnd(e)?.getTime() ?? s;
-
-    // show if overlaps window
     return ee >= startMs && s <= endMs;
   });
 
@@ -349,13 +352,8 @@ function renderGuide() {
 
     const blocks = r.list.map(e => {
       const s = parseET(e.start_et);
-      let ee = eventEnd(e);
+      const ee = eventEnd(e);
       if (!s || !ee) return "";
-
-      // ✅ If LIVE, extend through the visible window so it "keeps going"
-      if (e.status === "live") {
-        ee = new Date(Math.max(ee.getTime(), endMs));
-      }
 
       const leftMin = (s.getTime() - startMs) / 60000;
       const rightMin = (ee.getTime() - startMs) / 60000;
@@ -444,7 +442,7 @@ async function loadSchedule() {
 
   rebuildFilters(allEvents);
 
-  // ✅ reset window so it defaults to NOW after every refresh/load
+  // reset window so it defaults to NOW after every refresh/load
   windowStart = null;
 
   const now = new Date();

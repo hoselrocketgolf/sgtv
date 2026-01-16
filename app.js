@@ -1,4 +1,3 @@
-// SimGolf.TV Guide
 const SCHEDULE_URL = "schedule.json";
 
 const $ = (id) => document.getElementById(id);
@@ -13,10 +12,8 @@ const nowOn = $("nowOn");
 const upNext = $("upNext");
 const lastUpdated = $("lastUpdated");
 
-// Right tile body (we replace it with “window-only” chips)
 const infoTileBody = document.querySelector("#infoTile .tileBody");
 
-// Guide elements
 const hScroll = $("hScroll");
 const timeRow = $("timeRow");
 const rowsEl = $("rows");
@@ -27,7 +24,7 @@ const nextWindow = $("nextWindow");
 const jumpNowBtn = $("jumpNow");
 const windowLabel = $("windowLabel");
 
-// ---------- Time helpers ----------
+// --- Time helpers ---
 function parseET(str) {
   if (!str) return null;
   const [d, t] = str.split(" ");
@@ -66,23 +63,29 @@ function escapeHtml(s) {
     .replaceAll("'", "&#039;");
 }
 
-// ---------- State ----------
+// --- State ---
 let allEvents = [];
 let filteredEvents = [];
 let windowStart = null;
 
 // Guide window settings
-const windowMins = 240;     // 4 hours visible
-const tickMins = 30;        // tick every 30 min
-const pxPerTick = 140;      // width per tick
+const windowMins = 240;   // 4 hours
+const tickMins = 30;
+const pxPerTick = 140;
 const pxPerMin = pxPerTick / tickMins;
 
-// default show length if no end time in JSON
-function eventEnd(e) {
+// ✅ LIVE events extend to end of the visible window
+function eventEnd(e, windowEndMs) {
   const end = parseET(e.end_et);
   if (end) return end;
+
   const start = parseET(e.start_et);
   if (!start) return null;
+
+  if (e.status === "live" && typeof windowEndMs === "number") {
+    return new Date(windowEndMs);
+  }
+
   // default 2 hours
   return new Date(start.getTime() + 120 * 60000);
 }
@@ -150,7 +153,7 @@ function applyFilters() {
   renderGuide();
 }
 
-// ---------- Now/Next cards ----------
+// --- Now/Next cards ---
 function renderCard(e, forceLiveBadge = false) {
   const start = parseET(e.start_et);
   const media = e.thumbnail_url ? `style="background-image:url('${encodeURI(e.thumbnail_url)}')"` : "";
@@ -194,7 +197,7 @@ function renderNowNext() {
     : `<div class="muted">No upcoming events found.</div>`;
 }
 
-// ---------- Right tile: ONLY show items in current window ----------
+// --- Right tile: ONLY items in current window ---
 function renderRightTileWindowList() {
   if (!infoTileBody) return;
 
@@ -207,10 +210,8 @@ function renderRightTileWindowList() {
     .filter(e => {
       const s = parseET(e.start_et);
       if (!s || !sameDay(s, now)) return false;
-      const ee = eventEnd(e) || s;
-      const sMs = s.getTime();
-      const eMs = ee.getTime();
-      return eMs >= startMs && sMs <= endMs;
+      const ee = eventEnd(e, endMs) || s;
+      return ee.getTime() >= startMs && s.getTime() <= endMs;
     })
     .sort((a, b) => (parseET(a.start_et)?.getTime() ?? 0) - (parseET(b.start_et)?.getTime() ?? 0))
     .slice(0, 12);
@@ -223,9 +224,7 @@ function renderRightTileWindowList() {
   const items = windowItems.map(e => {
     const s = parseET(e.start_et);
     const t = fmtTime(s).replace(" ET", "");
-    const isLive = e.status === "live";
-    const badge = isLive ? `<span class="chipBadge">LIVE</span>` : "";
-
+    const badge = e.status === "live" ? `<span class="chipBadge">LIVE</span>` : "";
     return `
       <a class="chip" href="${escapeHtml(e.watch_url)}" target="_blank" rel="noreferrer">
         <span class="chipTime">${escapeHtml(t)}</span>
@@ -242,14 +241,11 @@ function renderRightTileWindowList() {
       <div class="muted">Window • ${fmtTime(base)} → ${fmtTime(end)}</div>
       <div class="muted" style="font-size:12px;">${windowItems.length} shows</div>
     </div>
-
-    <div class="chipList">
-      ${items}
-    </div>
+    <div class="chipList">${items}</div>
   `;
 }
 
-// ---------- Guide rendering ----------
+// --- Guide rendering ---
 function roundToTick(dt) {
   const mins = dt.getMinutes();
   const rounded = Math.floor(mins / tickMins) * tickMins;
@@ -257,7 +253,6 @@ function roundToTick(dt) {
 }
 
 function ensureWindowStart() {
-  // IMPORTANT: always default to current time (not “Up Next”)
   if (!windowStart) windowStart = roundToTick(new Date());
 }
 
@@ -313,19 +308,13 @@ function renderGuide() {
   const startMs = windowStart.getTime();
   const endMs = startMs + windowMins * 60000;
 
-  // Only events overlapping window
-  const windowEvents = filteredEvents.filter(e => {
-    const s = parseET(e.start_et);
-    if (!s) return false;
-    const ee = eventEnd(e) || s;
-    return ee.getTime() >= startMs && s.getTime() <= endMs;
-  });
-
-  // keep it “today” only (TV guide vibe)
   const today = new Date();
-  const todaysWindow = windowEvents.filter(e => {
+
+  const todaysWindow = filteredEvents.filter(e => {
     const s = parseET(e.start_et);
-    return s && sameDay(s, today);
+    if (!s || !sameDay(s, today)) return false;
+    const ee = eventEnd(e, endMs) || s;
+    return ee.getTime() >= startMs && s.getTime() <= endMs;
   });
 
   if (!todaysWindow.length) {
@@ -346,7 +335,7 @@ function renderGuide() {
 
     const blocks = r.list.map(e => {
       const s = parseET(e.start_et);
-      const ee = eventEnd(e) || s;
+      const ee = eventEnd(e, endMs) || s;
       if (!s || !ee) return "";
 
       const leftMin = (s.getTime() - startMs) / 60000;
@@ -400,7 +389,7 @@ function shiftWindow(dir) {
   ensureWindowStart();
   windowStart = new Date(windowStart.getTime() + dir * windowMins * 60000);
   renderGuide();
-  if (hScroll) hScroll.scrollLeft = 0; // clean snap per window
+  if (hScroll) hScroll.scrollLeft = 0;
 }
 
 function jumpToNow() {
@@ -409,7 +398,7 @@ function jumpToNow() {
   if (hScroll) hScroll.scrollLeft = 0;
 }
 
-// ---------- Fetch schedule.json ----------
+// --- Fetch schedule.json ---
 async function loadSchedule() {
   if (nowOn) nowOn.textContent = "Loading…";
   if (upNext) upNext.textContent = "Loading…";
@@ -439,7 +428,6 @@ async function loadSchedule() {
 
   rebuildFilters(allEvents);
 
-  // IMPORTANT: always start at NOW on load/refresh
   windowStart = roundToTick(new Date());
 
   const now = new Date();
@@ -448,7 +436,7 @@ async function loadSchedule() {
   applyFilters();
 }
 
-// ---------- Wire up ----------
+// --- Wire up ---
 on(leagueFilter, "change", applyFilters);
 on(platformFilter, "change", applyFilters);
 on(searchInput, "input", applyFilters);

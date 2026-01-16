@@ -12,7 +12,7 @@ const nowOn = $("nowOn");
 const upNext = $("upNext");
 const lastUpdated = $("lastUpdated");
 
-const infoTileBody = document.querySelector("#infoTile .tileBody");
+const guideTileBody = $("guideTileBody"); // new explicit id
 
 const hScroll = $("hScroll");
 const timeRow = $("timeRow");
@@ -32,12 +32,6 @@ function parseET(str) {
   const [Y, M, D] = d.split("-").map(Number);
   const [h, m] = t.split(":").map(Number);
   return new Date(Y, (M - 1), D, h, m, 0, 0);
-}
-function sameDay(a, b) {
-  return a && b &&
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate();
 }
 function fmtTime(dt) {
   if (!dt) return "";
@@ -69,12 +63,28 @@ let filteredEvents = [];
 let windowStart = null;
 
 // Guide window settings
-const windowMins = 240;   // 4 hours
+const windowMins = 240; // 4 hours
 const tickMins = 30;
 const pxPerTick = 140;
 const pxPerMin = pxPerTick / tickMins;
 
-// ✅ LIVE events extend to end of the visible window
+// Round down to tick
+function roundToTick(dt) {
+  const mins = dt.getMinutes();
+  const rounded = Math.floor(mins / tickMins) * tickMins;
+  return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), dt.getHours(), rounded, 0, 0);
+}
+
+function ensureWindowStart() {
+  if (!windowStart) windowStart = roundToTick(new Date());
+}
+
+/**
+ * End time policy:
+ * - if end_et exists -> use it
+ * - if LIVE -> extend to end of current window (so it always shows)
+ * - else default 2 hours
+ */
 function eventEnd(e, windowEndMs) {
   const end = parseET(e.end_et);
   if (end) return end;
@@ -86,7 +96,6 @@ function eventEnd(e, windowEndMs) {
     return new Date(windowEndMs);
   }
 
-  // default 2 hours
   return new Date(start.getTime() + 120 * 60000);
 }
 
@@ -149,11 +158,10 @@ function applyFilters() {
   filteredEvents = sortEvents(filteredEvents);
 
   renderNowNext();
-  renderRightTileWindowList();
   renderGuide();
+  renderRightTileWindowList();
 }
 
-// --- Now/Next cards ---
 function renderCard(e, forceLiveBadge = false) {
   const start = parseET(e.start_et);
   const media = e.thumbnail_url ? `style="background-image:url('${encodeURI(e.thumbnail_url)}')"` : "";
@@ -197,36 +205,39 @@ function renderNowNext() {
     : `<div class="muted">No upcoming events found.</div>`;
 }
 
-// --- Right tile: ONLY items in current window ---
-function renderRightTileWindowList() {
-  if (!infoTileBody) return;
+function intersectsWindow(e, startMs, endMs) {
+  const s = parseET(e.start_et);
+  if (!s) return false;
+  const ee = eventEnd(e, endMs) || s;
+  return ee.getTime() >= startMs && s.getTime() <= endMs;
+}
 
-  const now = new Date();
-  const base = windowStart || roundToTick(now);
-  const startMs = base.getTime();
+function renderRightTileWindowList() {
+  if (!guideTileBody) return;
+
+  ensureWindowStart();
+  const startMs = windowStart.getTime();
   const endMs = startMs + windowMins * 60000;
 
-  const windowItems = filteredEvents
-    .filter(e => {
-      const s = parseET(e.start_et);
-      if (!s || !sameDay(s, now)) return false;
-      const ee = eventEnd(e, endMs) || s;
-      return ee.getTime() >= startMs && s.getTime() <= endMs;
-    })
+  // Show: events in window, plus LIVE even if started previous day (still intersects window)
+  const items = filteredEvents
+    .filter(e => intersectsWindow(e, startMs, endMs))
     .sort((a, b) => (parseET(a.start_et)?.getTime() ?? 0) - (parseET(b.start_et)?.getTime() ?? 0))
     .slice(0, 12);
 
-  if (!windowItems.length) {
-    infoTileBody.innerHTML = `<div class="muted">No shows in this window.</div>`;
+  const end = new Date(endMs);
+
+  if (!items.length) {
+    guideTileBody.innerHTML = `<div class="muted">No shows in this window.</div>`;
     return;
   }
 
-  const items = windowItems.map(e => {
+  const htmlItems = items.map(e => {
     const s = parseET(e.start_et);
-    const t = fmtTime(s).replace(" ET", "");
+    const t = s ? fmtTime(s).replace(" ET", "") : "—";
     const badge = e.status === "live" ? `<span class="chipBadge">LIVE</span>` : "";
     return `
-      <a class="chip" href="${escapeHtml(e.watch_url)}" target="_blank" rel="noreferrer">
+      <a class="chip" href="${escapeHtml(e.watch_url || "#")}" target="_blank" rel="noreferrer">
         <span class="chipTime">${escapeHtml(t)}</span>
         <span class="chipChanStrong">${escapeHtml(e.channel || "")}</span>
         ${badge}
@@ -234,26 +245,13 @@ function renderRightTileWindowList() {
     `;
   }).join("");
 
-  const end = new Date(endMs);
-
-  infoTileBody.innerHTML = `
+  guideTileBody.innerHTML = `
     <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;">
-      <div class="muted">Window • ${fmtTime(base)} → ${fmtTime(end)}</div>
-      <div class="muted" style="font-size:12px;">${windowItems.length} shows</div>
+      <div class="muted">Window • ${fmtTime(windowStart)} → ${fmtTime(end)}</div>
+      <div class="muted" style="font-size:12px;">${items.length} shows</div>
     </div>
-    <div class="chipList">${items}</div>
+    <div class="chipList">${htmlItems}</div>
   `;
-}
-
-// --- Guide rendering ---
-function roundToTick(dt) {
-  const mins = dt.getMinutes();
-  const rounded = Math.floor(mins / tickMins) * tickMins;
-  return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), dt.getHours(), rounded, 0, 0);
-}
-
-function ensureWindowStart() {
-  if (!windowStart) windowStart = roundToTick(new Date());
 }
 
 function renderTimeRow() {
@@ -308,24 +306,18 @@ function renderGuide() {
   const startMs = windowStart.getTime();
   const endMs = startMs + windowMins * 60000;
 
-  const today = new Date();
+  // ✅ IMPORTANT: do NOT require "same day".
+  // We only care if it intersects the current window.
+  const windowEvents = filteredEvents.filter(e => intersectsWindow(e, startMs, endMs));
 
-  const todaysWindow = filteredEvents.filter(e => {
-    const s = parseET(e.start_et);
-    if (!s || !sameDay(s, today)) return false;
-    const ee = eventEnd(e, endMs) || s;
-    return ee.getTime() >= startMs && s.getTime() <= endMs;
-  });
-
-  if (!todaysWindow.length) {
+  if (!windowEvents.length) {
     rowsEl.innerHTML = "";
     emptyState.style.display = "";
-    renderRightTileWindowList();
     return;
   }
   emptyState.style.display = "none";
 
-  const rows = groupByChannel(todaysWindow);
+  const rows = groupByChannel(windowEvents);
 
   const ticks = Math.ceil(windowMins / tickMins) + 1;
   const laneWidth = ticks * pxPerTick;
@@ -335,8 +327,9 @@ function renderGuide() {
 
     const blocks = r.list.map(e => {
       const s = parseET(e.start_et);
+      if (!s) return "";
+
       const ee = eventEnd(e, endMs) || s;
-      if (!s || !ee) return "";
 
       const leftMin = (s.getTime() - startMs) / 60000;
       const rightMin = (ee.getTime() - startMs) / 60000;
@@ -381,29 +374,29 @@ function renderGuide() {
       </div>
     `;
   }).join("");
-
-  renderRightTileWindowList();
 }
 
 function shiftWindow(dir) {
   ensureWindowStart();
   windowStart = new Date(windowStart.getTime() + dir * windowMins * 60000);
   renderGuide();
+  renderRightTileWindowList();
   if (hScroll) hScroll.scrollLeft = 0;
 }
 
 function jumpToNow() {
   windowStart = roundToTick(new Date());
   renderGuide();
+  renderRightTileWindowList();
   if (hScroll) hScroll.scrollLeft = 0;
 }
 
-// --- Fetch schedule.json ---
 async function loadSchedule() {
   if (nowOn) nowOn.textContent = "Loading…";
   if (upNext) upNext.textContent = "Loading…";
   if (rowsEl) rowsEl.innerHTML = "";
   if (emptyState) emptyState.style.display = "none";
+  if (guideTileBody) guideTileBody.textContent = "Loading…";
 
   const bust = `${SCHEDULE_URL}?v=${Date.now()}`;
   const res = await fetch(bust, { cache: "no-store" });
@@ -445,6 +438,7 @@ on(refreshBtn, "click", () => loadSchedule().catch(err => {
   console.error(err);
   if (nowOn) nowOn.innerHTML = `<div class="muted">Error loading schedule.</div>`;
   if (upNext) upNext.innerHTML = `<div class="muted">${escapeHtml(err.message)}</div>`;
+  if (guideTileBody) guideTileBody.innerHTML = `<div class="muted">${escapeHtml(err.message)}</div>`;
 }));
 
 on(prevWindow, "click", () => shiftWindow(-1));
@@ -456,4 +450,5 @@ loadSchedule().catch(err => {
   console.error(err);
   if (nowOn) nowOn.innerHTML = `<div class="muted">Error loading schedule.</div>`;
   if (upNext) upNext.innerHTML = `<div class="muted">${escapeHtml(err.message)}</div>`;
+  if (guideTileBody) guideTileBody.innerHTML = `<div class="muted">${escapeHtml(err.message)}</div>`;
 });

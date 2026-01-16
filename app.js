@@ -1,3 +1,4 @@
+// SimGolf.TV Guide - resilient (won't crash if some DOM elements are missing)
 const SCHEDULE_URL = "schedule.json";
 
 const $ = (id) => document.getElementById(id);
@@ -12,9 +13,8 @@ const nowOn = $("nowOn");
 const upNext = $("upNext");
 const lastUpdated = $("lastUpdated");
 
-const guideTileBody = $("guideTileBody"); // new explicit id
-
-const hScroll = $("hScroll");
+// Optional guide elements (may not exist depending on your HTML)
+const infoTileBody = document.querySelector("#infoTile .tileBody");
 const timeRow = $("timeRow");
 const rowsEl = $("rows");
 const emptyState = $("emptyState");
@@ -32,6 +32,12 @@ function parseET(str) {
   const [Y, M, D] = d.split("-").map(Number);
   const [h, m] = t.split(":").map(Number);
   return new Date(Y, (M - 1), D, h, m, 0, 0);
+}
+function sameDay(a, b) {
+  return a && b &&
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
 }
 function fmtTime(dt) {
   if (!dt) return "";
@@ -63,39 +69,17 @@ let filteredEvents = [];
 let windowStart = null;
 
 // Guide window settings
-const windowMins = 240; // 4 hours
-const tickMins = 30;
-const pxPerTick = 140;
-const pxPerMin = pxPerTick / tickMins;
+let windowMins = 240; // 4 hours visible
+let tickMins = 30;
+let pxPerTick = 140;
+let pxPerMin = pxPerTick / tickMins;
 
-// Round down to tick
-function roundToTick(dt) {
-  const mins = dt.getMinutes();
-  const rounded = Math.floor(mins / tickMins) * tickMins;
-  return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), dt.getHours(), rounded, 0, 0);
-}
-
-function ensureWindowStart() {
-  if (!windowStart) windowStart = roundToTick(new Date());
-}
-
-/**
- * End time policy:
- * - if end_et exists -> use it
- * - if LIVE -> extend to end of current window (so it always shows)
- * - else default 2 hours
- */
-function eventEnd(e, windowEndMs) {
+function eventEnd(e) {
   const end = parseET(e.end_et);
   if (end) return end;
-
   const start = parseET(e.start_et);
   if (!start) return null;
-
-  if (e.status === "live" && typeof windowEndMs === "number") {
-    return new Date(windowEndMs);
-  }
-
+  // default 2 hours
   return new Date(start.getTime() + 120 * 60000);
 }
 
@@ -158,10 +142,11 @@ function applyFilters() {
   filteredEvents = sortEvents(filteredEvents);
 
   renderNowNext();
-  renderGuide();
-  renderRightTileWindowList();
+  renderTodaysGuideAllDay();  // NEW behavior
+  renderGuide();              // safe if guide missing
 }
 
+// --- Now/Next cards ---
 function renderCard(e, forceLiveBadge = false) {
   const start = parseET(e.start_et);
   const media = e.thumbnail_url ? `style="background-image:url('${encodeURI(e.thumbnail_url)}')"` : "";
@@ -205,37 +190,47 @@ function renderNowNext() {
     : `<div class="muted">No upcoming events found.</div>`;
 }
 
-function intersectsWindow(e, startMs, endMs) {
-  const s = parseET(e.start_et);
-  if (!s) return false;
-  const ee = eventEnd(e, endMs) || s;
-  return ee.getTime() >= startMs && s.getTime() <= endMs;
-}
+/**
+ * ✅ Today's Guide (right tile): ENTIRE DAY, resets at midnight ET.
+ * - Includes LIVE always (even if started yesterday).
+ * - Includes all events whose start_et is today.
+ * - Sorted: LIVE first, then by start time.
+ */
+function renderTodaysGuideAllDay() {
+  if (!infoTileBody) return;
 
-function renderRightTileWindowList() {
-  if (!guideTileBody) return;
+  const now = new Date();
 
-  ensureWindowStart();
-  const startMs = windowStart.getTime();
-  const endMs = startMs + windowMins * 60000;
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+  const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
 
-  // Show: events in window, plus LIVE even if started previous day (still intersects window)
-  const items = filteredEvents
-    .filter(e => intersectsWindow(e, startMs, endMs))
-    .sort((a, b) => (parseET(a.start_et)?.getTime() ?? 0) - (parseET(b.start_et)?.getTime() ?? 0))
-    .slice(0, 12);
+  const todays = filteredEvents
+    .filter(e => {
+      const s = parseET(e.start_et);
+      if (e.status === "live") return true; // always include live
+      if (!s) return false;
+      return s >= startOfDay && s < endOfDay;
+    })
+    .sort((a, b) => {
+      const aLive = a.status === "live" ? 0 : 1;
+      const bLive = b.status === "live" ? 0 : 1;
+      if (aLive !== bLive) return aLive - bLive;
+      const at = parseET(a.start_et)?.getTime() ?? 0;
+      const bt = parseET(b.start_et)?.getTime() ?? 0;
+      return at - bt;
+    });
 
-  const end = new Date(endMs);
-
-  if (!items.length) {
-    guideTileBody.innerHTML = `<div class="muted">No shows in this window.</div>`;
+  if (!todays.length) {
+    infoTileBody.innerHTML = `<div class="muted">No events scheduled for today.</div>`;
     return;
   }
 
-  const htmlItems = items.map(e => {
+  const items = todays.map(e => {
     const s = parseET(e.start_et);
-    const t = s ? fmtTime(s).replace(" ET", "") : "—";
-    const badge = e.status === "live" ? `<span class="chipBadge">LIVE</span>` : "";
+    const t = s ? fmtTime(s).replace(" ET", "") : "LIVE";
+    const isLive = e.status === "live";
+    const badge = isLive ? `<span class="chipBadge">LIVE</span>` : "";
+
     return `
       <a class="chip" href="${escapeHtml(e.watch_url || "#")}" target="_blank" rel="noreferrer">
         <span class="chipTime">${escapeHtml(t)}</span>
@@ -245,13 +240,41 @@ function renderRightTileWindowList() {
     `;
   }).join("");
 
-  guideTileBody.innerHTML = `
+  infoTileBody.innerHTML = `
     <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;">
-      <div class="muted">Window • ${fmtTime(windowStart)} → ${fmtTime(end)}</div>
-      <div class="muted" style="font-size:12px;">${items.length} shows</div>
+      <div class="muted">Today • ${fmtDay(now)}</div>
+      <div class="muted" style="font-size:12px;">${todays.length} shows</div>
     </div>
-    <div class="chipList">${htmlItems}</div>
+
+    <div class="chipList">
+      ${items}
+    </div>
+
+    <style>
+      .chipList{display:flex; flex-direction:column; gap:8px; max-height:360px; overflow:auto; padding-right:4px;}
+      .chip{display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:999px;
+        border:1px solid rgba(255,255,255,.12); background:rgba(0,0,0,.20); transition:filter .12s ease, transform .12s ease;}
+      .chip:hover{filter:brightness(1.07); transform:translateY(-1px); text-decoration:none;}
+      .chipTime{font-weight:900; font-size:12px; color:rgba(255,255,255,.90); min-width:86px; white-space:nowrap;}
+      .chipChanStrong{font-weight:900; font-size:13px; color:rgba(255,255,255,.94); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;}
+      .chipBadge{margin-left:auto; font-size:11px; padding:4px 9px; border-radius:999px; color:rgba(46,229,157,.95);
+        background:rgba(46,229,157,.10); border:1px solid rgba(46,229,157,.30); white-space:nowrap;}
+      @media (max-width: 980px){.chipTime{min-width:78px;}}
+    </style>
   `;
+}
+
+// --- Guide rendering (only if your HTML has the guide elements) ---
+function roundToTick(dt) {
+  const mins = dt.getMinutes();
+  const rounded = Math.floor(mins / tickMins) * tickMins;
+  return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), dt.getHours(), rounded, 0, 0);
+}
+
+function ensureWindowStart() {
+  if (windowStart) return;
+  // ✅ Always default to NOW (not "next up")
+  windowStart = roundToTick(new Date());
 }
 
 function renderTimeRow() {
@@ -259,14 +282,11 @@ function renderTimeRow() {
   ensureWindowStart();
 
   const ticks = Math.ceil(windowMins / tickMins) + 1;
-  const laneWidth = ticks * pxPerTick;
-
-  timeRow.style.minWidth = `${laneWidth}px`;
-
   const parts = [];
+
   for (let i = 0; i < ticks; i++) {
     const dt = new Date(windowStart.getTime() + i * tickMins * 60000);
-    parts.push(`<div class="timeTick" style="width:${pxPerTick}px">${fmtTime(dt).replace(" ET","")}</div>`);
+    parts.push(`<div class="timeTick" style="min-width:${pxPerTick}px">${fmtTime(dt).replace(" ET","")}</div>`);
   }
   timeRow.innerHTML = parts.join("");
 
@@ -306,9 +326,14 @@ function renderGuide() {
   const startMs = windowStart.getTime();
   const endMs = startMs + windowMins * 60000;
 
-  // ✅ IMPORTANT: do NOT require "same day".
-  // We only care if it intersects the current window.
-  const windowEvents = filteredEvents.filter(e => intersectsWindow(e, startMs, endMs));
+  const windowEvents = filteredEvents.filter(e => {
+    const s = parseET(e.start_et)?.getTime();
+    if (!s) return false;
+    const ee = eventEnd(e)?.getTime() ?? s;
+
+    // show if overlaps window
+    return ee >= startMs && s <= endMs;
+  });
 
   if (!windowEvents.length) {
     rowsEl.innerHTML = "";
@@ -319,26 +344,27 @@ function renderGuide() {
 
   const rows = groupByChannel(windowEvents);
 
-  const ticks = Math.ceil(windowMins / tickMins) + 1;
-  const laneWidth = ticks * pxPerTick;
-
   rowsEl.innerHTML = rows.map(r => {
     const subs = r.maxSubs ? `${Number(r.maxSubs).toLocaleString()} subs` : "";
 
     const blocks = r.list.map(e => {
       const s = parseET(e.start_et);
-      if (!s) return "";
+      let ee = eventEnd(e);
+      if (!s || !ee) return "";
 
-      const ee = eventEnd(e, endMs) || s;
+      // ✅ If LIVE, extend through the visible window so it "keeps going"
+      if (e.status === "live") {
+        ee = new Date(Math.max(ee.getTime(), endMs));
+      }
 
       const leftMin = (s.getTime() - startMs) / 60000;
       const rightMin = (ee.getTime() - startMs) / 60000;
 
-      const left = clamp(leftMin * pxPerMin, -99999, 99999);
-      const width = clamp((rightMin - leftMin) * pxPerMin, 160, 99999);
+      const left = clamp(leftMin * pxPerMin, -9999, 9999);
+      const width = clamp((rightMin - leftMin) * pxPerMin, 120, 9999);
 
       const thumb = e.thumbnail_url || (e.source_id ? `https://i.ytimg.com/vi/${e.source_id}/hqdefault.jpg` : "");
-      const liveBadge = e.status === "live" ? `<span class="badgeLiveInline">LIVE</span>` : "";
+      const liveBadge = e.status === "live" ? `<span class="badgeLive">LIVE</span>` : "";
 
       const startLabel = fmtTime(s).replace(" ET", "");
       const endLabel = fmtTime(ee).replace(" ET", "");
@@ -355,7 +381,7 @@ function renderGuide() {
             </div>
             <div class="blockBottom">
               <div class="blockTime">${startLabel}–${endLabel}</div>
-              <div class="blockPlat">${escapeHtml(e.platform || "")}</div>
+              <div>${escapeHtml(e.platform || "")}</div>
             </div>
           </div>
         </a>
@@ -366,9 +392,9 @@ function renderGuide() {
       <div class="row">
         <div class="rowLabel">
           <div class="name">${escapeHtml(r.channel)}</div>
-          <div class="subs">${escapeHtml(subs)}</div>
+          <div class="subs">${subs}</div>
         </div>
-        <div class="lane" style="min-width:${laneWidth}px; background-size:${pxPerTick}px 1px;">
+        <div class="lane" style="background-size:${pxPerTick}px 1px;">
           ${blocks}
         </div>
       </div>
@@ -380,23 +406,20 @@ function shiftWindow(dir) {
   ensureWindowStart();
   windowStart = new Date(windowStart.getTime() + dir * windowMins * 60000);
   renderGuide();
-  renderRightTileWindowList();
-  if (hScroll) hScroll.scrollLeft = 0;
+  if (rowsEl) rowsEl.scrollTop = 0;
 }
-
 function jumpToNow() {
   windowStart = roundToTick(new Date());
   renderGuide();
-  renderRightTileWindowList();
-  if (hScroll) hScroll.scrollLeft = 0;
+  if (rowsEl) rowsEl.scrollTop = 0;
 }
 
+// --- Fetch schedule.json ---
 async function loadSchedule() {
   if (nowOn) nowOn.textContent = "Loading…";
   if (upNext) upNext.textContent = "Loading…";
   if (rowsEl) rowsEl.innerHTML = "";
   if (emptyState) emptyState.style.display = "none";
-  if (guideTileBody) guideTileBody.textContent = "Loading…";
 
   const bust = `${SCHEDULE_URL}?v=${Date.now()}`;
   const res = await fetch(bust, { cache: "no-store" });
@@ -421,7 +444,8 @@ async function loadSchedule() {
 
   rebuildFilters(allEvents);
 
-  windowStart = roundToTick(new Date());
+  // ✅ reset window so it defaults to NOW after every refresh/load
+  windowStart = null;
 
   const now = new Date();
   if (lastUpdated) lastUpdated.textContent = `Last updated: ${fmtDay(now)} ${fmtTime(now)}`;
@@ -429,7 +453,7 @@ async function loadSchedule() {
   applyFilters();
 }
 
-// --- Wire up ---
+// --- Wire up (null-safe) ---
 on(leagueFilter, "change", applyFilters);
 on(platformFilter, "change", applyFilters);
 on(searchInput, "input", applyFilters);
@@ -438,7 +462,6 @@ on(refreshBtn, "click", () => loadSchedule().catch(err => {
   console.error(err);
   if (nowOn) nowOn.innerHTML = `<div class="muted">Error loading schedule.</div>`;
   if (upNext) upNext.innerHTML = `<div class="muted">${escapeHtml(err.message)}</div>`;
-  if (guideTileBody) guideTileBody.innerHTML = `<div class="muted">${escapeHtml(err.message)}</div>`;
 }));
 
 on(prevWindow, "click", () => shiftWindow(-1));
@@ -450,5 +473,4 @@ loadSchedule().catch(err => {
   console.error(err);
   if (nowOn) nowOn.innerHTML = `<div class="muted">Error loading schedule.</div>`;
   if (upNext) upNext.innerHTML = `<div class="muted">${escapeHtml(err.message)}</div>`;
-  if (guideTileBody) guideTileBody.innerHTML = `<div class="muted">${escapeHtml(err.message)}</div>`;
 });

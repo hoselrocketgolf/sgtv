@@ -11,7 +11,6 @@
       <div class="brand">
         <!-- Logo badge (click = refresh) -->
         <button id="brandBtn" class="brandLogo" type="button" aria-label="Refresh" title="Refresh">
-          <img class="brandLogoImg" src="assets/sgtv-logo.svg" alt="SimGolf.TV" />
           <span class="brandLogo__fallback">SGTV</span>
         </button>
 
@@ -71,14 +70,9 @@
           <div class="tileHeader">
             <h2>Guide</h2>
           </div>
+          <!-- app.js will replace this body with “window-only” chips -->
           <div class="tileBody info">
-            <div class="muted">TV-guide view below. Live shows first.</div>
-            <ul>
-              <li>Times are Eastern</li>
-              <li>Scroll the grid horizontally</li>
-              <li>Click any show to watch</li>
-              <li>Use “Now” to jump to live</li>
-            </ul>
+            <div class="muted">Loading…</div>
           </div>
         </div>
       </section>
@@ -88,18 +82,21 @@
           <h2>Today's Schedule</h2>
 
           <div class="scheduleTools">
-            <button class="iconBtn" id="prevWindow">◀</button>
-            <button class="nowBtn" id="jumpNow">Now</button>
+            <button class="iconBtn" id="prevWindow" title="Back">◀</button>
+            <button class="nowBtn" id="jumpNow" title="Jump to current time">Now</button>
             <div class="windowLabel" id="windowLabel">Loading…</div>
-            <button class="iconBtn" id="nextWindow">▶</button>
+            <button class="iconBtn" id="nextWindow" title="Forward">▶</button>
           </div>
 
           <div class="updated" id="lastUpdated"></div>
         </div>
 
+        <!-- ONE horizontal scroller for time + rows -->
         <div class="guide">
-          <div class="timeRow" id="timeRow"></div>
-          <div class="rows" id="rows"></div>
+          <div class="hScroll" id="hScroll">
+            <div class="timeRow" id="timeRow"></div>
+            <div class="rows" id="rows"></div>
+          </div>
         </div>
 
         <div class="empty" id="emptyState" style="display:none;">

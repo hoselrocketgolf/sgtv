@@ -11,7 +11,7 @@
       <div class="brand">
         <!-- Logo badge (click = refresh) -->
         <button id="brandBtn" class="brandLogo" type="button" aria-label="Refresh" title="Refresh">
-          <span class="brandLogo__fallback">SGTV</span>
+          <img class="brandLogoImg" src="assets/sgtv-logo.svg" alt="SGTV" />
         </button>
 
         <div>
@@ -70,7 +70,6 @@
           <div class="tileHeader">
             <h2>Guide</h2>
           </div>
-          <!-- app.js will replace this body with “window-only” chips -->
           <div class="tileBody info">
             <div class="muted">Loading…</div>
           </div>
@@ -91,7 +90,6 @@
           <div class="updated" id="lastUpdated"></div>
         </div>
 
-        <!-- ONE horizontal scroller for time + rows -->
         <div class="guide">
           <div class="hScroll" id="hScroll">
             <div class="timeRow" id="timeRow"></div>
@@ -110,7 +108,6 @@
     <script src="app.js"></script>
 
     <script>
-      // Clicking logo triggers refresh button (or reload as fallback)
       document.getElementById("brandBtn").addEventListener("click", () => {
         const refresh = document.getElementById("refreshBtn");
         refresh ? refresh.click() : location.reload();

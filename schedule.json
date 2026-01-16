@@ -1,58 +1,6 @@
 [
   {
-    "start_et": "2026-01-15 18:00",
-    "end_et": "",
-    "title": "Live Garage Simulator Golf - SGT Web+ Tour Rounds 1 & 2 @ Waialae",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "TurbodTalon Golf",
-    "watch_url": "https://www.youtube.com/watch?v=qsseUriV0Qw",
-    "source_id": "qsseUriV0Qw",
-    "status": "live",
-    "thumbnail_url": "https://i.ytimg.com/vi/qsseUriV0Qw/maxresdefault_live.jpg",
-    "subscribers": 175
-  },
-  {
-    "start_et": "2026-01-15 18:01",
-    "end_et": "",
-    "title": "LIVE 3-Man Scramble \u2014 Can We Break the Course Record? | TNT",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Hosel Rocket Golf",
-    "watch_url": "https://www.youtube.com/watch?v=cxo6lgwlKzs",
-    "source_id": "cxo6lgwlKzs",
-    "status": "live",
-    "thumbnail_url": "https://i.ytimg.com/vi/cxo6lgwlKzs/maxresdefault_live.jpg",
-    "subscribers": 2470
-  },
-  {
-    "start_et": "2026-01-15 18:01",
-    "end_et": "",
-    "title": "Thursday Night Thunder - TNT (LIVE)",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Hosel Rocket Golf",
-    "watch_url": "https://www.youtube.com/watch?v=SyW1ZQAiSMc",
-    "source_id": "SyW1ZQAiSMc",
-    "status": "live",
-    "thumbnail_url": "https://i.ytimg.com/vi/SyW1ZQAiSMc/maxresdefault_live.jpg",
-    "subscribers": 2470
-  },
-  {
-    "start_et": "2026-01-15 20:45",
-    "end_et": "",
-    "title": "Are we the team to set the course record at Meadow Brook?!",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Garbage Garage Golf",
-    "watch_url": "https://www.youtube.com/watch?v=IdPRZQimZUw",
-    "source_id": "IdPRZQimZUw",
-    "status": "upcoming",
-    "thumbnail_url": "https://i.ytimg.com/vi/IdPRZQimZUw/maxresdefault_live.jpg",
-    "subscribers": 93
-  },
-  {
-    "start_et": "2026-01-15 21:30",
+    "start_et": "2026-01-15 21:49",
     "end_et": "",
     "title": "EP. 193 | Triple Bogey LIVE League\ud83e\udde8ft. @HoselRocketGolf  - Tonight!",
     "league": "",
@@ -60,12 +8,12 @@
     "channel": "Triple Bogey Golf",
     "watch_url": "https://www.youtube.com/watch?v=QDAD_rnrwIo",
     "source_id": "QDAD_rnrwIo",
-    "status": "upcoming",
+    "status": "live",
     "thumbnail_url": "https://i.ytimg.com/vi/QDAD_rnrwIo/maxresdefault_live.jpg",
-    "subscribers": 8680
+    "subscribers": 8690
   },
   {
-    "start_et": "2026-01-15 22:00",
+    "start_et": "2026-01-15 21:49",
     "end_et": "",
     "title": "Grip N Sip Presents Thursday Night Thunder Late Night Edition",
     "league": "",
@@ -73,12 +21,12 @@
     "channel": "Grip n Sip Golf",
     "watch_url": "https://www.youtube.com/watch?v=apgfGKmuVkw",
     "source_id": "apgfGKmuVkw",
-    "status": "upcoming",
+    "status": "live",
     "thumbnail_url": "https://i.ytimg.com/vi/apgfGKmuVkw/maxresdefault_live.jpg",
-    "subscribers": 36
+    "subscribers": 37
   },
   {
-    "start_et": "2026-01-15 22:00",
+    "start_et": "2026-01-15 22:08",
     "end_et": "",
     "title": "Thursday Night Thunder with Take It Low and the Boys",
     "league": "",
@@ -86,9 +34,22 @@
     "channel": "Take It Low Golf 29",
     "watch_url": "https://www.youtube.com/watch?v=HJa0AUeS5lE",
     "source_id": "HJa0AUeS5lE",
-    "status": "upcoming",
+    "status": "live",
     "thumbnail_url": "https://i.ytimg.com/vi/HJa0AUeS5lE/maxresdefault_live.jpg",
     "subscribers": 12
+  },
+  {
+    "start_et": "2026-01-15 22:26",
+    "end_et": "",
+    "title": "2nd Flight Golf is Live",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "2nd Flight Golf",
+    "watch_url": "https://www.youtube.com/watch?v=v3UvP3oibBU",
+    "source_id": "v3UvP3oibBU",
+    "status": "live",
+    "thumbnail_url": "https://i.ytimg.com/vi/v3UvP3oibBU/maxresdefault_live.jpg",
+    "subscribers": 874
   },
   {
     "start_et": "2026-01-16 13:00",

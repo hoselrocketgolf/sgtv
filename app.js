@@ -77,7 +77,7 @@ let tickMins = 30;
 let pxPerTick = 190;            // match styles.css --tickW
 let pxPerMin = pxPerTick / tickMins;
 
-// ⭐️ CHANGE: wider minimum show blocks so thumbnails don't feel crushed
+// wider minimum show blocks so thumbnails don't feel crushed
 const MIN_BLOCK_W = 340;
 
 function eventEnd(e) {
@@ -265,12 +265,10 @@ function roundToTick(dt) {
   return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), dt.getHours(), rounded, 0, 0);
 }
 
+// ✅ FIX: default the window to NOW on load/refresh
 function ensureWindowStart() {
   if (windowStart) return;
-  const live = filteredEvents.find(e => e.status === "live");
-  const next = filteredEvents.find(e => e.status !== "live");
-  let base = parseET(live?.start_et) || parseET(next?.start_et) || new Date();
-  windowStart = roundToTick(base);
+  windowStart = roundToTick(new Date());
 }
 
 function renderTimeRow() {
@@ -314,7 +312,6 @@ function groupByChannel(events) {
 }
 
 function renderGuide() {
-  // If your HTML doesn't have guide elements, skip.
   if (!rowsEl || !emptyState) return;
 
   ensureWindowStart();
@@ -398,6 +395,7 @@ function shiftWindow(dir) {
   renderGuide();
   if (rowsEl) rowsEl.scrollTop = 0;
 }
+
 function jumpToNow() {
   windowStart = roundToTick(new Date());
   renderGuide();
@@ -434,6 +432,7 @@ async function loadSchedule() {
 
   rebuildFilters(allEvents);
 
+  // ✅ reset to NOW on every load so refresh always anchors current time
   windowStart = null;
 
   const now = new Date();

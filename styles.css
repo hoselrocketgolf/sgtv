@@ -13,7 +13,7 @@
 
   --shadow: 0 18px 42px rgba(0,0,0,0.45);
   --radius: 22px;
-  --radius2: 18px;
+  --radius2: 16px;
 
   --accentA: rgba(120,220,255,0.35);
   --accentB: rgba(140,90,255,0.22);
@@ -21,14 +21,12 @@
   --live: rgba(70, 240, 170, 0.95);
   --liveBg: rgba(50, 240, 160, 0.14);
 
-  /* Guide sizing */
-  --rowH: 92px;
-  --cellH: 76px;
   --gutter: 18px;
 
-  /* Larger default surface */
-  --maxW: 1420px;
-  --maxW-wide: 1640px;
+  /* schedule sizing */
+  --rowLabelW: 240px;
+  --laneH: 92px;        /* lane height */
+  --blockH: 74px;       /* show block height */
 }
 
 *{ box-sizing:border-box; }
@@ -44,13 +42,13 @@ body{
 }
 
 a{ color: inherit; text-decoration: none; }
-a:hover{ text-decoration: underline; }
+a:hover{ text-decoration: none; }
 
-/* ========= Header ========= */
+/* ========= Top / Header ========= */
 .top{
-  max-width: var(--maxW);
+  max-width: 1180px;
   margin: 26px auto 0;
-  padding: 0 22px;
+  padding: 0 18px;
   display:flex;
   flex-direction:column;
   gap:16px;
@@ -64,7 +62,7 @@ a:hover{ text-decoration: underline; }
 
 h1{
   margin:0;
-  font-size: 24px;
+  font-size: 22px;
   letter-spacing: 0.2px;
 }
 
@@ -76,9 +74,9 @@ h1{
 
 /* ========= Logo badge ========= */
 .brandLogo{
-  width: 56px;
-  height: 56px;
-  border-radius: 16px;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
   border: 1px solid rgba(255,255,255,0.14);
   box-shadow:
     inset 0 0 0 1px rgba(255,255,255,0.06),
@@ -96,7 +94,7 @@ h1{
 .brandLogo::before{
   content:"";
   position:absolute;
-  inset: 6px;
+  inset: 7px;
   background:
     radial-gradient(100% 120% at 30% 25%, rgba(120,220,255,0.95), rgba(0,0,0,0) 55%),
     radial-gradient(100% 120% at 70% 70%, rgba(160,110,255,0.95), rgba(0,0,0,0) 58%),
@@ -106,30 +104,33 @@ h1{
   filter: drop-shadow(0 10px 18px rgba(0,0,0,0.55));
   opacity: 0.98;
 }
-
-.brandLogo::after{
-  content:"";
-  position:absolute;
-  inset:-40%;
-  background: linear-gradient(110deg, rgba(255,255,255,0), rgba(255,255,255,0.16), rgba(255,255,255,0));
-  transform: translateX(-55%) rotate(10deg);
-  transition: transform 420ms ease;
-  pointer-events:none;
-  mix-blend-mode: screen;
-  opacity: 0.55;
-}
-
 .brandLogo:hover{
   transform: translateY(-1px);
   border-color: rgba(255,255,255,0.2);
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,0.08),
-    0 18px 44px rgba(0,0,0,0.48);
 }
-.brandLogo:hover::after{ transform: translateX(25%) rotate(10deg); }
 .brandLogo:active{ transform: translateY(0px) scale(0.99); }
-
 .brandLogo__fallback{ display:none; }
+
+.brandLogo.isLive{
+  animation: livePulse 1.8s ease-in-out infinite;
+}
+@keyframes livePulse{
+  0%{ box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.08),
+    0 18px 44px rgba(0,0,0,0.48),
+    0 0 0 0 rgba(70,240,170,0.18);
+  }
+  55%{ box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.08),
+    0 18px 44px rgba(0,0,0,0.48),
+    0 0 0 10px rgba(70,240,170,0.0);
+  }
+  100%{ box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.08),
+    0 18px 44px rgba(0,0,0,0.48),
+    0 0 0 0 rgba(70,240,170,0.0);
+  }
+}
 
 /* ========= Controls ========= */
 .controls{
@@ -147,11 +148,11 @@ h1{
   display:flex;
   flex-direction:column;
   gap:8px;
-  min-width: 140px;
+  min-width: 130px;
 }
 
-.control.grow{ flex:1; min-width: 320px; }
-.control.refresh{ min-width: 150px; align-items:flex-end; }
+.control.grow{ flex:1; min-width: 280px; }
+.control.refresh{ min-width: 140px; align-items:flex-end; }
 
 label{
   font-size: 12px;
@@ -159,8 +160,8 @@ label{
 }
 
 select, input{
-  height: 42px;
-  border-radius: 13px;
+  height: 40px;
+  border-radius: 12px;
   border: 1px solid rgba(255,255,255,0.12);
   background: rgba(0,0,0,0.28);
   color: var(--text);
@@ -170,7 +171,7 @@ select, input{
 input::placeholder{ color: rgba(255,255,255,0.35); }
 
 #refreshBtn{
-  height: 44px;
+  height: 42px;
   border-radius: 14px;
   padding: 0 18px;
   border: 1px solid rgba(255,255,255,0.14);
@@ -183,14 +184,14 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
 
 /* ========= Layout ========= */
 .wrap{
-  max-width: var(--maxW);
-  margin: 18px auto 46px;
-  padding: 0 22px;
+  max-width: 1180px;
+  margin: 18px auto 40px;
+  padding: 0 18px;
 }
 
 .heroGrid{
   display:grid;
-  grid-template-columns: 1.15fr 1.15fr 0.9fr;
+  grid-template-columns: 1.05fr 1.05fr 0.9fr;
   gap: 18px;
   margin-top: 18px;
 }
@@ -209,12 +210,10 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
   justify-content:space-between;
   padding: 16px 18px 10px;
 }
-
 .tileHeader h2{
   margin:0;
   font-size: 16px;
 }
-
 .tileBody{
   padding: 0 18px 18px;
 }
@@ -237,53 +236,42 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
   background: rgba(50,240,160,0.12);
 }
 
-/* ========= HERO cards (Now On / Up Next) ========= */
-/* Your JS uses: .card, .cardMedia, .cardBody, .cardTitle, .cardMeta, .cardActions */
+/* ========= Now/Next Cards ========= */
 .card{
   border-radius: var(--radius2);
   border: 1px solid rgba(255,255,255,0.10);
   background: rgba(0,0,0,0.22);
   overflow:hidden;
 }
-
 .cardMedia{
-  width: 100%;
-  aspect-ratio: 16 / 9;
+  width:100%;
+  aspect-ratio: 16/9;
   background-size: cover;
   background-position: center;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  background-color: rgba(255,255,255,0.06);
 }
-
-.cardBody{
-  padding: 12px 14px 0;
-}
-
+.cardBody{ padding-top: 12px; }
 .cardTitle{
   font-weight: 800;
   font-size: 14px;
   line-height: 1.25;
-  margin: 0 0 8px 0;
+  margin: 2px 0 8px;
 }
-
 .cardMeta{
-  color: rgba(255,255,255,0.72);
-  font-size: 12px;
-  line-height: 1.35;
   display:flex;
   flex-wrap:wrap;
-  gap:6px;
+  gap:8px;
+  color: rgba(255,255,255,0.70);
+  font-size: 12px;
 }
-
-.cardActions{
-  padding: 10px 14px 14px;
-}
+.cardActions{ margin-top: 10px; }
 
 .watchBtn{
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  height: 40px;
-  padding: 0 16px;
+  height: 38px;
+  padding: 0 14px;
   border-radius: 12px;
   border: 1px solid rgba(140,90,255,0.45);
   background: rgba(140,90,255,0.14);
@@ -291,9 +279,9 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
   cursor:pointer;
   text-decoration:none;
 }
-.watchBtn:hover{ filter: brightness(1.06); text-decoration:none; }
+.watchBtn:hover{ filter: brightness(1.06); }
 
-/* ========= Info tile (right) ========= */
+/* ========= Right tile info ========= */
 .tileBody.info{
   color: rgba(255,255,255,0.76);
   font-size: 13px;
@@ -306,7 +294,7 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
 
 /* ========= Schedule Section ========= */
 .scheduleSection{
-  margin-top: 18px;
+  margin-top: 20px;
   border-radius: var(--radius);
   background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
   border: 1px solid rgba(255,255,255,0.10);
@@ -321,7 +309,6 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
   padding: 16px 18px;
   gap: 16px;
 }
-
 .scheduleHeader h2{
   margin:0;
   font-size: 16px;
@@ -342,8 +329,6 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
   color: rgba(255,255,255,0.9);
   cursor:pointer;
 }
-.iconBtn:hover{ filter: brightness(1.06); }
-
 .nowBtn{
   height: 36px;
   padding: 0 12px;
@@ -353,7 +338,6 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
   color: rgba(255,255,255,0.9);
   cursor:pointer;
 }
-.nowBtn:hover{ filter: brightness(1.06); }
 
 .windowLabel{
   font-size: 12px;
@@ -368,136 +352,130 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
   color: rgba(255,255,255,0.55);
 }
 
-/* Guide grid shell */
+/* ======= Guide grid shell ======= */
 .guide{
   border-top: 1px solid rgba(255,255,255,0.08);
-}
-
-/* Hide scrollbars (still scrollable) */
-.timeRow,
-.rows,
-.lane{
-  scrollbar-width: none;
-}
-.timeRow::-webkit-scrollbar,
-.rows::-webkit-scrollbar,
-.lane::-webkit-scrollbar{
-  height: 0;
-  width: 0;
+  padding-bottom: 6px;
 }
 
 /* Time header row */
 .timeRow{
   display:flex;
-  gap: 0;
-  overflow:auto;
-  white-space:nowrap;
+  gap:0;
+  overflow-x:auto;
+  overflow-y:hidden;
   border-bottom: 1px solid rgba(255,255,255,0.08);
-  background: rgba(0,0,0,0.08);
+  scrollbar-width: thin;
 }
-
 .timeTick{
-  min-width: 180px;
+  flex: 0 0 auto;
   padding: 12px 14px;
   font-weight: 900;
   font-size: 12px;
   color: rgba(255,255,255,0.78);
   border-right: 1px solid rgba(255,255,255,0.06);
+  white-space: nowrap;
 }
 
 /* Rows container */
 .rows{
   display:flex;
   flex-direction:column;
-  overflow:auto;
+  gap: 0;
+  max-height: 360px;         /* bigger + nicer */
+  overflow-y:auto;
+  overflow-x:hidden;
 }
 
 /* One channel row */
 .row{
   display:flex;
-  min-height: var(--rowH);
+  align-items:stretch;
   border-bottom: 1px solid rgba(255,255,255,0.06);
+  min-height: var(--laneH);
 }
 
+/* Sticky channel label */
 .rowLabel{
+  width: var(--rowLabelW);
+  flex: 0 0 var(--rowLabelW);
   position: sticky;
   left: 0;
-  z-index: 2;
+  z-index: 5;
+  padding: 12px 14px;
   display:flex;
   flex-direction:column;
   justify-content:center;
   gap:6px;
-  padding: 10px 14px;
-  min-width: 240px;
-  max-width: 240px;
-  background: linear-gradient(90deg, rgba(0,0,0,0.42), rgba(0,0,0,0.20));
+  background: linear-gradient(90deg, rgba(0,0,0,0.42), rgba(0,0,0,0.18));
   border-right: 1px solid rgba(255,255,255,0.08);
 }
-
 .rowLabel .name{
   font-weight: 900;
   font-size: 13px;
-  color: rgba(255,255,255,0.94);
+  color: rgba(255,255,255,0.92);
   white-space:nowrap;
   overflow:hidden;
   text-overflow: ellipsis;
 }
-
 .rowLabel .subs{
+  font-size: 12px;
   color: rgba(255,255,255,0.55);
-  font-size: 11px;
   white-space:nowrap;
   overflow:hidden;
   text-overflow: ellipsis;
 }
 
-/* The timeline lane that blocks are positioned into */
+/* The time lane (relative so blocks absolute-position inside) */
 .lane{
   position: relative;
-  flex: 1;
-  overflow:hidden; /* critical: removes the “squishy” look + no inner scrollbar */
-  background-image: linear-gradient(to right, rgba(255,255,255,0.07) 1px, rgba(0,0,0,0) 1px);
-  background-size: 180px 1px;
+  flex: 1 1 auto;
+  min-height: var(--laneH);
+  overflow-x:auto; /* horizontal scroll happens here */
+  overflow-y:hidden;
+
+  /* grid lines */
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,0.06) 1px, rgba(0,0,0,0) 1px);
+  background-size: 190px 1px; /* matches pxPerTick in JS */
+  background-repeat: repeat;
+
+  scrollbar-width: thin;
 }
 
 /* Show blocks */
 .block{
   position:absolute;
-  top: 8px;
-  height: var(--cellH);
-  border-radius: 18px;
+  top: 9px;
+  height: var(--blockH);
+  border-radius: 16px;
   border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(0,0,0,0.24);
   overflow:hidden;
-  cursor:pointer;
-  display:block;
-  text-decoration:none;
+  box-shadow: 0 14px 30px rgba(0,0,0,0.35);
+  transform: translateZ(0);
 }
 .block:hover{
-  filter: brightness(1.06);
-  border-color: rgba(255,255,255,0.18);
-  text-decoration:none;
+  filter: brightness(1.07);
 }
 
-/* Big, unsquished thumbnail fill */
+/* Full thumbnail background (no squish) */
 .blockMedia{
   position:absolute;
   inset:0;
   background-size: cover;
   background-position: center;
-  transform: scale(1.02);
+  background-repeat: no-repeat;
 }
 
-/* Overlay for legibility */
+/* overlay for readability */
 .blockOverlay{
   position:absolute;
   inset:0;
   background:
-    linear-gradient(90deg, rgba(0,0,0,0.55), rgba(0,0,0,0.10) 55%),
-    linear-gradient(180deg, rgba(0,0,0,0.12), rgba(0,0,0,0.55));
+    linear-gradient(90deg, rgba(0,0,0,0.62), rgba(0,0,0,0.15) 55%, rgba(0,0,0,0.60));
 }
 
-/* Content */
+/* content overlay */
 .blockContent{
   position:absolute;
   inset:0;
@@ -505,27 +483,43 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
   display:flex;
   flex-direction:column;
   justify-content:space-between;
-  gap:10px;
+  gap:8px;
 }
-
 .blockTop{
   display:flex;
   align-items:flex-start;
   justify-content:space-between;
   gap:10px;
 }
-
 .blockTitle{
   font-weight: 900;
-  font-size: 12.5px;
-  line-height: 1.2;
-  color: rgba(255,255,255,0.96);
-  max-width: 78%;
+  font-size: 13px;
+  line-height: 1.15;
+  color: rgba(255,255,255,0.95);
   overflow:hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  max-width: 100%;
+}
+.blockBottom{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  color: rgba(255,255,255,0.78);
+  font-size: 12px;
+}
+.blockTime{
+  font-weight: 900;
+  color: rgba(255,255,255,0.88);
+  white-space: nowrap;
+}
+.blockPlatform{
+  color: rgba(255,255,255,0.62);
+  white-space: nowrap;
 }
 
+/* LIVE badge */
 .badgeLive{
   display:inline-flex;
   align-items:center;
@@ -533,25 +527,11 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
   padding: 5px 10px;
   border-radius: 999px;
   border: 1px solid rgba(70,240,170,0.34);
-  background: rgba(50,240,160,0.14);
+  background: rgba(50,240,160,0.12);
   color: rgba(70,240,170,0.95);
-  font-size: 11px;
-  font-weight: 900;
-  white-space:nowrap;
-}
-
-.blockBottom{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  color: rgba(255,255,255,0.78);
-  font-size: 11px;
-}
-
-.blockTime{
-  font-weight: 900;
-  color: rgba(255,255,255,0.92);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
 }
 
 /* empty */
@@ -563,21 +543,10 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
 /* footer removed */
 .footer{ display:none; }
 
-/* ========= Wide screens: truly fill your iMac ========= */
-@media (min-width: 1500px){
-  .top, .wrap{ max-width: var(--maxW-wide); }
-  h1{ font-size: 26px; }
-  .heroGrid{ grid-template-columns: 1.25fr 1.25fr 0.9fr; }
-  .rowLabel{ min-width: 260px; max-width: 260px; }
-  :root{ --rowH: 104px; --cellH: 86px; }
-}
-
 /* ========= Responsive ========= */
 @media (max-width: 980px){
   .heroGrid{ grid-template-columns: 1fr; }
   .controls{ flex-wrap:wrap; }
   .control.grow{ min-width: 220px; flex: 1 1 240px; }
-  .rowLabel{ min-width: 190px; max-width: 190px; }
-  .timeTick{ min-width: 150px; }
-  .lane{ background-size: 150px 1px; }
+  :root{ --rowLabelW: 190px; }
 }

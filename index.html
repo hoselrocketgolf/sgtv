@@ -9,8 +9,10 @@
   <body>
     <header class="top">
       <div class="brand">
+        <!-- Logo badge (click = refresh) -->
         <button id="brandBtn" class="brandLogo" type="button" aria-label="Refresh" title="Refresh">
-          <img class="brandLogoImg" src="assets/sgtv-logo.svg" alt="SGTV" />
+          <!-- IMPORTANT: the <img> is what guarantees the logo shows -->
+          <img class="brandLogoImg" src="./assets/sgtv-logo.svg" alt="SGTV" />
         </button>
 
         <div>
@@ -69,8 +71,9 @@
           <div class="tileHeader">
             <h2>Today's Guide</h2>
           </div>
-          <!-- JS will fully render this -->
-          <div class="tileBody" id="guideTileBody">Loading…</div>
+          <div class="tileBody">
+            Loading…
+          </div>
         </div>
       </section>
 
@@ -79,20 +82,18 @@
           <h2>Today's Schedule</h2>
 
           <div class="scheduleTools">
-            <button class="iconBtn" id="prevWindow" title="Back">◀</button>
-            <button class="nowBtn" id="jumpNow" title="Jump to current time">Now</button>
+            <button class="iconBtn" id="prevWindow">◀</button>
+            <button class="nowBtn" id="jumpNow">Now</button>
             <div class="windowLabel" id="windowLabel">Loading…</div>
-            <button class="iconBtn" id="nextWindow" title="Forward">▶</button>
+            <button class="iconBtn" id="nextWindow">▶</button>
           </div>
 
           <div class="updated" id="lastUpdated"></div>
         </div>
 
         <div class="guide">
-          <div class="hScroll" id="hScroll">
-            <div class="timeRow" id="timeRow"></div>
-            <div class="rows" id="rows"></div>
-          </div>
+          <div class="timeRow" id="timeRow"></div>
+          <div class="rows" id="rows"></div>
         </div>
 
         <div class="empty" id="emptyState" style="display:none;">
@@ -104,7 +105,9 @@
     </main>
 
     <script src="app.js"></script>
+
     <script>
+      // Clicking logo triggers refresh button (or reload as fallback)
       document.getElementById("brandBtn").addEventListener("click", () => {
         const refresh = document.getElementById("refreshBtn");
         refresh ? refresh.click() : location.reload();

@@ -1,16 +1,29 @@
 [
   {
-    "start_et": "2026-01-16 18:55",
+    "start_et": "2026-01-16 21:05",
     "end_et": "",
-    "title": "Live Garage Simulator Golf - TurbodTalon & BackPatioGolfer Scramble @ Wynn",
+    "title": "Break 50 - Whistler Nicklaus North Golf Course",
     "league": "",
     "platform": "YouTube",
-    "channel": "TurbodTalon Golf",
-    "watch_url": "https://www.youtube.com/watch?v=UOwWic89DxY",
-    "source_id": "UOwWic89DxY",
+    "channel": "SticeGolf",
+    "watch_url": "https://www.youtube.com/watch?v=juRnhsWTxHk",
+    "source_id": "juRnhsWTxHk",
     "status": "live",
-    "thumbnail_url": "https://i.ytimg.com/vi/UOwWic89DxY/maxresdefault_live.jpg",
-    "subscribers": 175
+    "thumbnail_url": "https://i.ytimg.com/vi/juRnhsWTxHk/maxresdefault_live.jpg",
+    "subscribers": 216
+  },
+  {
+    "start_et": "2026-01-16 21:05",
+    "end_et": "",
+    "title": "SGT PRO at the Sony Open",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Garbage Garage Golf",
+    "watch_url": "https://www.youtube.com/watch?v=-jgUce61FfM",
+    "source_id": "-jgUce61FfM",
+    "status": "live",
+    "thumbnail_url": "https://i.ytimg.com/vi/-jgUce61FfM/maxresdefault_live.jpg",
+    "subscribers": 93
   },
   {
     "start_et": "2026-01-17 16:00",

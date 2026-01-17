@@ -16,20 +16,19 @@ CHANNEL_SHEET_CSV = env_or_default("CHANNEL_SHEET_CSV", DEFAULT_CHANNEL_SHEET_CS
 OUT_PATH = env_or_default("OUT_PATH", "schedule.json")
 YT_API_KEY = (os.environ.get("YT_API_KEY") or "").strip()
 
+# How many recent uploads to scan per channel (more = better live detection, still cheap)
+MAX_UPLOAD_SCAN = int(env_or_default("MAX_UPLOAD_SCAN", "50"))
+
 USER_AGENT = "Mozilla/5.0 (compatible; sgtv-bot/2.1)"
 REQ_HEADERS = {
     "User-Agent": USER_AGENT,
     "Accept-Language": "en-US,en;q=0.9",
 }
 
-# If a stream was scheduled but never started, ignore it once it's this old.
-STALE_UPCOMING_GRACE_HOURS = 6
-UPCOMING_HORIZON_DAYS = 7
-
 # --------- HTTP helpers ---------
 def http_get(url: str) -> str:
     req = urllib.request.Request(url, headers=REQ_HEADERS)
-    with urllib.request.urlopen(req, timeout=30) as resp:
+    with urllib.request.urlopen(req, timeout=45) as resp:
         return resp.read().decode("utf-8", errors="ignore")
 
 def http_get_json(url: str) -> dict:
@@ -94,15 +93,19 @@ def iso_to_et_fmt(iso: str) -> str:
 def now_utc() -> datetime:
     return datetime.now(timezone.utc)
 
-def parse_iso_utc(iso: str) -> datetime | None:
+def parse_iso(iso: str) -> datetime | None:
     if not iso:
         return None
     try:
-        return datetime.fromisoformat(iso.replace("Z", "+00:00")).astimezone(timezone.utc)
+        return datetime.fromisoformat(iso.replace("Z", "+00:00"))
     except Exception:
         return None
 
 # --------- YouTube API strategy ---------
+# 1) channels.list (batch): uploads playlist + subscriber count + channel title
+# 2) playlistItems.list per channel: pull latest MAX_UPLOAD_SCAN
+# 3) videos.list (batched): read liveStreamingDetails to classify live/upcoming
+
 def chunked(lst, n):
     for i in range(0, len(lst), n):
         yield lst[i:i+n]
@@ -132,17 +135,35 @@ def fetch_channels_meta(channel_ids: list[str]) -> dict:
                 }
     return meta
 
-def fetch_uploads_video_ids(uploads_playlist_id: str, max_results: int = 20) -> list[str]:
-    resp = yt_api("playlistItems", {
-        "part": "contentDetails",
-        "playlistId": uploads_playlist_id,
-        "maxResults": max_results
-    })
+def fetch_uploads_video_ids(uploads_playlist_id: str, max_results: int = 50) -> list[str]:
     vids = []
-    for it in resp.get("items", []):
-        vid = (((it.get("contentDetails") or {}).get("videoId")) or "").strip()
-        if vid:
-            vids.append(vid)
+    page_token = None
+
+    # PlaylistItems maxResults per page is 50
+    while len(vids) < max_results:
+        per_page = min(50, max_results - len(vids))
+        params = {
+            "part": "contentDetails",
+            "playlistId": uploads_playlist_id,
+            "maxResults": per_page
+        }
+        if page_token:
+            params["pageToken"] = page_token
+
+        resp = yt_api("playlistItems", params)
+
+        for it in resp.get("items", []):
+            vid = (((it.get("contentDetails") or {}).get("videoId")) or "").strip()
+            if vid:
+                vids.append(vid)
+
+        page_token = resp.get("nextPageToken")
+        if not page_token:
+            break
+
+        # small throttle
+        time.sleep(0.05)
+
     return vids
 
 def fetch_videos_details(video_ids: list[str]) -> dict:
@@ -167,38 +188,45 @@ def pick_thumb(snippet: dict) -> str:
             return u
     return ""
 
-def classify_video(item: dict, now: datetime) -> tuple[str | None, str | None]:
+def classify_video(item: dict) -> tuple[str | None, str | None]:
     """
     Returns (status, start_iso)
       status: "live" | "upcoming" | None
-      start_iso: ISO timestamp string or None
     """
     lsd = (item.get("liveStreamingDetails") or {})
     snippet = (item.get("snippet") or {})
-
-    # YouTube's own classification is the safest truth-source:
     live_content = (snippet.get("liveBroadcastContent") or "").lower()
 
     actual_start = lsd.get("actualStartTime")
     actual_end = lsd.get("actualEndTime")
     scheduled_start = lsd.get("scheduledStartTime")
 
-    # --- LIVE: require YouTube to say it's live ---
-    # Prevents "live forever" if actualEndTime never appears.
-    if live_content == "live" and actual_start and not actual_end:
+    # Live if started and not ended
+    if actual_start and not actual_end:
         return "live", actual_start
 
-    # --- UPCOMING: must be upcoming and not started ---
-    if live_content == "upcoming" and scheduled_start and not actual_start:
-        sched_dt = parse_iso_utc(scheduled_start)
-        if sched_dt:
-            # ignore no-show streams that are scheduled in the past
-            if sched_dt < (now - timedelta(hours=STALE_UPCOMING_GRACE_HOURS)):
-                return None, None
+    # Upcoming if scheduled but not started
+    if scheduled_start and not actual_start:
         return "upcoming", scheduled_start
 
-    # If YouTube says "none", it's neither live nor upcoming.
+    # Fallbacks (rare)
+    if live_content == "live" and actual_start and not actual_end:
+        return "live", actual_start
+    if live_content == "upcoming" and scheduled_start:
+        return "upcoming", scheduled_start
+
     return None, None
+
+def is_stale_upcoming(start_iso: str, now: datetime) -> bool:
+    """
+    If YouTube says 'upcoming' but the scheduled time is in the past,
+    it’s almost always a canceled/never-went-live placeholder.
+    Drop it if it's older than 30 minutes ago.
+    """
+    dt = parse_iso(start_iso)
+    if not dt:
+        return False
+    return dt < (now - timedelta(minutes=30))
 
 # --------- Main ---------
 def main():
@@ -207,6 +235,7 @@ def main():
         raise SystemExit("No channels found in channel sheet CSV (check publish link + headers).")
 
     print("Loaded channels from sheet:", len(channels))
+    print("Scanning uploads per channel:", MAX_UPLOAD_SCAN)
 
     channel_ids = [c["channel_id"] for c in channels]
     meta = fetch_channels_meta(channel_ids)
@@ -219,6 +248,7 @@ def main():
     all_candidate_vids = []
     per_channel_candidate = {}
 
+    # Gather candidates
     for cid in channel_ids:
         m = meta.get(cid)
         if not m:
@@ -226,16 +256,17 @@ def main():
             continue
 
         uploads = m["uploads_playlist_id"]
-        vids = fetch_uploads_video_ids(uploads, max_results=20)
+        vids = fetch_uploads_video_ids(uploads, max_results=MAX_UPLOAD_SCAN)
         per_channel_candidate[cid] = vids
         all_candidate_vids.extend(vids)
 
         time.sleep(0.05)
 
+    # Fetch details for all unique candidates
     video_details = fetch_videos_details(sorted(set(all_candidate_vids)))
 
     now = now_utc()
-    upcoming_horizon = now + timedelta(days=UPCOMING_HORIZON_DAYS)
+    upcoming_horizon = now + timedelta(days=7)
 
     for cid, vids in per_channel_candidate.items():
         m = meta.get(cid) or {}
@@ -253,20 +284,24 @@ def main():
         print("-----")
         print(f"Channel: {cid} name: {channel_name} subs(api): {subs_api} subs(sheet): {subs_sheet}")
 
-        found_live_for_channel = False
+        found_live = False
 
         for vid in vids:
             item = video_details.get(vid)
             if not item:
                 continue
 
-            status, start_iso = classify_video(item, now)
+            status, start_iso = classify_video(item)
             if not status or not start_iso:
                 continue
 
-            # Upcoming horizon (only keep within next N days)
+            # Kill stale "upcoming" that are already in the past (canceled/never-live)
+            if status == "upcoming" and is_stale_upcoming(start_iso, now):
+                continue
+
+            # Upcoming filter window (next 7 days only)
             if status == "upcoming":
-                start_dt = parse_iso_utc(start_iso)
+                start_dt = parse_iso(start_iso)
                 if start_dt and start_dt > upcoming_horizon:
                     continue
 
@@ -279,7 +314,7 @@ def main():
             thumb = pick_thumb(snippet) or f"https://i.ytimg.com/vi/{vid}/hqdefault.jpg"
 
             if status == "live":
-                found_live_for_channel = True
+                found_live = True
 
             events.append({
                 "start_et": iso_to_et_fmt(start_iso),
@@ -295,9 +330,10 @@ def main():
                 "subscribers": subs
             })
 
-        if not found_live_for_channel:
+        if not found_live:
             print("No LIVE detected right now.")
 
+    # Sort: live first, then by time, tie by subs desc
     def sort_key(e):
         live_rank = 0 if e.get("status") == "live" else 1
         return (

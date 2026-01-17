@@ -71,10 +71,10 @@ let allEvents = [];
 let filteredEvents = [];
 let windowStart = null;
 
-// Guide window settings
-let windowMins = 240;
+// Guide window settings (tightened for nicer feel)
+let windowMins = 180;     // was 240 (4h). 3h feels way better visually.
 let tickMins = 30;
-let pxPerTick = 140;
+let pxPerTick = 190;      // wider ticks = less cramped labels
 let pxPerMin = pxPerTick / tickMins;
 
 // LIVE behavior tuning
@@ -92,8 +92,6 @@ function eventEnd(e) {
   if (e.status === "live") {
     const now = new Date();
     const extended = new Date(now.getTime() + LIVE_EXTEND_MINS * 60000);
-
-    // Ensure end is always after start (guard weird clocks)
     if (extended.getTime() > start.getTime()) return extended;
   }
 
@@ -160,8 +158,8 @@ function applyFilters() {
   filteredEvents = sortEvents(filteredEvents);
 
   renderNowNext();
-  renderRightTileTodayList();  // safe if tile missing
-  renderGuide();               // safe if guide missing
+  renderRightTileTodayList();
+  renderGuide();
   updateBrandLivePulse();
 }
 
@@ -275,11 +273,7 @@ function roundToTick(dt) {
 
 function ensureWindowStart() {
   if (windowStart) return;
-
-  // Prefer: current time window
-  // If you want initial view to be "Now" every page load, set it to now.
-  // This prevents it from jumping to 6pm just because the next event is later.
-  windowStart = roundToTick(new Date());
+  windowStart = roundToTick(new Date()); // ALWAYS start at now (prevents jumping to next show)
 }
 
 function renderTimeRow() {
@@ -331,8 +325,6 @@ function renderGuide() {
   const startMs = windowStart.getTime();
   const endMs = startMs + windowMins * 60000;
 
-  // Only include events that overlap the current window.
-  // LIVE is forced to overlap by eventEnd() extending.
   const windowEvents = filteredEvents.filter(e => {
     const s = parseET(e.start_et)?.getTime();
     if (!s) return false;
@@ -361,7 +353,9 @@ function renderGuide() {
       const rightMin = (ee.getTime() - startMs) / 60000;
 
       const left = clamp(leftMin * pxPerMin, -9999, 9999);
-      const width = clamp((rightMin - leftMin) * pxPerMin, 140, 9999);
+
+      // Increased minimum width so thumbnails don’t become tiny/squished.
+      const width = clamp((rightMin - leftMin) * pxPerMin, 240, 99999);
 
       const thumb = e.thumbnail_url || (e.source_id ? `https://i.ytimg.com/vi/${e.source_id}/hqdefault.jpg` : "");
       const liveBadge = e.status === "live" ? `<span class="badgeLive">LIVE</span>` : "";
@@ -381,7 +375,7 @@ function renderGuide() {
             </div>
             <div class="blockBottom">
               <div class="blockTime">${startLabel}–${endLabel}</div>
-              <div>${escapeHtml(e.platform || "")}</div>
+              <div class="blockPlatform">${escapeHtml(e.platform || "")}</div>
             </div>
           </div>
         </a>
@@ -394,7 +388,7 @@ function renderGuide() {
           <div class="name">${escapeHtml(r.channel)}</div>
           <div class="subs">${subs}</div>
         </div>
-        <div class="lane" style="background-size:${pxPerTick}px 1px;">
+        <div class="lane" style="width:${(Math.ceil(windowMins / tickMins) + 1) * pxPerTick}px;">
           ${blocks}
         </div>
       </div>
@@ -408,7 +402,6 @@ function shiftWindow(dir) {
   renderGuide();
   if (rowsEl) rowsEl.scrollTop = 0;
 }
-
 function jumpToNow() {
   windowStart = roundToTick(new Date());
   renderGuide();
@@ -452,7 +445,7 @@ async function loadSchedule() {
 
   rebuildFilters(allEvents);
 
-  // IMPORTANT: keep default window anchored to NOW on each fresh load
+  // Always anchor to NOW after refresh
   windowStart = roundToTick(new Date());
 
   const now = new Date();
@@ -461,7 +454,7 @@ async function loadSchedule() {
   applyFilters();
 }
 
-// --- Wire up (null-safe) ---
+// --- Wire up ---
 on(leagueFilter, "change", applyFilters);
 on(platformFilter, "change", applyFilters);
 on(searchInput, "input", applyFilters);
@@ -476,7 +469,6 @@ on(prevWindow, "click", () => shiftWindow(-1));
 on(nextWindow, "click", () => shiftWindow(1));
 on(jumpNowBtn, "click", jumpToNow);
 
-// Clicking logo triggers refresh
 on(brandBtn, "click", () => {
   const refresh = $("refreshBtn");
   refresh ? refresh.click() : location.reload();

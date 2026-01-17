@@ -1,20 +1,27 @@
-// SimGolf TV Guide - resilient (won't crash if some DOM elements are missing)
+// SimGolf.TV Guide - app.js (stable + no schedule scrollbars)
+
 const SCHEDULE_URL = "schedule.json";
 
 const $ = (id) => document.getElementById(id);
 const on = (el, evt, fn) => { if (el) el.addEventListener(evt, fn); };
 
+// Controls
 const leagueFilter = $("leagueFilter");
 const platformFilter = $("platformFilter");
 const searchInput = $("searchInput");
 const refreshBtn = $("refreshBtn");
 
+// Hero tiles
 const nowOn = $("nowOn");
 const upNext = $("upNext");
 const lastUpdated = $("lastUpdated");
 
-// Optional guide elements (may not exist depending on your HTML)
+// Right tile (Today’s Guide)
+const infoTile = $("infoTile");
 const infoTileBody = document.querySelector("#infoTile .tileBody");
+const infoTileHeaderH2 = document.querySelector("#infoTile .tileHeader h2");
+
+// Bottom schedule elements
 const timeRow = $("timeRow");
 const rowsEl = $("rows");
 const emptyState = $("emptyState");
@@ -24,17 +31,23 @@ const nextWindow = $("nextWindow");
 const jumpNowBtn = $("jumpNow");
 const windowLabel = $("windowLabel");
 
-// Optional logo (pulse when live exists)
-const brandBtn = $("brandBtn");
-
-// --- Time helpers ---
+// -------------------- Time helpers --------------------
 function parseET(str) {
+  // NOTE: This treats the given YYYY-MM-DD HH:MM as the viewer's local time.
+  // Your audience is ET-focused; keeping this simple & consistent with previous code.
   if (!str) return null;
   const [d, t] = str.split(" ");
   if (!d || !t) return null;
   const [Y, M, D] = d.split("-").map(Number);
   const [h, m] = t.split(":").map(Number);
   return new Date(Y, (M - 1), D, h, m, 0, 0);
+}
+
+function startOfDay(dt) {
+  return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), 0, 0, 0, 0);
+}
+function endOfDay(dt) {
+  return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), 23, 59, 59, 999);
 }
 function sameDay(a, b) {
   return a && b &&
@@ -66,27 +79,154 @@ function escapeHtml(s) {
     .replaceAll("'", "&#039;");
 }
 
-// --- State ---
+// -------------------- State --------------------
 let allEvents = [];
 let filteredEvents = [];
 let windowStart = null;
 
-// Guide window settings
-let windowMins = 240;
-let tickMins = 30;
-let pxPerTick = 190;            // match styles.css --tickW
+// Window configuration (you can tweak these safely)
+let windowMins = 240;     // 4 hours
+let tickMins = 30;        // time labels every 30 min
+let pxPerTick = 140;      // width per tick
 let pxPerMin = pxPerTick / tickMins;
 
-// wider minimum show blocks so thumbnails don't feel crushed
-const MIN_BLOCK_W = 340;
+// -------------------- Styling overrides (kills scrollbars + fixes lane sizing) --------------------
+(function injectNoScrollCss() {
+  const css = `
+    /* Disable native horizontal scrollbars in schedule */
+    #timeRow, #rows { overflow: hidden !important; }
+    /* Each row should NOT scroll horizontally */
+    .row { overflow: hidden !important; }
+    /* Lane is a fixed-width time window surface */
+    .lane {
+      position: relative !important;
+      overflow: hidden !important;
+      min-height: 76px;
+      border-left: 1px solid rgba(255,255,255,0.06);
+    }
+    /* TimeRow tick styling fallback */
+    .timeTick{
+      font-weight:800;
+      font-size:12px;
+      color: rgba(255,255,255,0.78);
+      padding: 12px 14px;
+      border-right: 1px solid rgba(255,255,255,0.06);
+    }
 
+    /* Block (show) as a full thumbnail card (not squished) */
+    .block{
+      position:absolute;
+      top: 10px;
+      bottom: 10px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(0,0,0,0.20);
+      overflow:hidden;
+      text-decoration:none !important;
+    }
+    .block:hover{ filter: brightness(1.06); }
+
+    .blockMedia{
+      position:absolute;
+      inset:0;
+      background-size: cover;
+      background-position: center;
+      transform: scale(1.01);
+    }
+    .blockOverlay{
+      position:absolute;
+      inset:0;
+      background:
+        linear-gradient(180deg, rgba(0,0,0,0.10), rgba(0,0,0,0.55));
+    }
+    .blockContent{
+      position:absolute;
+      inset:0;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      padding: 10px 12px;
+      gap: 10px;
+      min-width:0;
+    }
+    .blockTop{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+    .blockTitle{
+      font-weight: 900;
+      font-size: 12px;
+      line-height: 1.15;
+      color: rgba(255,255,255,0.94);
+      max-height: 2.4em;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+    .blockBottom{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      color: rgba(255,255,255,0.70);
+      font-size: 11px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+    .badgeLive{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(70,240,170,0.34);
+      background: rgba(50,240,160,0.12);
+      color: rgba(70,240,170,0.95);
+      font-size: 11px;
+      font-weight: 800;
+      white-space:nowrap;
+      flex: 0 0 auto;
+    }
+
+    /* Row label fallback (matches your earlier CSS naming differences) */
+    .rowLabel .name{
+      font-weight: 900;
+      font-size: 12px;
+      color: rgba(255,255,255,0.92);
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+    .rowLabel .subs{
+      margin-top: 2px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.55);
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+  `;
+  const style = document.createElement("style");
+  style.textContent = css;
+  document.head.appendChild(style);
+})();
+
+// -------------------- Event end-time logic --------------------
+// - Default: 2 hours from start
+// - If LIVE: extend to max(start+2h, now+20m) so it stays visible while live
 function eventEnd(e) {
   const end = parseET(e.end_et);
   if (end) return end;
+
   const start = parseET(e.start_et);
   if (!start) return null;
-  // default 2 hours
-  return new Date(start.getTime() + 120 * 60000);
+
+  const defaultEnd = new Date(start.getTime() + 120 * 60000);
+
+  if (e.status === "live") {
+    const now = new Date();
+    const liveHold = new Date(now.getTime() + 20 * 60000);
+    return new Date(Math.max(defaultEnd.getTime(), liveHold.getTime()));
+  }
+
+  return defaultEnd;
 }
 
 function sortEvents(events) {
@@ -110,6 +250,7 @@ function rebuildFilters(events) {
 
   const leagues = new Set();
   const platforms = new Set();
+
   events.forEach(e => {
     if (e.league) leagues.add(e.league);
     if (e.platform) platforms.add(e.platform);
@@ -148,17 +289,11 @@ function applyFilters() {
   filteredEvents = sortEvents(filteredEvents);
 
   renderNowNext();
-  renderRightTileTodayList();  // safe if tile missing
-  renderGuide();               // safe if guide missing
-
-  // pulse logo if anything is live
-  if (brandBtn) {
-    const hasLive = filteredEvents.some(e => e.status === "live");
-    brandBtn.classList.toggle("isLive", hasLive);
-  }
+  renderTodaysGuide();  // full day list
+  renderSchedule();     // bottom window
 }
 
-// --- Now/Next cards ---
+// -------------------- Hero cards --------------------
 function renderCard(e, forceLiveBadge = false) {
   const start = parseET(e.start_et);
   const media = e.thumbnail_url ? `style="background-image:url('${encodeURI(e.thumbnail_url)}')"` : "";
@@ -202,15 +337,23 @@ function renderNowNext() {
     : `<div class="muted">No upcoming events found.</div>`;
 }
 
-// --- Right tile chips (channel name bold only) ---
-function renderRightTileTodayList() {
+// -------------------- Right tile: Today’s Guide (full day) --------------------
+function renderTodaysGuide() {
   if (!infoTileBody) return;
 
+  // Force title to "Today's Guide" if you want it consistent
+  if (infoTileHeaderH2) infoTileHeaderH2.textContent = "Today's Guide";
+
   const now = new Date();
+  const dayStart = startOfDay(now).getTime();
+  const dayEnd = endOfDay(now).getTime();
+
   const todays = filteredEvents
     .filter(e => {
       const s = parseET(e.start_et);
-      return s && sameDay(s, now);
+      if (!s) return false;
+      const st = s.getTime();
+      return st >= dayStart && st <= dayEnd;
     })
     .sort((a, b) => (parseET(a.start_et)?.getTime() ?? 0) - (parseET(b.start_et)?.getTime() ?? 0));
 
@@ -240,9 +383,7 @@ function renderRightTileTodayList() {
       <div class="muted" style="font-size:12px;">${todays.length} shows</div>
     </div>
 
-    <div class="chipList">
-      ${items}
-    </div>
+    <div class="chipList">${items}</div>
 
     <style>
       .chipList{display:flex; flex-direction:column; gap:8px; max-height:360px; overflow:auto; padding-right:4px;}
@@ -258,16 +399,16 @@ function renderRightTileTodayList() {
   `;
 }
 
-// --- Guide rendering (only if your HTML has the guide elements) ---
+// -------------------- Bottom schedule (no scrollbars; arrows move window) --------------------
 function roundToTick(dt) {
   const mins = dt.getMinutes();
   const rounded = Math.floor(mins / tickMins) * tickMins;
   return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), dt.getHours(), rounded, 0, 0);
 }
 
-// ✅ FIX: default the window to NOW on load/refresh
 function ensureWindowStart() {
   if (windowStart) return;
+  // ALWAYS default to NOW on refresh (your request)
   windowStart = roundToTick(new Date());
 }
 
@@ -275,16 +416,28 @@ function renderTimeRow() {
   if (!timeRow || !windowLabel) return;
   ensureWindowStart();
 
+  const startMs = windowStart.getTime();
+  const endMs = startMs + windowMins * 60000;
+
+  // Render ticks
   const ticks = Math.ceil(windowMins / tickMins) + 1;
   const parts = [];
-
   for (let i = 0; i < ticks; i++) {
-    const dt = new Date(windowStart.getTime() + i * tickMins * 60000);
-    parts.push(`<div class="timeTick" style="min-width:${pxPerTick}px">${fmtTime(dt).replace(" ET","")}</div>`);
+    const dt = new Date(startMs + i * tickMins * 60000);
+    parts.push(`<div class="timeTick" style="width:${pxPerTick}px; flex:0 0 ${pxPerTick}px">${fmtTime(dt).replace(" ET","")}</div>`);
   }
+
+  // Make the time row exactly fit our window surface width
+  const surfaceW = Math.round(windowMins * pxPerMin);
+
+  timeRow.style.display = "flex";
+  timeRow.style.width = `${surfaceW}px`;
+  timeRow.style.maxWidth = `${surfaceW}px`;
+  timeRow.style.whiteSpace = "nowrap";
+  timeRow.style.overflow = "hidden";
   timeRow.innerHTML = parts.join("");
 
-  const end = new Date(windowStart.getTime() + windowMins * 60000);
+  const end = new Date(endMs);
   windowLabel.textContent = `${fmtDay(windowStart)} • ${fmtTime(windowStart)} → ${fmtTime(end)}`;
 }
 
@@ -311,7 +464,7 @@ function groupByChannel(events) {
   return rows;
 }
 
-function renderGuide() {
+function renderSchedule() {
   if (!rowsEl || !emptyState) return;
 
   ensureWindowStart();
@@ -321,10 +474,12 @@ function renderGuide() {
   const endMs = startMs + windowMins * 60000;
 
   const windowEvents = filteredEvents.filter(e => {
-    const s = parseET(e.start_et)?.getTime();
+    const s = parseET(e.start_et);
     if (!s) return false;
-    const ee = eventEnd(e)?.getTime() ?? s;
-    return ee >= startMs && s <= endMs;
+    const ee = eventEnd(e);
+    if (!ee) return false;
+    // Overlaps window
+    return ee.getTime() >= startMs && s.getTime() <= endMs;
   });
 
   if (!windowEvents.length) {
@@ -334,10 +489,17 @@ function renderGuide() {
   }
   emptyState.style.display = "none";
 
+  const surfaceW = Math.round(windowMins * pxPerMin);
   const rows = groupByChannel(windowEvents);
 
   rowsEl.innerHTML = rows.map(r => {
     const subs = r.maxSubs ? `${Number(r.maxSubs).toLocaleString()} subs` : "";
+
+    // Lane background grid lines
+    const laneBg = `
+      background-image: linear-gradient(to right, rgba(255,255,255,0.06) 1px, rgba(0,0,0,0) 1px);
+      background-size: ${pxPerTick}px 100%;
+    `;
 
     const blocks = r.list.map(e => {
       const s = parseET(e.start_et);
@@ -348,7 +510,7 @@ function renderGuide() {
       const rightMin = (ee.getTime() - startMs) / 60000;
 
       const left = clamp(leftMin * pxPerMin, -9999, 9999);
-      const width = clamp((rightMin - leftMin) * pxPerMin, MIN_BLOCK_W, 9999);
+      const width = clamp((rightMin - leftMin) * pxPerMin, 160, 99999); // minimum so thumbs aren't crushed
 
       const thumb = e.thumbnail_url || (e.source_id ? `https://i.ytimg.com/vi/${e.source_id}/hqdefault.jpg` : "");
       const liveBadge = e.status === "live" ? `<span class="badgeLive">LIVE</span>` : "";
@@ -367,8 +529,8 @@ function renderGuide() {
               ${liveBadge}
             </div>
             <div class="blockBottom">
-              <div class="blockTime">${startLabel}–${endLabel}</div>
-              <div class="blockPlatform">${escapeHtml(e.platform || "")}</div>
+              <div class="blockTime">${escapeHtml(startLabel)}–${escapeHtml(endLabel)}</div>
+              <div style="opacity:.9">${escapeHtml(e.platform || "")}</div>
             </div>
           </div>
         </a>
@@ -376,12 +538,14 @@ function renderGuide() {
     }).join("");
 
     return `
-      <div class="row">
-        <div class="rowLabel">
-          <div class="name">${escapeHtml(r.channel)}</div>
-          <div class="subs">${subs}</div>
+      <div class="row" style="display:flex; align-items:stretch; border-bottom: 1px solid rgba(255,255,255,0.06);">
+        <div class="rowLabel" style="min-width:220px; max-width:220px;">
+          <div style="min-width:0;">
+            <div class="name">${escapeHtml(r.channel)}</div>
+            <div class="subs">${escapeHtml(subs)}</div>
+          </div>
         </div>
-        <div class="lane" style="background-size:${pxPerTick}px 1px;">
+        <div class="lane" style="width:${surfaceW}px; ${laneBg}">
           ${blocks}
         </div>
       </div>
@@ -392,17 +556,16 @@ function renderGuide() {
 function shiftWindow(dir) {
   ensureWindowStart();
   windowStart = new Date(windowStart.getTime() + dir * windowMins * 60000);
-  renderGuide();
-  if (rowsEl) rowsEl.scrollTop = 0;
+  windowStart = roundToTick(windowStart);
+  renderSchedule();
 }
 
 function jumpToNow() {
   windowStart = roundToTick(new Date());
-  renderGuide();
-  if (rowsEl) rowsEl.scrollTop = 0;
+  renderSchedule();
 }
 
-// --- Fetch schedule.json ---
+// -------------------- Fetch schedule.json --------------------
 async function loadSchedule() {
   if (nowOn) nowOn.textContent = "Loading…";
   if (upNext) upNext.textContent = "Loading…";
@@ -432,7 +595,7 @@ async function loadSchedule() {
 
   rebuildFilters(allEvents);
 
-  // ✅ reset to NOW on every load so refresh always anchors current time
+  // IMPORTANT: default schedule window to NOW every refresh
   windowStart = null;
 
   const now = new Date();
@@ -441,7 +604,7 @@ async function loadSchedule() {
   applyFilters();
 }
 
-// --- Wire up (null-safe) ---
+// -------------------- Wire up --------------------
 on(leagueFilter, "change", applyFilters);
 on(platformFilter, "change", applyFilters);
 on(searchInput, "input", applyFilters);
@@ -456,7 +619,7 @@ on(prevWindow, "click", () => shiftWindow(-1));
 on(nextWindow, "click", () => shiftWindow(1));
 on(jumpNowBtn, "click", jumpToNow);
 
-// initial
+// initial load
 loadSchedule().catch(err => {
   console.error(err);
   if (nowOn) nowOn.innerHTML = `<div class="muted">Error loading schedule.</div>`;

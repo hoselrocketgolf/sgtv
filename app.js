@@ -1,4 +1,4 @@
-// SimGolf.TV Guide - app.js (stable + no schedule scrollbars)
+// SimGolf.TV Guide - app.js (responsive schedule, no scrollbars, no injected CSS)
 
 const SCHEDULE_URL = "schedule.json";
 
@@ -17,7 +17,6 @@ const upNext = $("upNext");
 const lastUpdated = $("lastUpdated");
 
 // Right tile (Today’s Guide)
-const infoTile = $("infoTile");
 const infoTileBody = document.querySelector("#infoTile .tileBody");
 const infoTileHeaderH2 = document.querySelector("#infoTile .tileHeader h2");
 
@@ -33,8 +32,6 @@ const windowLabel = $("windowLabel");
 
 // -------------------- Time helpers --------------------
 function parseET(str) {
-  // NOTE: This treats the given YYYY-MM-DD HH:MM as the viewer's local time.
-  // Your audience is ET-focused; keeping this simple & consistent with previous code.
   if (!str) return null;
   const [d, t] = str.split(" ");
   if (!d || !t) return null;
@@ -48,12 +45,6 @@ function startOfDay(dt) {
 }
 function endOfDay(dt) {
   return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), 23, 59, 59, 999);
-}
-function sameDay(a, b) {
-  return a && b &&
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate();
 }
 function fmtTime(dt) {
   if (!dt) return "";
@@ -84,129 +75,13 @@ let allEvents = [];
 let filteredEvents = [];
 let windowStart = null;
 
-// Window configuration (you can tweak these safely)
-let windowMins = 240;     // 4 hours
-let tickMins = 30;        // time labels every 30 min
-let pxPerTick = 140;      // width per tick
-let pxPerMin = pxPerTick / tickMins;
+// Config
+let tickMins = 30;        // label ticks every 30 minutes
 
-// -------------------- Styling overrides (kills scrollbars + fixes lane sizing) --------------------
-(function injectNoScrollCss() {
-  const css = `
-    /* Disable native horizontal scrollbars in schedule */
-    #timeRow, #rows { overflow: hidden !important; }
-    /* Each row should NOT scroll horizontally */
-    .row { overflow: hidden !important; }
-    /* Lane is a fixed-width time window surface */
-    .lane {
-      position: relative !important;
-      overflow: hidden !important;
-      min-height: 76px;
-      border-left: 1px solid rgba(255,255,255,0.06);
-    }
-    /* TimeRow tick styling fallback */
-    .timeTick{
-      font-weight:800;
-      font-size:12px;
-      color: rgba(255,255,255,0.78);
-      padding: 12px 14px;
-      border-right: 1px solid rgba(255,255,255,0.06);
-    }
-
-    /* Block (show) as a full thumbnail card (not squished) */
-    .block{
-      position:absolute;
-      top: 10px;
-      bottom: 10px;
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,0.10);
-      background: rgba(0,0,0,0.20);
-      overflow:hidden;
-      text-decoration:none !important;
-    }
-    .block:hover{ filter: brightness(1.06); }
-
-    .blockMedia{
-      position:absolute;
-      inset:0;
-      background-size: cover;
-      background-position: center;
-      transform: scale(1.01);
-    }
-    .blockOverlay{
-      position:absolute;
-      inset:0;
-      background:
-        linear-gradient(180deg, rgba(0,0,0,0.10), rgba(0,0,0,0.55));
-    }
-    .blockContent{
-      position:absolute;
-      inset:0;
-      display:flex;
-      flex-direction:column;
-      justify-content:space-between;
-      padding: 10px 12px;
-      gap: 10px;
-      min-width:0;
-    }
-    .blockTop{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
-    .blockTitle{
-      font-weight: 900;
-      font-size: 12px;
-      line-height: 1.15;
-      color: rgba(255,255,255,0.94);
-      max-height: 2.4em;
-      overflow:hidden;
-      text-overflow: ellipsis;
-    }
-    .blockBottom{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      color: rgba(255,255,255,0.70);
-      font-size: 11px;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow: ellipsis;
-    }
-    .badgeLive{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      padding: 5px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(70,240,170,0.34);
-      background: rgba(50,240,160,0.12);
-      color: rgba(70,240,170,0.95);
-      font-size: 11px;
-      font-weight: 800;
-      white-space:nowrap;
-      flex: 0 0 auto;
-    }
-
-    /* Row label fallback (matches your earlier CSS naming differences) */
-    .rowLabel .name{
-      font-weight: 900;
-      font-size: 12px;
-      color: rgba(255,255,255,0.92);
-      white-space: nowrap;
-      overflow:hidden;
-      text-overflow: ellipsis;
-    }
-    .rowLabel .subs{
-      margin-top: 2px;
-      font-size: 11px;
-      color: rgba(255,255,255,0.55);
-      white-space: nowrap;
-      overflow:hidden;
-      text-overflow: ellipsis;
-    }
-  `;
-  const style = document.createElement("style");
-  style.textContent = css;
-  document.head.appendChild(style);
-})();
+// We will compute these dynamically each render based on available width:
+let windowMins = 240;     // 2–4 hours adaptive
+let pxPerTick = 140;      // tick width (will be recomputed)
+let pxPerMin = 140 / 30;
 
 // -------------------- Event end-time logic --------------------
 // - Default: 2 hours from start
@@ -250,7 +125,6 @@ function rebuildFilters(events) {
 
   const leagues = new Set();
   const platforms = new Set();
-
   events.forEach(e => {
     if (e.league) leagues.add(e.league);
     if (e.platform) platforms.add(e.platform);
@@ -289,8 +163,8 @@ function applyFilters() {
   filteredEvents = sortEvents(filteredEvents);
 
   renderNowNext();
-  renderTodaysGuide();  // full day list
-  renderSchedule();     // bottom window
+  renderTodaysGuide();
+  renderSchedule();
 }
 
 // -------------------- Hero cards --------------------
@@ -341,7 +215,6 @@ function renderNowNext() {
 function renderTodaysGuide() {
   if (!infoTileBody) return;
 
-  // Force title to "Today's Guide" if you want it consistent
   if (infoTileHeaderH2) infoTileHeaderH2.textContent = "Today's Guide";
 
   const now = new Date();
@@ -399,7 +272,7 @@ function renderTodaysGuide() {
   `;
 }
 
-// -------------------- Bottom schedule (no scrollbars; arrows move window) --------------------
+// -------------------- Bottom schedule (responsive, no scrollbars) --------------------
 function roundToTick(dt) {
   const mins = dt.getMinutes();
   const rounded = Math.floor(mins / tickMins) * tickMins;
@@ -408,33 +281,63 @@ function roundToTick(dt) {
 
 function ensureWindowStart() {
   if (windowStart) return;
-  // ALWAYS default to NOW on refresh (your request)
+  // ALWAYS default to NOW on refresh
   windowStart = roundToTick(new Date());
 }
 
-function renderTimeRow() {
+function getLaneSurfaceWidthPx() {
+  // Find the schedule section width and subtract the sticky channel label width.
+  // This keeps the lane surface ALWAYS within the container => no page scrollbar.
+  if (!rowsEl) return 800;
+
+  const scheduleSection = rowsEl.closest(".scheduleSection") || document.querySelector(".scheduleSection");
+  const sectionW = scheduleSection ? scheduleSection.getBoundingClientRect().width : window.innerWidth;
+
+  // Matches your CSS: rowLabel min/max width 220px + paddings/borders
+  const labelW = window.matchMedia("(max-width: 980px)").matches ? 180 : 220;
+
+  // Section has inner padding; give a little breathing room
+  const paddingFudge = 60;
+
+  return Math.max(420, Math.floor(sectionW - labelW - paddingFudge));
+}
+
+function computeWindowAndScale(surfaceW) {
+  // Goal: keep blocks looking good (avoid squish).
+  // We vary the time window between 120 and 240 minutes based on available width.
+  const desiredPxPerMin = 3.8; // “density”: larger = fewer hours, bigger thumbnails
+  let mins = Math.round((surfaceW / desiredPxPerMin) / 30) * 30;
+
+  mins = clamp(mins, 120, 240); // 2h to 4h adaptive
+  windowMins = mins;
+
+  // Now compute px/min from actual chosen window
+  pxPerMin = surfaceW / windowMins;
+  pxPerTick = pxPerMin * tickMins;
+}
+
+function renderTimeRow(surfaceW) {
   if (!timeRow || !windowLabel) return;
   ensureWindowStart();
 
   const startMs = windowStart.getTime();
   const endMs = startMs + windowMins * 60000;
 
-  // Render ticks
   const ticks = Math.ceil(windowMins / tickMins) + 1;
   const parts = [];
+
   for (let i = 0; i < ticks; i++) {
     const dt = new Date(startMs + i * tickMins * 60000);
-    parts.push(`<div class="timeTick" style="width:${pxPerTick}px; flex:0 0 ${pxPerTick}px">${fmtTime(dt).replace(" ET","")}</div>`);
+    parts.push(
+      `<div class="timeTick" style="width:${pxPerTick}px; flex:0 0 ${pxPerTick}px">${fmtTime(dt).replace(" ET","")}</div>`
+    );
   }
-
-  // Make the time row exactly fit our window surface width
-  const surfaceW = Math.round(windowMins * pxPerMin);
 
   timeRow.style.display = "flex";
   timeRow.style.width = `${surfaceW}px`;
   timeRow.style.maxWidth = `${surfaceW}px`;
-  timeRow.style.whiteSpace = "nowrap";
   timeRow.style.overflow = "hidden";
+  timeRow.style.whiteSpace = "nowrap";
   timeRow.innerHTML = parts.join("");
 
   const end = new Date(endMs);
@@ -468,7 +371,12 @@ function renderSchedule() {
   if (!rowsEl || !emptyState) return;
 
   ensureWindowStart();
-  renderTimeRow();
+
+  // Always fit schedule to container width (no scrollbars)
+  const surfaceW = getLaneSurfaceWidthPx();
+  computeWindowAndScale(surfaceW);
+
+  renderTimeRow(surfaceW);
 
   const startMs = windowStart.getTime();
   const endMs = startMs + windowMins * 60000;
@@ -478,7 +386,7 @@ function renderSchedule() {
     if (!s) return false;
     const ee = eventEnd(e);
     if (!ee) return false;
-    // Overlaps window
+    // Overlaps the visible window
     return ee.getTime() >= startMs && s.getTime() <= endMs;
   });
 
@@ -489,13 +397,12 @@ function renderSchedule() {
   }
   emptyState.style.display = "none";
 
-  const surfaceW = Math.round(windowMins * pxPerMin);
   const rows = groupByChannel(windowEvents);
 
+  rowsEl.style.overflow = "hidden";
   rowsEl.innerHTML = rows.map(r => {
     const subs = r.maxSubs ? `${Number(r.maxSubs).toLocaleString()} subs` : "";
 
-    // Lane background grid lines
     const laneBg = `
       background-image: linear-gradient(to right, rgba(255,255,255,0.06) 1px, rgba(0,0,0,0) 1px);
       background-size: ${pxPerTick}px 100%;
@@ -509,8 +416,8 @@ function renderSchedule() {
       const leftMin = (s.getTime() - startMs) / 60000;
       const rightMin = (ee.getTime() - startMs) / 60000;
 
-      const left = clamp(leftMin * pxPerMin, -9999, 9999);
-      const width = clamp((rightMin - leftMin) * pxPerMin, 160, 99999); // minimum so thumbs aren't crushed
+      const left = clamp(leftMin * pxPerMin, -9999, 99999);
+      const width = clamp((rightMin - leftMin) * pxPerMin, 180, 99999); // bumped min width
 
       const thumb = e.thumbnail_url || (e.source_id ? `https://i.ytimg.com/vi/${e.source_id}/hqdefault.jpg` : "");
       const liveBadge = e.status === "live" ? `<span class="badgeLive">LIVE</span>` : "";
@@ -538,14 +445,14 @@ function renderSchedule() {
     }).join("");
 
     return `
-      <div class="row" style="display:flex; align-items:stretch; border-bottom: 1px solid rgba(255,255,255,0.06);">
-        <div class="rowLabel" style="min-width:220px; max-width:220px;">
+      <div class="row" style="display:flex; align-items:stretch; border-bottom: 1px solid rgba(255,255,255,0.06); overflow:hidden;">
+        <div class="rowLabel" style="min-width:${window.matchMedia("(max-width: 980px)").matches ? 180 : 220}px; max-width:${window.matchMedia("(max-width: 980px)").matches ? 180 : 220}px;">
           <div style="min-width:0;">
             <div class="name">${escapeHtml(r.channel)}</div>
             <div class="subs">${escapeHtml(subs)}</div>
           </div>
         </div>
-        <div class="lane" style="width:${surfaceW}px; ${laneBg}">
+        <div class="lane" style="width:${surfaceW}px; overflow:hidden; ${laneBg}">
           ${blocks}
         </div>
       </div>
@@ -564,6 +471,12 @@ function jumpToNow() {
   windowStart = roundToTick(new Date());
   renderSchedule();
 }
+
+// Re-render schedule if window resizes (prevents scrollbars / cutoffs)
+window.addEventListener("resize", () => {
+  // Don’t reset time window; just recompute width/scale
+  renderSchedule();
+});
 
 // -------------------- Fetch schedule.json --------------------
 async function loadSchedule() {

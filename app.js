@@ -24,7 +24,7 @@ const nextWindow = $("nextWindow");
 const jumpNowBtn = $("jumpNow");
 const windowLabel = $("windowLabel");
 
-// Optional brand refresh button
+// Optional logo (pulse when live exists)
 const brandBtn = $("brandBtn");
 
 // --- Time helpers ---
@@ -71,32 +71,22 @@ let allEvents = [];
 let filteredEvents = [];
 let windowStart = null;
 
-// Guide window settings (tightened for nicer feel)
-let windowMins = 180;     // was 240 (4h). 3h feels way better visually.
+// Guide window settings
+let windowMins = 240;
 let tickMins = 30;
-let pxPerTick = 190;      // wider ticks = less cramped labels
+let pxPerTick = 190;            // match styles.css --tickW
 let pxPerMin = pxPerTick / tickMins;
 
-// LIVE behavior tuning
-const DEFAULT_EVENT_MINS = 120;     // default show length (2 hours)
-const LIVE_EXTEND_MINS = 20;        // keep live visible by extending to now+20
+// ⭐️ CHANGE: wider minimum show blocks so thumbnails don't feel crushed
+const MIN_BLOCK_W = 340;
 
 function eventEnd(e) {
   const end = parseET(e.end_et);
   if (end) return end;
-
   const start = parseET(e.start_et);
   if (!start) return null;
-
-  // If LIVE, extend "effective end" so it remains visible in the schedule grid.
-  if (e.status === "live") {
-    const now = new Date();
-    const extended = new Date(now.getTime() + LIVE_EXTEND_MINS * 60000);
-    if (extended.getTime() > start.getTime()) return extended;
-  }
-
-  // default duration
-  return new Date(start.getTime() + DEFAULT_EVENT_MINS * 60000);
+  // default 2 hours
+  return new Date(start.getTime() + 120 * 60000);
 }
 
 function sortEvents(events) {
@@ -158,9 +148,14 @@ function applyFilters() {
   filteredEvents = sortEvents(filteredEvents);
 
   renderNowNext();
-  renderRightTileTodayList();
-  renderGuide();
-  updateBrandLivePulse();
+  renderRightTileTodayList();  // safe if tile missing
+  renderGuide();               // safe if guide missing
+
+  // pulse logo if anything is live
+  if (brandBtn) {
+    const hasLive = filteredEvents.some(e => e.status === "live");
+    brandBtn.classList.toggle("isLive", hasLive);
+  }
 }
 
 // --- Now/Next cards ---
@@ -207,12 +202,11 @@ function renderNowNext() {
     : `<div class="muted">No upcoming events found.</div>`;
 }
 
-// --- Right tile (full day list; resets at midnight) ---
+// --- Right tile chips (channel name bold only) ---
 function renderRightTileTodayList() {
   if (!infoTileBody) return;
 
   const now = new Date();
-
   const todays = filteredEvents
     .filter(e => {
       const s = parseET(e.start_et);
@@ -264,7 +258,7 @@ function renderRightTileTodayList() {
   `;
 }
 
-// --- Guide rendering ---
+// --- Guide rendering (only if your HTML has the guide elements) ---
 function roundToTick(dt) {
   const mins = dt.getMinutes();
   const rounded = Math.floor(mins / tickMins) * tickMins;
@@ -273,7 +267,10 @@ function roundToTick(dt) {
 
 function ensureWindowStart() {
   if (windowStart) return;
-  windowStart = roundToTick(new Date()); // ALWAYS start at now (prevents jumping to next show)
+  const live = filteredEvents.find(e => e.status === "live");
+  const next = filteredEvents.find(e => e.status !== "live");
+  let base = parseET(live?.start_et) || parseET(next?.start_et) || new Date();
+  windowStart = roundToTick(base);
 }
 
 function renderTimeRow() {
@@ -317,6 +314,7 @@ function groupByChannel(events) {
 }
 
 function renderGuide() {
+  // If your HTML doesn't have guide elements, skip.
   if (!rowsEl || !emptyState) return;
 
   ensureWindowStart();
@@ -353,9 +351,7 @@ function renderGuide() {
       const rightMin = (ee.getTime() - startMs) / 60000;
 
       const left = clamp(leftMin * pxPerMin, -9999, 9999);
-
-      // Increased minimum width so thumbnails don’t become tiny/squished.
-      const width = clamp((rightMin - leftMin) * pxPerMin, 240, 99999);
+      const width = clamp((rightMin - leftMin) * pxPerMin, MIN_BLOCK_W, 9999);
 
       const thumb = e.thumbnail_url || (e.source_id ? `https://i.ytimg.com/vi/${e.source_id}/hqdefault.jpg` : "");
       const liveBadge = e.status === "live" ? `<span class="badgeLive">LIVE</span>` : "";
@@ -388,7 +384,7 @@ function renderGuide() {
           <div class="name">${escapeHtml(r.channel)}</div>
           <div class="subs">${subs}</div>
         </div>
-        <div class="lane" style="width:${(Math.ceil(windowMins / tickMins) + 1) * pxPerTick}px;">
+        <div class="lane" style="background-size:${pxPerTick}px 1px;">
           ${blocks}
         </div>
       </div>
@@ -406,13 +402,6 @@ function jumpToNow() {
   windowStart = roundToTick(new Date());
   renderGuide();
   if (rowsEl) rowsEl.scrollTop = 0;
-}
-
-// --- Brand pulse if anything is LIVE ---
-function updateBrandLivePulse() {
-  if (!brandBtn) return;
-  const hasLive = filteredEvents.some(e => e.status === "live");
-  brandBtn.classList.toggle("isLive", !!hasLive);
 }
 
 // --- Fetch schedule.json ---
@@ -445,8 +434,7 @@ async function loadSchedule() {
 
   rebuildFilters(allEvents);
 
-  // Always anchor to NOW after refresh
-  windowStart = roundToTick(new Date());
+  windowStart = null;
 
   const now = new Date();
   if (lastUpdated) lastUpdated.textContent = `Last updated: ${fmtDay(now)} ${fmtTime(now)}`;
@@ -454,7 +442,7 @@ async function loadSchedule() {
   applyFilters();
 }
 
-// --- Wire up ---
+// --- Wire up (null-safe) ---
 on(leagueFilter, "change", applyFilters);
 on(platformFilter, "change", applyFilters);
 on(searchInput, "input", applyFilters);
@@ -468,11 +456,6 @@ on(refreshBtn, "click", () => loadSchedule().catch(err => {
 on(prevWindow, "click", () => shiftWindow(-1));
 on(nextWindow, "click", () => shiftWindow(1));
 on(jumpNowBtn, "click", jumpToNow);
-
-on(brandBtn, "click", () => {
-  const refresh = $("refreshBtn");
-  refresh ? refresh.click() : location.reload();
-});
 
 // initial
 loadSchedule().catch(err => {

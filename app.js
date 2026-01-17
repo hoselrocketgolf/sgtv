@@ -63,9 +63,9 @@ let filteredEvents = [];
 let windowStart = null;
 
 // Guide window settings
-let windowMins = 240; // 4 hours visible
-let tickMins = 30;
-let pxPerTick = 140;
+let windowMins = 120;   // 2 hours default (feels like TV Guide)
+let tickMins = 30;      // keep 30-min ticks
+let pxPerTick = 180;    // more space per tick = less squish
 let pxPerMin = pxPerTick / tickMins;
 
 // ✅ End-time logic

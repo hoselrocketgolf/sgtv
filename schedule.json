@@ -1,18 +1,5 @@
 [
   {
-    "start_et": "2026-01-16 21:05",
-    "end_et": "",
-    "title": "SGT PRO at the Sony Open",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Garbage Garage Golf",
-    "watch_url": "https://www.youtube.com/watch?v=-jgUce61FfM",
-    "source_id": "-jgUce61FfM",
-    "status": "live",
-    "thumbnail_url": "https://i.ytimg.com/vi/-jgUce61FfM/maxresdefault_live.jpg",
-    "subscribers": 93
-  },
-  {
     "start_et": "2026-01-16 22:24",
     "end_et": "",
     "title": "EP. 194 | Beezy & Triple Bogey take on the Scramble Tour!",
@@ -23,7 +10,33 @@
     "source_id": "xn8TgOIYLOs",
     "status": "live",
     "thumbnail_url": "https://i.ytimg.com/vi/xn8TgOIYLOs/maxresdefault_live.jpg",
-    "subscribers": 8700
+    "subscribers": 8710
+  },
+  {
+    "start_et": "2026-01-16 23:04",
+    "end_et": "",
+    "title": "Scramble Event for Twisted Sticks ft. Stavy",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "DLud Golf",
+    "watch_url": "https://www.youtube.com/watch?v=qPeZ8Xk7iHg",
+    "source_id": "qPeZ8Xk7iHg",
+    "status": "live",
+    "thumbnail_url": "https://i.ytimg.com/vi/qPeZ8Xk7iHg/maxresdefault_live.jpg",
+    "subscribers": 1870
+  },
+  {
+    "start_et": "2026-01-16 23:31",
+    "end_et": "",
+    "title": "2 man scramble",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Clark Edwards",
+    "watch_url": "https://www.youtube.com/watch?v=zHtBr3Gd5wo",
+    "source_id": "zHtBr3Gd5wo",
+    "status": "live",
+    "thumbnail_url": "https://i.ytimg.com/vi/zHtBr3Gd5wo/sddefault_live.jpg",
+    "subscribers": 22
   },
   {
     "start_et": "2026-01-17 16:00",

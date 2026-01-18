@@ -1,7 +1,6 @@
-// SimGolf.TV Guide - app.js (ET-correct source times, display in user's local time, preference B UI)
+// SimGolf.TV Guide - app.js (ET source → user local display, schedule blocks clamped to window)
 
 const SCHEDULE_URL = "schedule.json";
-
 const $ = (id) => document.getElementById(id);
 const on = (el, evt, fn) => { if (el) el.addEventListener(evt, fn); };
 
@@ -17,11 +16,10 @@ function getUserTzShort() {
     return parts.find(p => p.type === "timeZoneName")?.value || "";
   } catch { return ""; }
 }
-
 const USER_TZ = getUserTimeZone();
 const USER_TZ_SHORT = getUserTzShort();
 
-// The schedule.json fields start_et/end_et are authored in Eastern Time.
+// Schedule is authored in Eastern wall time strings:
 const ET_TZ = "America/New_York";
 
 function getParts(date, tz) {
@@ -36,16 +34,10 @@ function getParts(date, tz) {
   }).formatToParts(date);
 
   const get = (t) => Number(parts.find(p => p.type === t)?.value || 0);
-  return {
-    year: get("year"),
-    month: get("month"),
-    day: get("day"),
-    hour: get("hour"),
-    minute: get("minute"),
-  };
+  return { year: get("year"), month: get("month"), day: get("day"), hour: get("hour"), minute: get("minute") };
 }
 
-// Convert ET wall time "YYYY-MM-DD HH:MM" -> real Date instant.
+// Convert ET wall time "YYYY-MM-DD HH:MM" -> instant Date.
 function parseET(str) {
   if (!str) return null;
   const [d, t] = str.split(" ");
@@ -55,9 +47,10 @@ function parseET(str) {
   const [h, m] = t.split(":").map(Number);
   if (![Y, M, D, h, m].every(n => Number.isFinite(n))) return null;
 
-  // Iteratively find the UTC timestamp that corresponds to the desired ET wall-clock.
+  // start guess at UTC with same wall time
   let utc = Date.UTC(Y, M - 1, D, h, m, 0, 0);
 
+  // Iteratively correct until the ET wall clock matches.
   for (let i = 0; i < 4; i++) {
     const got = getParts(new Date(utc), ET_TZ);
 
@@ -65,7 +58,7 @@ function parseET(str) {
     const gotUTC = Date.UTC(got.year, got.month - 1, got.day, got.hour, got.minute, 0, 0);
 
     const diff = desiredUTC - gotUTC;
-    if (Math.abs(diff) < 30 * 1000) break; // close enough
+    if (Math.abs(diff) < 30 * 1000) break;
     utc += diff;
   }
 
@@ -96,22 +89,19 @@ function escapeHtml(s) {
     .replaceAll("'", "&#039;");
 }
 
-// -------------------- Controls --------------------
+// -------------------- DOM --------------------
 const leagueFilter = $("leagueFilter");
 const platformFilter = $("platformFilter");
 const searchInput = $("searchInput");
 const refreshBtn = $("refreshBtn");
 
-// Hero tiles
 const nowOn = $("nowOn");
 const upNext = $("upNext");
 const lastUpdated = $("lastUpdated");
 
-// Right tile (Today’s Guide)
 const infoTileBody = document.querySelector("#infoTile .tileBody");
 const infoTileHeaderH2 = document.querySelector("#infoTile .tileHeader h2");
 
-// Bottom schedule elements
 const timeRow = $("timeRow");
 const rowsEl = $("rows");
 const emptyState = $("emptyState");
@@ -126,27 +116,26 @@ let allEvents = [];
 let filteredEvents = [];
 let windowStart = null;
 
-// Window configuration
-let windowMins = 240;   // 4 hours
-let tickMins = 30;      // labels every 30 min
-let pxPerTick = 140;    // width per tick
+// Window config
+let windowMins = 240;
+let tickMins = 30;
+let pxPerTick = 140;
 let pxPerMin = pxPerTick / tickMins;
 
-// -------------------- Inject schedule CSS safety (no horizontal scrollbars) --------------------
+// Safety: kill native scrollbars inside schedule
 (function injectNoScrollCss() {
   const css = `
     #timeRow, #rows { overflow: hidden !important; }
     .row { overflow: hidden !important; }
-    .lane { position: relative !important; overflow: hidden !important; min-height: 76px; }
+    .lane { overflow: hidden !important; }
   `;
   const style = document.createElement("style");
   style.textContent = css;
   document.head.appendChild(style);
 })();
 
-// -------------------- LIVE end-time logic --------------------
-// Default: 2 hours from start.
-// If LIVE: keep extending to at least (now + 20m) so it stays visible while live.
+// -------------------- End time logic --------------------
+// Default: 2h. If LIVE: extend to max(start+2h, now+20m)
 function eventEnd(e) {
   const explicit = parseET(e.end_et);
   if (explicit) return explicit;
@@ -160,7 +149,6 @@ function eventEnd(e) {
     const liveHold = new Date(Date.now() + 20 * 60000);
     return new Date(Math.max(defaultEnd.getTime(), liveHold.getTime()));
   }
-
   return defaultEnd;
 }
 
@@ -174,9 +162,7 @@ function sortEvents(events) {
     const bt = parseET(b.start_et)?.getTime() ?? Number.MAX_SAFE_INTEGER;
     if (at !== bt) return at - bt;
 
-    const as = Number(a.subscribers || 0);
-    const bs = Number(b.subscribers || 0);
-    return bs - as;
+    return (Number(b.subscribers || 0) - Number(a.subscribers || 0));
   });
 }
 
@@ -210,7 +196,6 @@ function setBrandLiveGlow() {
   const brandBtn = $("brandBtn");
   if (!brandBtn) return;
   const anyLive = filteredEvents.some(e => e.status === "live");
-  // Preference B: subtle glow (not neon) when anything is live
   brandBtn.classList.toggle("glow", anyLive);
 }
 
@@ -233,8 +218,8 @@ function applyFilters() {
 
   setBrandLiveGlow();
   renderNowNext();
-  renderTodaysGuide();  // full day list
-  renderSchedule();     // bottom window
+  renderTodaysGuide();
+  renderSchedule();
 }
 
 // -------------------- Hero cards --------------------
@@ -281,7 +266,7 @@ function renderNowNext() {
     : `<div class="muted">No upcoming events found.</div>`;
 }
 
-// -------------------- Right tile: Today’s Guide (full day, preference B) --------------------
+// -------------------- Today's Guide (Preference B: subtle dot, no extra LIVE pills) --------------------
 function renderTodaysGuide() {
   if (!infoTileBody) return;
   if (infoTileHeaderH2) infoTileHeaderH2.textContent = "Today's Guide";
@@ -304,17 +289,14 @@ function renderTodaysGuide() {
     return;
   }
 
-  // Preference B: do not shout LIVE everywhere. Use a subtle dot + time tint.
   const items = todays.map(e => {
     const s = parseET(e.start_et);
-    const t = fmtTime(s);
     const isLive = e.status === "live";
-
     return `
       <a class="chip ${isLive ? "chipLive" : ""}" href="${escapeHtml(e.watch_url)}" target="_blank" rel="noreferrer">
         <span class="chipTime">
           ${isLive ? `<span class="chipDot" aria-hidden="true"></span>` : ``}
-          ${escapeHtml(t)}
+          ${escapeHtml(fmtTime(s))}
         </span>
         <span class="chipChanStrong">${escapeHtml(e.channel || "")}</span>
       </a>
@@ -343,7 +325,7 @@ function renderTodaysGuide() {
   `;
 }
 
-// -------------------- Bottom schedule (windowed, arrows move window) --------------------
+// -------------------- Bottom schedule --------------------
 function roundToTick(dt) {
   const mins = dt.getMinutes();
   const rounded = Math.floor(mins / tickMins) * tickMins;
@@ -352,7 +334,7 @@ function roundToTick(dt) {
 
 function ensureWindowStart() {
   if (windowStart) return;
-  windowStart = roundToTick(new Date()); // always default to NOW
+  windowStart = roundToTick(new Date()); // always NOW on refresh
 }
 
 function renderTimeRow() {
@@ -379,7 +361,7 @@ function renderTimeRow() {
   timeRow.innerHTML = parts.join("");
 
   const end = new Date(endMs);
-  windowLabel.textContent = `${fmtDay(windowStart)} • ${fmtTime(windowStart)} → ${fmtTime(end)}`;
+  windowLabel.textContent = `${fmtDay(windowStart)} • ${fmtTime(windowStart)} → ${fmtTime(end)}${USER_TZ_SHORT ? ` (${USER_TZ_SHORT})` : ""}`;
 }
 
 function groupByChannel(events) {
@@ -413,6 +395,7 @@ function renderSchedule() {
 
   const startMs = windowStart.getTime();
   const endMs = startMs + windowMins * 60000;
+  const surfaceW = Math.round(windowMins * pxPerMin);
 
   const windowEvents = filteredEvents.filter(e => {
     const s = parseET(e.start_et);
@@ -429,7 +412,6 @@ function renderSchedule() {
   }
   emptyState.style.display = "none";
 
-  const surfaceW = Math.round(windowMins * pxPerMin);
   const rows = groupByChannel(windowEvents);
 
   rowsEl.innerHTML = rows.map(r => {
@@ -445,21 +427,28 @@ function renderSchedule() {
       const ee = eventEnd(e);
       if (!s || !ee) return "";
 
-      const leftMin = (s.getTime() - startMs) / 60000;
-      const rightMin = (ee.getTime() - startMs) / 60000;
+      // Raw pixel positions relative to window start
+      const leftPxRaw = ((s.getTime() - startMs) / 60000) * pxPerMin;
+      const rightPxRaw = ((ee.getTime() - startMs) / 60000) * pxPerMin;
 
-      const left = clamp(leftMin * pxPerMin, -9999, 9999);
-      const width = clamp((rightMin - leftMin) * pxPerMin, 160, 99999);
+      // ✅ CRITICAL FIX: clamp to visible window so block always matches header ticks
+      const leftPx = clamp(leftPxRaw, 0, surfaceW);
+      const rightPx = clamp(rightPxRaw, 0, surfaceW);
+
+      if (rightPx <= leftPx) return ""; // nothing visible
+
+      const widthPx = Math.max(rightPx - leftPx, 160); // keep thumbs readable, but start/end are correct
 
       const thumb = e.thumbnail_url || (e.source_id ? `https://i.ytimg.com/vi/${e.source_id}/hqdefault.jpg` : "");
       const liveBadge = e.status === "live" ? `<span class="badgeLive">LIVE</span>` : "";
 
+      // Labels reflect true times; bar reflects clamped visibility
       const startLabel = fmtTime(s);
       const endLabel = fmtTime(ee);
 
       return `
         <a class="block" href="${escapeHtml(e.watch_url || "#")}" target="_blank" rel="noreferrer"
-           style="left:${left}px; width:${width}px;">
+           style="left:${leftPx}px; width:${widthPx}px;">
           <div class="blockMedia" style="background-image:url('${encodeURI(thumb)}')"></div>
           <div class="blockOverlay"></div>
           <div class="blockContent">
@@ -502,7 +491,7 @@ function jumpToNow() {
   renderSchedule();
 }
 
-// -------------------- Fetch schedule.json --------------------
+// -------------------- Fetch schedule --------------------
 async function loadSchedule() {
   if (nowOn) nowOn.textContent = "Loading…";
   if (upNext) upNext.textContent = "Loading…";
@@ -531,9 +520,7 @@ async function loadSchedule() {
   );
 
   rebuildFilters(allEvents);
-
-  // Default schedule window to NOW every refresh
-  windowStart = null;
+  windowStart = null; // reset window to NOW on refresh
 
   const now = new Date();
   if (lastUpdated) lastUpdated.textContent = `Last updated: ${fmtDay(now)} ${fmtTime(now)}${USER_TZ_SHORT ? ` (${USER_TZ_SHORT})` : ""}`;
@@ -556,7 +543,6 @@ on(prevWindow, "click", () => shiftWindow(-1));
 on(nextWindow, "click", () => shiftWindow(1));
 on(jumpNowBtn, "click", jumpToNow);
 
-// initial load
 loadSchedule().catch(err => {
   console.error(err);
   if (nowOn) nowOn.innerHTML = `<div class="muted">Error loading schedule.</div>`;

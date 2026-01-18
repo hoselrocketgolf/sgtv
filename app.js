@@ -1,4 +1,4 @@
-// SimGolf.TV Guide - app.js (stable + aligned schedule header)
+// SimGolf.TV Guide - app.js (LOCAL TIMEZONE DISPLAY + correct ET parsing)
 
 const SCHEDULE_URL = "schedule.json";
 
@@ -30,37 +30,26 @@ const nextWindow = $("nextWindow");
 const jumpNowBtn = $("jumpNow");
 const windowLabel = $("windowLabel");
 
-// -------------------- Time helpers --------------------
-function parseET(str) {
-  if (!str) return null;
-  const [d, t] = str.split(" ");
-  if (!d || !t) return null;
-  const [Y, M, D] = d.split("-").map(Number);
-  const [h, m] = t.split(":").map(Number);
-  return new Date(Y, (M - 1), D, h, m, 0, 0);
+// -------------------- Timezone config --------------------
+// Source times in schedule.json are ET wall times like "YYYY-MM-DD HH:MM"
+const SOURCE_TZ = "America/New_York"; // ET with DST
+
+// Viewer timezone (what we display in)
+const VIEWER_TZ = Intl.DateTimeFormat().resolvedOptions().timeZone || "local";
+
+// Short label like "EST"/"EDT"/"PST"/etc (best-effort)
+function viewerTzShort() {
+  try {
+    const parts = new Intl.DateTimeFormat(undefined, { timeZoneName: "short" })
+      .formatToParts(new Date());
+    const tz = parts.find(p => p.type === "timeZoneName")?.value;
+    return tz || VIEWER_TZ;
+  } catch {
+    return VIEWER_TZ;
+  }
 }
 
-function startOfDay(dt) {
-  return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), 0, 0, 0, 0);
-}
-function endOfDay(dt) {
-  return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), 23, 59, 59, 999);
-}
-function fmtTime(dt) {
-  if (!dt) return "";
-  const h = dt.getHours();
-  const m = dt.getMinutes().toString().padStart(2, "0");
-  const ampm = h >= 12 ? "PM" : "AM";
-  const hr = ((h + 11) % 12) + 1;
-  return `${hr}:${m} ${ampm} ET`;
-}
-function fmtDay(dt) {
-  if (!dt) return "";
-  const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  return `${days[dt.getDay()]}, ${months[dt.getMonth()]} ${dt.getDate()}`;
-}
-function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
+// -------------------- Time helpers --------------------
 function escapeHtml(s) {
   return String(s ?? "")
     .replaceAll("&", "&amp;")
@@ -69,6 +58,86 @@ function escapeHtml(s) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 }
+
+// Offset minutes for a timezone at a given UTC instant.
+// Returns minutes such that: localTime = utcTime + offsetMinutes
+function tzOffsetMinutes(timeZone, utcDate) {
+  const dtf = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hour12: false,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+  const parts = dtf.formatToParts(utcDate);
+  const get = (t) => Number(parts.find(p => p.type === t)?.value || 0);
+
+  const y = get("year");
+  const mo = get("month");
+  const d = get("day");
+  const h = get("hour");
+  const mi = get("minute");
+  const s = get("second");
+
+  // "As if" that timezone wall time were UTC
+  const asUTC = Date.UTC(y, mo - 1, d, h, mi, s);
+  return (asUTC - utcDate.getTime()) / 60000;
+}
+
+// Convert a "wall time" in a timezone to a real Date (UTC instant)
+function zonedWallTimeToDate(timeZone, Y, M, D, h, m) {
+  // initial guess: treat wall time as UTC
+  const guess0 = Date.UTC(Y, M - 1, D, h, m, 0);
+
+  // pass 1
+  const off1 = tzOffsetMinutes(timeZone, new Date(guess0));
+  const utc1 = Date.UTC(Y, M - 1, D, h, m, 0) - off1 * 60000;
+
+  // pass 2 (handles DST edges better)
+  const off2 = tzOffsetMinutes(timeZone, new Date(utc1));
+  const utc2 = Date.UTC(Y, M - 1, D, h, m, 0) - off2 * 60000;
+
+  return new Date(utc2);
+}
+
+// Parse "YYYY-MM-DD HH:MM" as SOURCE_TZ wall time, return Date (instant)
+function parseSourceTime(str) {
+  if (!str) return null;
+  const [d, t] = str.split(" ");
+  if (!d || !t) return null;
+  const [Y, M, D] = d.split("-").map(Number);
+  const [h, m] = t.split(":").map(Number);
+  if (![Y, M, D, h, m].every(Number.isFinite)) return null;
+  return zonedWallTimeToDate(SOURCE_TZ, Y, M, D, h, m);
+}
+
+function startOfLocalDay(dt) {
+  return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), 0, 0, 0, 0);
+}
+function endOfLocalDay(dt) {
+  return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), 23, 59, 59, 999);
+}
+
+function fmtTimeLocal(dt) {
+  if (!dt) return "";
+  // viewer local time formatting
+  return new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" }).format(dt);
+}
+
+function fmtDayLocal(dt) {
+  if (!dt) return "";
+  // eg "Sat, Jan 17"
+  return new Intl.DateTimeFormat(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  }).format(dt);
+}
+
+function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
 
 // -------------------- State --------------------
 let allEvents = [];
@@ -90,10 +159,10 @@ function labelWidthPx() {
 
 // -------------------- Event end-time logic --------------------
 function eventEnd(e) {
-  const end = parseET(e.end_et);
+  const end = parseSourceTime(e.end_et);
   if (end) return end;
 
-  const start = parseET(e.start_et);
+  const start = parseSourceTime(e.start_et);
   if (!start) return null;
 
   const defaultEnd = new Date(start.getTime() + 120 * 60000);
@@ -113,8 +182,8 @@ function sortEvents(events) {
     const bLive = b.status === "live" ? 0 : 1;
     if (aLive !== bLive) return aLive - bLive;
 
-    const at = parseET(a.start_et)?.getTime() ?? Number.MAX_SAFE_INTEGER;
-    const bt = parseET(b.start_et)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+    const at = parseSourceTime(a.start_et)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+    const bt = parseSourceTime(b.start_et)?.getTime() ?? Number.MAX_SAFE_INTEGER;
     if (at !== bt) return at - bt;
 
     const as = Number(a.subscribers || 0);
@@ -173,7 +242,7 @@ function applyFilters() {
 
 // -------------------- Hero cards --------------------
 function renderCard(e, forceLiveBadge = false) {
-  const start = parseET(e.start_et);
+  const start = parseSourceTime(e.start_et);
   const media = e.thumbnail_url ? `style="background-image:url('${encodeURI(e.thumbnail_url)}')"` : "";
   const badge = (forceLiveBadge || e.status === "live") ? `<span class="pill live">LIVE</span>` : "";
   const subs = e.subscribers ? `${Number(e.subscribers).toLocaleString()} subs` : "";
@@ -184,7 +253,7 @@ function renderCard(e, forceLiveBadge = false) {
       <div class="cardBody">
         <div class="cardTitle">${escapeHtml(e.title || "")}</div>
         <div class="cardMeta">
-          <span>${fmtTime(start)}</span>
+          <span>${fmtTimeLocal(start)} ${escapeHtml(viewerTzShort())}</span>
           <span>•</span>
           <span>${escapeHtml(e.platform || "")}</span>
           <span>•</span>
@@ -215,23 +284,23 @@ function renderNowNext() {
     : `<div class="muted">No upcoming events found.</div>`;
 }
 
-// -------------------- Right tile: Today’s Guide (full day) --------------------
+// -------------------- Right tile: Today’s Guide (local day) --------------------
 function renderTodaysGuide() {
   if (!infoTileBody) return;
   if (infoTileHeaderH2) infoTileHeaderH2.textContent = "Today's Guide";
 
   const now = new Date();
-  const dayStart = startOfDay(now).getTime();
-  const dayEnd = endOfDay(now).getTime();
+  const dayStart = startOfLocalDay(now).getTime();
+  const dayEnd = endOfLocalDay(now).getTime();
 
   const todays = filteredEvents
     .filter(e => {
-      const s = parseET(e.start_et);
+      const s = parseSourceTime(e.start_et);
       if (!s) return false;
       const st = s.getTime();
       return st >= dayStart && st <= dayEnd;
     })
-    .sort((a, b) => (parseET(a.start_et)?.getTime() ?? 0) - (parseET(b.start_et)?.getTime() ?? 0));
+    .sort((a, b) => (parseSourceTime(a.start_et)?.getTime() ?? 0) - (parseSourceTime(b.start_et)?.getTime() ?? 0));
 
   if (!todays.length) {
     infoTileBody.innerHTML = `<div class="muted">No events scheduled for today.</div>`;
@@ -239,8 +308,8 @@ function renderTodaysGuide() {
   }
 
   const items = todays.map(e => {
-    const s = parseET(e.start_et);
-    const t = fmtTime(s).replace(" ET", "");
+    const s = parseSourceTime(e.start_et);
+    const t = fmtTimeLocal(s);
     const isLive = e.status === "live";
     const badge = isLive ? `<span class="chipBadge">LIVE</span>` : "";
 
@@ -255,7 +324,7 @@ function renderTodaysGuide() {
 
   infoTileBody.innerHTML = `
     <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;">
-      <div class="muted">Today • ${fmtDay(now)}</div>
+      <div class="muted">Today • ${escapeHtml(fmtDayLocal(now))} • ${escapeHtml(viewerTzShort())}</div>
       <div class="muted" style="font-size:12px;">${todays.length} shows</div>
     </div>
 
@@ -266,11 +335,10 @@ function renderTodaysGuide() {
       .chip{display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:999px;
         border:1px solid rgba(255,255,255,.12); background:rgba(0,0,0,.20); transition:filter .12s ease, transform .12s ease;}
       .chip:hover{filter:brightness(1.07); transform:translateY(-1px);}
-      .chipTime{font-weight:900; font-size:12px; color:rgba(255,255,255,.90); min-width:86px; white-space:nowrap;}
+      .chipTime{font-weight:900; font-size:12px; color:rgba(255,255,255,.90); min-width:70px; white-space:nowrap;}
       .chipChanStrong{font-weight:900; font-size:13px; color:rgba(255,255,255,.94); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;}
       .chipBadge{margin-left:auto; font-size:11px; padding:4px 9px; border-radius:999px; color:rgba(46,229,157,.95);
         background:rgba(46,229,157,.10); border:1px solid rgba(46,229,157,.30); white-space:nowrap;}
-      @media (max-width: 980px){.chipTime{min-width:78px;}}
     </style>
   `;
 }
@@ -284,7 +352,7 @@ function roundToTick(dt) {
 
 function ensureWindowStart() {
   if (windowStart) return;
-  windowStart = roundToTick(new Date());
+  windowStart = roundToTick(new Date()); // always NOW in viewer local time
 }
 
 function renderTimeRow() {
@@ -297,13 +365,12 @@ function renderTimeRow() {
   const ticks = Math.ceil(windowMins / tickMins) + 1;
   const parts = [];
 
-  // LEFT SPACER so ticks align with lane (after channel labels)
   const labelW = labelWidthPx();
   parts.push(`<div class="timeSpacer" style="flex:0 0 ${labelW}px; width:${labelW}px"></div>`);
 
   for (let i = 0; i < ticks; i++) {
     const dt = new Date(startMs + i * tickMins * 60000);
-    parts.push(`<div class="timeTick" style="width:${pxPerTick}px; flex:0 0 ${pxPerTick}px">${fmtTime(dt).replace(" ET","")}</div>`);
+    parts.push(`<div class="timeTick" style="width:${pxPerTick}px; flex:0 0 ${pxPerTick}px">${escapeHtml(fmtTimeLocal(dt))}</div>`);
   }
 
   const surfaceW = Math.round(windowMins * pxPerMin);
@@ -317,7 +384,7 @@ function renderTimeRow() {
   timeRow.innerHTML = parts.join("");
 
   const end = new Date(endMs);
-  windowLabel.textContent = `${fmtDay(windowStart)} • ${fmtTime(windowStart)} → ${fmtTime(end)}`;
+  windowLabel.textContent = `${fmtDayLocal(windowStart)} • ${fmtTimeLocal(windowStart)} → ${fmtTimeLocal(end)} ${viewerTzShort()}`;
 }
 
 function groupByChannel(events) {
@@ -353,7 +420,7 @@ function renderSchedule() {
   const endMs = startMs + windowMins * 60000;
 
   const windowEvents = filteredEvents.filter(e => {
-    const s = parseET(e.start_et);
+    const s = parseSourceTime(e.start_et);
     if (!s) return false;
     const ee = eventEnd(e);
     if (!ee) return false;
@@ -380,7 +447,7 @@ function renderSchedule() {
     `;
 
     const blocks = r.list.map(e => {
-      const s = parseET(e.start_et);
+      const s = parseSourceTime(e.start_et);
       const ee = eventEnd(e);
       if (!s || !ee) return "";
 
@@ -393,8 +460,8 @@ function renderSchedule() {
       const thumb = e.thumbnail_url || (e.source_id ? `https://i.ytimg.com/vi/${e.source_id}/hqdefault.jpg` : "");
       const liveBadge = e.status === "live" ? `<span class="badgeLive">LIVE</span>` : "";
 
-      const startLabel = fmtTime(s).replace(" ET", "");
-      const endLabel = fmtTime(ee).replace(" ET", "");
+      const startLabel = fmtTimeLocal(s);
+      const endLabel = fmtTimeLocal(ee);
 
       return `
         <a class="block" href="${escapeHtml(e.watch_url || "#")}" target="_blank" rel="noreferrer"
@@ -473,10 +540,10 @@ async function loadSchedule() {
 
   rebuildFilters(allEvents);
 
-  windowStart = null;
+  windowStart = null; // default schedule window to NOW on every refresh
 
   const now = new Date();
-  if (lastUpdated) lastUpdated.textContent = `Last updated: ${fmtDay(now)} ${fmtTime(now)}`;
+  if (lastUpdated) lastUpdated.textContent = `Last updated: ${fmtDayLocal(now)} ${fmtTimeLocal(now)} ${viewerTzShort()}`;
 
   applyFilters();
 }

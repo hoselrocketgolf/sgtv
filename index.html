@@ -4,11 +4,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SimGolf.TV Guide</title>
-    <link rel="stylesheet" href="styles.css" />
+
+    <!-- Cache-bust so Cloudflare/browser never mixes old JS with new CSS -->
+    <link rel="stylesheet" href="styles.css?v=20260118" />
   </head>
+
   <body>
     <header class="top">
       <div class="brand">
+        <!-- Logo badge (click = refresh) -->
         <button id="brandBtn" class="brandLogo" type="button" aria-label="Refresh" title="Refresh">
           <img class="brandLogoImg" src="./assets/sgtv-logo.svg" alt="SGTV" />
         </button>
@@ -97,9 +101,10 @@
       <footer class="footer"></footer>
     </main>
 
-    <script src="app.js"></script>
+    <script src="app.js?v=20260118"></script>
 
     <script>
+      // Clicking logo triggers refresh button (or reload as fallback)
       document.getElementById("brandBtn").addEventListener("click", () => {
         const refresh = document.getElementById("refreshBtn");
         refresh ? refresh.click() : location.reload();

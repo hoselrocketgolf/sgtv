@@ -4,32 +4,21 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SimGolf.TV Guide</title>
-    <link rel="stylesheet" href="styles.css" />
+
+    <!-- cache-bust so Cloudflare doesn't serve an old / missing stylesheet -->
+    <link rel="stylesheet" href="./styles.css?v=7" />
   </head>
 
   <body>
     <header class="top">
       <div class="brand">
-        <!-- Logo badge (click = refresh) -->
-        <button
-          id="brandBtn"
-          class="brandLogo"
-          type="button"
-          aria-label="Refresh"
-          title="Refresh"
-        >
-          <img
-            class="brandLogoImg"
-            src="./assets/sgtv-logo.svg"
-            alt="SGTV"
-          />
+        <button id="brandBtn" class="brandLogo" type="button" aria-label="Refresh" title="Refresh">
+          <img class="brandLogoImg" src="./assets/sgtv-logo.svg" alt="SGTV" />
         </button>
 
         <div>
           <h1>SimGolf.TV Guide</h1>
-          <div class="subtitle" id="timezoneSubtitle">
-            LIVE 24/7 • matches, leagues, and streams • Times in your local time zone
-          </div>
+          <div class="subtitle">LIVE 24/7 • matches, leagues, and streams • Times in your local time zone</div>
         </div>
       </div>
 
@@ -112,32 +101,14 @@
       <footer class="footer"></footer>
     </main>
 
-    <script src="app.js"></script>
+    <!-- cache-bust JS too -->
+    <script src="./app.js?v=7"></script>
 
     <script>
-      // Clicking logo triggers refresh
       document.getElementById("brandBtn").addEventListener("click", () => {
         const refresh = document.getElementById("refreshBtn");
         refresh ? refresh.click() : location.reload();
       });
-
-      // ---- Timezone subtitle enhancement ----
-      (function () {
-        try {
-          const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-          const short = new Date().toLocaleTimeString([], { timeZoneName: "short" })
-            .split(" ")
-            .pop();
-
-          const el = document.getElementById("timezoneSubtitle");
-          if (el && short) {
-            el.textContent =
-              `LIVE 24/7 • matches, leagues, and streams • Times in your local time zone (${short})`;
-          }
-        } catch (e) {
-          // fail silently
-        }
-      })();
     </script>
   </body>
 </html>

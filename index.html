@@ -6,18 +6,29 @@
     <title>SimGolf.TV Guide</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
+
   <body>
     <header class="top">
       <div class="brand">
         <!-- Logo badge (click = refresh) -->
-        <button id="brandBtn" class="brandLogo" type="button" aria-label="Refresh" title="Refresh">
-          <!-- IMPORTANT: the <img> is what guarantees the logo shows -->
-          <img class="brandLogoImg" src="./assets/sgtv-logo.svg" alt="SGTV" />
+        <button
+          id="brandBtn"
+          class="brandLogo"
+          type="button"
+          aria-label="Refresh"
+          title="Refresh"
+        >
+          <img
+            class="brandLogoImg"
+            src="./assets/sgtv-logo.svg"
+            alt="SGTV"
+          />
         </button>
 
         <div>
           <h1>SimGolf.TV Guide</h1>
-          <div class="subtitle">LIVE 24/7 • matches, leagues, and streams • Times in your local time zone</div>
+          <div class="subtitle" id="timezoneSubtitle">
+            LIVE 24/7 • matches, leagues, and streams • Times in your local time zone
           </div>
         </div>
       </div>
@@ -70,9 +81,7 @@
           <div class="tileHeader">
             <h2>Today's Guide</h2>
           </div>
-          <div class="tileBody">
-            Loading…
-          </div>
+          <div class="tileBody">Loading…</div>
         </div>
       </section>
 
@@ -106,11 +115,29 @@
     <script src="app.js"></script>
 
     <script>
-      // Clicking logo triggers refresh button (or reload as fallback)
+      // Clicking logo triggers refresh
       document.getElementById("brandBtn").addEventListener("click", () => {
         const refresh = document.getElementById("refreshBtn");
         refresh ? refresh.click() : location.reload();
       });
+
+      // ---- Timezone subtitle enhancement ----
+      (function () {
+        try {
+          const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+          const short = new Date().toLocaleTimeString([], { timeZoneName: "short" })
+            .split(" ")
+            .pop();
+
+          const el = document.getElementById("timezoneSubtitle");
+          if (el && short) {
+            el.textContent =
+              `LIVE 24/7 • matches, leagues, and streams • Times in your local time zone (${short})`;
+          }
+        } catch (e) {
+          // fail silently
+        }
+      })();
     </script>
   </body>
 </html>

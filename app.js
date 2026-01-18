@@ -1,4 +1,4 @@
-// SimGolf.TV Guide - app.js (polish pack: tz labels + "now" column highlight + live pulse)
+// SimGolf.TV Guide - app.js (fix: live glow + correct timeline placement via clipping)
 
 const SCHEDULE_URL = "schedule.json";
 
@@ -30,10 +30,10 @@ const nextWindow = $("nextWindow");
 const jumpNowBtn = $("jumpNow");
 const windowLabel = $("windowLabel");
 
-// Schedule header title (for timezone label)
+// Schedule header title (for tz label)
 const scheduleTitleEl = document.querySelector(".scheduleHeader h2");
 
-// -------------------- Timezone helpers --------------------
+// -------------------- Timezone --------------------
 function getUserTimeZone() {
   try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; }
   catch { return ""; }
@@ -42,17 +42,13 @@ function getUserTzShort() {
   try {
     const parts = new Date().toLocaleTimeString([], { timeZoneName: "short" }).split(" ");
     return parts[parts.length - 1] || "";
-  } catch {
-    return "";
-  }
+  } catch { return ""; }
 }
 const USER_TZ = getUserTimeZone();
 const USER_TZ_SHORT = getUserTzShort();
 
 // -------------------- Time helpers --------------------
-// NOTE: schedule.json times are stored like "YYYY-MM-DD HH:MM" (previously ET).
-// Your site already states "local time zone" — we display labels in local time.
-// (We keep parsing simple like before; your generator defines the source truth.)
+// schedule.json strings are "YYYY-MM-DD HH:MM" (treated as viewer-local clock time like your prior code)
 function parseLocal(str) {
   if (!str) return null;
   const [d, t] = str.split(" ");
@@ -62,18 +58,9 @@ function parseLocal(str) {
   return new Date(Y, (M - 1), D, h, m, 0, 0);
 }
 
-function startOfDay(dt) {
-  return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), 0, 0, 0, 0);
-}
-function endOfDay(dt) {
-  return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), 23, 59, 59, 999);
-}
-function sameDay(a, b) {
-  return a && b &&
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate();
-}
+function startOfDay(dt) { return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), 0, 0, 0, 0); }
+function endOfDay(dt) { return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), 23, 59, 59, 999); }
+
 function fmtTime(dt) {
   if (!dt) return "";
   const h = dt.getHours();
@@ -88,6 +75,7 @@ function fmtDay(dt) {
   const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   return `${days[dt.getDay()]}, ${months[dt.getMonth()]} ${dt.getDate()}`;
 }
+
 function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
 function escapeHtml(s) {
   return String(s ?? "")
@@ -105,11 +93,11 @@ let windowStart = null;
 
 // Window configuration
 let windowMins = 240;     // 4 hours
-let tickMins = 30;        // time labels every 30 min
+let tickMins = 30;        // labels every 30 min
 let pxPerTick = 140;      // width per tick
 let pxPerMin = pxPerTick / tickMins;
 
-// -------------------- Small UI polish: timezone labels --------------------
+// -------------------- Labels --------------------
 function applyTimeZoneLabels() {
   const tz = USER_TZ_SHORT ? ` (${USER_TZ_SHORT})` : "";
   if (scheduleTitleEl) scheduleTitleEl.textContent = `Today's Schedule${tz}`;
@@ -118,8 +106,8 @@ function applyTimeZoneLabels() {
 applyTimeZoneLabels();
 
 // -------------------- Event end-time logic --------------------
-// - Default: 2 hours from start
-// - If LIVE: extend to max(start+2h, now+20m) so it stays visible while live
+// Default: 2 hours from start
+// LIVE: extend to max(start+2h, now+20m)
 function eventEnd(e) {
   const end = parseLocal(e.end_et);
   if (end) return end;
@@ -130,8 +118,7 @@ function eventEnd(e) {
   const defaultEnd = new Date(start.getTime() + 120 * 60000);
 
   if (e.status === "live") {
-    const now = new Date();
-    const liveHold = new Date(now.getTime() + 20 * 60000);
+    const liveHold = new Date(Date.now() + 20 * 60000);
     return new Date(Math.max(defaultEnd.getTime(), liveHold.getTime()));
   }
   return defaultEnd;
@@ -179,6 +166,13 @@ function rebuildFilters(events) {
   if ([...platforms].includes(keepPlat)) platformFilter.value = keepPlat;
 }
 
+function setBrandLiveGlow() {
+  const brandBtn = $("brandBtn");
+  if (!brandBtn) return;
+  const anyLive = filteredEvents.some(e => e.status === "live");
+  brandBtn.classList.toggle("isLive", anyLive);
+}
+
 function applyFilters() {
   const l = leagueFilter ? leagueFilter.value : "all";
   const p = platformFilter ? platformFilter.value : "all";
@@ -196,9 +190,10 @@ function applyFilters() {
 
   filteredEvents = sortEvents(filteredEvents);
 
+  setBrandLiveGlow();
   renderNowNext();
-  renderTodaysGuide();   // full day list (right tile)
-  renderSchedule();      // bottom schedule
+  renderTodaysGuide();
+  renderSchedule();
 }
 
 // -------------------- Hero cards --------------------
@@ -270,9 +265,7 @@ function renderTodaysGuide() {
   const items = todays.map(e => {
     const s = parseLocal(e.start_et);
     const t = fmtTime(s);
-    const isLive = e.status === "live";
-    const badge = isLive ? `<span class="chipBadge">LIVE</span>` : "";
-
+    const badge = e.status === "live" ? `<span class="chipBadge">LIVE</span>` : "";
     return `
       <a class="chip" href="${escapeHtml(e.watch_url)}" target="_blank" rel="noreferrer">
         <span class="chipTime">${escapeHtml(t)}</span>
@@ -294,7 +287,7 @@ function renderTodaysGuide() {
       .chipList{display:flex; flex-direction:column; gap:8px; max-height:360px; overflow:auto; padding-right:4px;}
       .chip{display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:999px;
         border:1px solid rgba(255,255,255,.12); background:rgba(0,0,0,.20); transition:filter .12s ease, transform .12s ease;}
-      .chip:hover{filter:brightness(1.07); transform:translateY(-1px);}
+      .chip:hover{filter:brightness(1.07); transform:translateY(-1px); text-decoration:none;}
       .chipTime{font-weight:900; font-size:12px; color:rgba(255,255,255,.90); min-width:78px; white-space:nowrap;}
       .chipChanStrong{font-weight:900; font-size:13px; color:rgba(255,255,255,.94); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;}
       .chipBadge{margin-left:auto; font-size:11px; padding:4px 9px; border-radius:999px; color:rgba(46,229,157,.95);
@@ -312,7 +305,7 @@ function roundToTick(dt) {
 
 function ensureWindowStart() {
   if (windowStart) return;
-  windowStart = roundToTick(new Date()); // default to NOW
+  windowStart = roundToTick(new Date());
 }
 
 function renderTimeRow() {
@@ -366,16 +359,15 @@ function groupByChannel(events) {
   return rows;
 }
 
-// ---- NOW column highlight (vertical band + line) ----
-function nowOffsetPx() {
+// vertical now marker (line + soft band)
+function nowOffsetPx(surfaceW) {
   ensureWindowStart();
   const startMs = windowStart.getTime();
   const endMs = startMs + windowMins * 60000;
   const nowMs = Date.now();
-
   if (nowMs < startMs || nowMs > endMs) return null;
   const mins = (nowMs - startMs) / 60000;
-  return mins * pxPerMin;
+  return clamp(mins * pxPerMin, 0, surfaceW);
 }
 
 function renderSchedule() {
@@ -386,6 +378,7 @@ function renderSchedule() {
 
   const startMs = windowStart.getTime();
   const endMs = startMs + windowMins * 60000;
+  const surfaceW = Math.round(windowMins * pxPerMin);
 
   const windowEvents = filteredEvents.filter(e => {
     const s = parseLocal(e.start_et);
@@ -398,31 +391,34 @@ function renderSchedule() {
   if (!windowEvents.length) {
     rowsEl.innerHTML = "";
     emptyState.style.display = "";
+    setBrandLiveGlow();
     return;
   }
   emptyState.style.display = "none";
 
-  const surfaceW = Math.round(windowMins * pxPerMin);
   const rows = groupByChannel(windowEvents);
-
-  const nowPx = nowOffsetPx();
-  const nowMarker = (nowPx !== null)
-    ? `<div class="nowMarker" style="left:${nowPx}px"></div>`
-    : "";
+  const nowPx = nowOffsetPx(surfaceW);
+  const nowMarker = (nowPx !== null) ? `<div class="nowMarker" style="left:${nowPx}px"></div>` : "";
 
   rowsEl.innerHTML = rows.map(r => {
     const subs = r.maxSubs ? `${Number(r.maxSubs).toLocaleString()} subs` : "";
-
     const blocks = r.list.map(e => {
       const s = parseLocal(e.start_et);
       const ee = eventEnd(e);
       if (!s || !ee) return "";
 
-      const leftMin = (s.getTime() - startMs) / 60000;
-      const rightMin = (ee.getTime() - startMs) / 60000;
+      // ----- CLIP TO WINDOW (THIS FIXES YOUR "TIMES MESSED UP" LOOK) -----
+      const leftRaw = ((s.getTime() - startMs) / 60000) * pxPerMin;
+      const rightRaw = ((ee.getTime() - startMs) / 60000) * pxPerMin;
 
-      const left = clamp(leftMin * pxPerMin, -9999, 9999);
-      const width = clamp((rightMin - leftMin) * pxPerMin, 160, 99999);
+      const left = clamp(leftRaw, 0, surfaceW);
+      const right = clamp(rightRaw, 0, surfaceW);
+
+      const minW = 160;
+      const width = Math.max(minW, right - left);
+
+      // if it's totally outside after clipping, skip
+      if (right <= 0 || left >= surfaceW) return "";
 
       const thumb = e.thumbnail_url || (e.source_id ? `https://i.ytimg.com/vi/${e.source_id}/hqdefault.jpg` : "");
       const liveBadge = e.status === "live" ? `<span class="badgeLive">LIVE</span>` : "";
@@ -458,7 +454,6 @@ function renderSchedule() {
           <div class="subs">${escapeHtml(subs)}</div>
           ${r.hasLive ? `<div class="liveMini">Live now</div>` : ``}
         </div>
-
         <div class="lane" style="width:${surfaceW}px;">
           ${nowMarker}
           ${blocks}
@@ -467,12 +462,7 @@ function renderSchedule() {
     `;
   }).join("");
 
-  // brand button pulse if any live exists
-  const brandBtn = $("brandBtn");
-  if (brandBtn) {
-    const anyLive = filteredEvents.some(e => e.status === "live");
-    brandBtn.classList.toggle("isLive", anyLive);
-  }
+  setBrandLiveGlow();
 }
 
 function shiftWindow(dir) {
@@ -487,14 +477,13 @@ function jumpToNow() {
   renderSchedule();
 }
 
-// ---- Keep "now marker" fresh without refetching ----
+// keep marker fresh without refetch
 let nowMarkerTimer = null;
 function startNowMarkerTimer() {
   if (nowMarkerTimer) clearInterval(nowMarkerTimer);
   nowMarkerTimer = setInterval(() => {
-    // only repaint schedule if it's on screen
     if (rowsEl && rowsEl.childElementCount) renderSchedule();
-  }, 30000); // every 30s
+  }, 30000);
 }
 
 // -------------------- Fetch schedule.json --------------------

@@ -1,5 +1,9 @@
 // SimGolf.TV Guide - app.js (ET-correct + stable + no schedule scrollbars)
+
 const SCHEDULE_URL = "schedule.json";
+
+// ==================== TIME (ET-CORRECT) ====================
+const ET_TZ = "America/New_York";
 
 const $ = (id) => document.getElementById(id);
 const on = (el, evt, fn) => { if (el) el.addEventListener(evt, fn); };
@@ -29,111 +33,88 @@ const nextWindow = $("nextWindow");
 const jumpNowBtn = $("jumpNow");
 const windowLabel = $("windowLabel");
 
-// ==================== TIME (ET-CORRECT) ====================
-const ET_TZ = "America/New_York";
-
-function pad2(n) { return String(n).padStart(2, "0"); }
-
-/**
- * Get timezone offset minutes for a given instant in a specific IANA timezone.
- * Positive means tz is ahead of UTC, negative means behind UTC.
- */
-function tzOffsetMinutes(date, timeZone) {
-  const dtf = new Intl.DateTimeFormat("en-US", {
-    timeZone,
-    hour12: false,
-    year: "numeric", month: "2-digit", day: "2-digit",
-    hour: "2-digit", minute: "2-digit", second: "2-digit",
-  });
-  const parts = dtf.formatToParts(date);
-  const map = Object.fromEntries(parts.map(p => [p.type, p.value]));
-  const asUTC = Date.UTC(
-    Number(map.year),
-    Number(map.month) - 1,
-    Number(map.day),
-    Number(map.hour),
-    Number(map.minute),
-    Number(map.second)
-  );
-  return (asUTC - date.getTime()) / 60000;
-}
-
-/**
- * Convert an ET wall-clock time (Y,M,D,h,m) into a real Date instant.
- * Handles DST correctly.
- */
-function etWallToInstant(Y, M, D, h, m) {
-  const guessUTC = Date.UTC(Y, M - 1, D, h, m, 0);
-  const offset = tzOffsetMinutes(new Date(guessUTC), ET_TZ);
-  return new Date(guessUTC - offset * 60000);
-}
-
-/**
- * Parse "YYYY-MM-DD HH:MM" which is ET wall time, into a real instant.
- */
+// -------------------- ET helpers --------------------
+// We treat schedule strings as *ET wall clock* and convert them to a UTC Date.
+// This makes layout consistent for all users regardless of their local timezone.
 function parseET(str) {
   if (!str) return null;
   const [d, t] = str.split(" ");
   if (!d || !t) return null;
   const [Y, M, D] = d.split("-").map(Number);
   const [h, m] = t.split(":").map(Number);
-  if (![Y, M, D, h, m].every(Number.isFinite)) return null;
-  return etWallToInstant(Y, M, D, h, m);
+  // Interpret components as ET wall-clock but store as UTC timestamp
+  return new Date(Date.UTC(Y, (M - 1), D, h, m, 0, 0));
 }
 
-/**
- * Get ET calendar parts from an instant.
- */
-function etParts(date) {
-  const dtf = new Intl.DateTimeFormat("en-US", {
+const fmtET = new Intl.DateTimeFormat("en-US", {
+  timeZone: ET_TZ,
+  hour: "numeric",
+  minute: "2-digit",
+  hour12: true
+});
+
+const fmtETDay = new Intl.DateTimeFormat("en-US", {
+  timeZone: ET_TZ,
+  weekday: "short",
+  month: "short",
+  day: "numeric"
+});
+
+function fmtTime(dt) {
+  if (!dt) return "";
+  // dt is stored as UTC timestamp; format in ET
+  return `${fmtET.format(dt)} ET`;
+}
+
+function fmtDay(dt) {
+  if (!dt) return "";
+  return fmtETDay.format(dt);
+}
+
+// Get “now” as a Date whose UTC timestamp corresponds to the current ET wall-clock.
+// (We still store everything as UTC timestamps, but derived from ET wall time.)
+function nowEtWallClockUTC() {
+  const now = new Date();
+  // Extract ET parts of current moment
+  const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: ET_TZ,
-    hour12: false,
-    year: "numeric", month: "2-digit", day: "2-digit",
-    hour: "2-digit", minute: "2-digit",
-  });
-  const parts = dtf.formatToParts(date);
-  const map = Object.fromEntries(parts.map(p => [p.type, p.value]));
-  return {
-    Y: Number(map.year),
-    M: Number(map.month),
-    D: Number(map.day),
-    h: Number(map.hour),
-    m: Number(map.minute),
-  };
-}
-
-/**
- * Start/end of ET day for a given instant.
- */
-function startOfEtDay(date) {
-  const p = etParts(date);
-  return etWallToInstant(p.Y, p.M, p.D, 0, 0);
-}
-function endOfEtDay(date) {
-  const p = etParts(date);
-  // 23:59 ET as an instant (good enough for filtering)
-  return etWallToInstant(p.Y, p.M, p.D, 23, 59);
-}
-
-function fmtTimeEt(date) {
-  if (!date) return "";
-  return new Intl.DateTimeFormat("en-US", {
-    timeZone: ET_TZ,
-    hour: "numeric",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
     minute: "2-digit",
-    hour12: true
-  }).format(date) + " ET";
+    hour12: false
+  }).formatToParts(now);
+
+  const get = (type) => parts.find(p => p.type === type)?.value;
+  const Y = Number(get("year"));
+  const M = Number(get("month"));
+  const D = Number(get("day"));
+  const h = Number(get("hour"));
+  const m = Number(get("minute"));
+
+  return new Date(Date.UTC(Y, M - 1, D, h, m, 0, 0));
 }
 
-function fmtDayEt(date) {
-  if (!date) return "";
-  const dtf = new Intl.DateTimeFormat("en-US", {
+function startOfEtDayUTC(dtUtc) {
+  // dtUtc stored as UTC timestamp; derive ET day parts then build ET midnight UTC-stored
+  const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: ET_TZ,
-    weekday: "short",
-    month: "short",
-    day: "numeric"
-  });
-  return dtf.format(date);
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(dtUtc);
+
+  const get = (type) => parts.find(p => p.type === type)?.value;
+  const Y = Number(get("year"));
+  const M = Number(get("month"));
+  const D = Number(get("day"));
+  return new Date(Date.UTC(Y, M - 1, D, 0, 0, 0, 0));
+}
+
+function endOfEtDayUTC(dtUtc) {
+  const s = startOfEtDayUTC(dtUtc);
+  return new Date(s.getTime() + (24 * 60 * 60000) - 1);
 }
 
 function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
@@ -146,40 +127,35 @@ function escapeHtml(s) {
     .replaceAll("'", "&#039;");
 }
 
-// ==================== STATE ====================
+// -------------------- State --------------------
 let allEvents = [];
 let filteredEvents = [];
 let windowStart = null;
 
-// Window config
-let windowMins = 240;   // 4h
-let tickMins = 30;      // label every 30m
-let pxPerTick = 140;
+// Window configuration
+let windowMins = 240;     // 4 hours
+let tickMins = 30;        // time labels every 30 min
+let pxPerTick = 140;      // width per tick
 let pxPerMin = pxPerTick / tickMins;
 
-// ==================== CSS INJECT: kill scrollbars + better blocks ====================
+// -------------------- Styling overrides (kills scrollbars + fixes lane sizing) --------------------
 (function injectNoScrollCss() {
   const css = `
-    /* No native horizontal scrollbars inside schedule */
-    #timeRow, #rows, .row { overflow: hidden !important; }
-
-    .lane{
+    #timeRow, #rows { overflow: hidden !important; }
+    .row { overflow: hidden !important; }
+    .lane {
       position: relative !important;
       overflow: hidden !important;
       min-height: 76px;
       border-left: 1px solid rgba(255,255,255,0.06);
     }
-
     .timeTick{
       font-weight:800;
       font-size:12px;
       color: rgba(255,255,255,0.78);
       padding: 12px 14px;
       border-right: 1px solid rgba(255,255,255,0.06);
-      white-space: nowrap;
     }
-
-    /* Full thumbnail block (not squished) */
     .block{
       position:absolute;
       top: 10px;
@@ -191,7 +167,6 @@ let pxPerMin = pxPerTick / tickMins;
       text-decoration:none !important;
     }
     .block:hover{ filter: brightness(1.06); }
-
     .blockMedia{
       position:absolute;
       inset:0;
@@ -249,14 +224,30 @@ let pxPerMin = pxPerTick / tickMins;
       white-space:nowrap;
       flex: 0 0 auto;
     }
+    .rowLabel .name{
+      font-weight: 900;
+      font-size: 12px;
+      color: rgba(255,255,255,0.92);
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+    .rowLabel .subs{
+      margin-top: 2px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.55);
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
   `;
   const style = document.createElement("style");
   style.textContent = css;
   document.head.appendChild(style);
 })();
 
-// ==================== EVENT END ====================
-// Default: 2h from start
+// -------------------- Event end-time logic --------------------
+// Default: 2 hours from start
 // LIVE: extend to max(start+2h, now+20m) so it stays visible while live
 function eventEnd(e) {
   const end = parseET(e.end_et);
@@ -268,15 +259,14 @@ function eventEnd(e) {
   const defaultEnd = new Date(start.getTime() + 120 * 60000);
 
   if (e.status === "live") {
-    const now = new Date();
-    const liveHold = new Date(now.getTime() + 20 * 60000);
+    const nowET = nowEtWallClockUTC();
+    const liveHold = new Date(nowET.getTime() + 20 * 60000);
     return new Date(Math.max(defaultEnd.getTime(), liveHold.getTime()));
   }
 
   return defaultEnd;
 }
 
-// ==================== SORT / FILTER ====================
 function sortEvents(events) {
   return [...events].sort((a, b) => {
     const aLive = a.status === "live" ? 0 : 1;
@@ -287,7 +277,9 @@ function sortEvents(events) {
     const bt = parseET(b.start_et)?.getTime() ?? Number.MAX_SAFE_INTEGER;
     if (at !== bt) return at - bt;
 
-    return Number(b.subscribers || 0) - Number(a.subscribers || 0);
+    const as = Number(a.subscribers || 0);
+    const bs = Number(b.subscribers || 0);
+    return bs - as;
   });
 }
 
@@ -338,7 +330,7 @@ function applyFilters() {
   renderSchedule();
 }
 
-// ==================== HERO ====================
+// -------------------- Hero cards --------------------
 function renderCard(e, forceLiveBadge = false) {
   const start = parseET(e.start_et);
   const media = e.thumbnail_url ? `style="background-image:url('${encodeURI(e.thumbnail_url)}')"` : "";
@@ -351,7 +343,7 @@ function renderCard(e, forceLiveBadge = false) {
       <div class="cardBody">
         <div class="cardTitle">${escapeHtml(e.title || "")}</div>
         <div class="cardMeta">
-          <span>${fmtTimeEt(start)}</span>
+          <span>${fmtTime(start)}</span>
           <span>•</span>
           <span>${escapeHtml(e.platform || "")}</span>
           <span>•</span>
@@ -382,14 +374,14 @@ function renderNowNext() {
     : `<div class="muted">No upcoming events found.</div>`;
 }
 
-// ==================== TODAY'S GUIDE (FULL ET DAY) ====================
+// -------------------- Right tile: Today’s Guide (ET day) --------------------
 function renderTodaysGuide() {
   if (!infoTileBody) return;
   if (infoTileHeaderH2) infoTileHeaderH2.textContent = "Today's Guide";
 
-  const now = new Date();
-  const dayStart = startOfEtDay(now).getTime();
-  const dayEnd = endOfEtDay(now).getTime();
+  const nowET = nowEtWallClockUTC();
+  const dayStart = startOfEtDayUTC(nowET).getTime();
+  const dayEnd = endOfEtDayUTC(nowET).getTime();
 
   const todays = filteredEvents
     .filter(e => {
@@ -407,7 +399,7 @@ function renderTodaysGuide() {
 
   const items = todays.map(e => {
     const s = parseET(e.start_et);
-    const t = fmtTimeEt(s).replace(" ET", "");
+    const t = fmtET.format(s); // ET time label (no "ET" suffix here)
     const isLive = e.status === "live";
     const badge = isLive ? `<span class="chipBadge">LIVE</span>` : "";
 
@@ -422,12 +414,10 @@ function renderTodaysGuide() {
 
   infoTileBody.innerHTML = `
     <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;">
-      <div class="muted">Today • ${fmtDayEt(now)}</div>
+      <div class="muted">Today • ${fmtDay(nowET)}</div>
       <div class="muted" style="font-size:12px;">${todays.length} shows</div>
     </div>
-
     <div class="chipList">${items}</div>
-
     <style>
       .chipList{display:flex; flex-direction:column; gap:8px; max-height:360px; overflow:auto; padding-right:4px;}
       .chip{display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:999px;
@@ -442,16 +432,24 @@ function renderTodaysGuide() {
   `;
 }
 
-// ==================== SCHEDULE (ET WINDOW, NO SCROLLBARS) ====================
-function roundToTickEt(instant) {
-  const p = etParts(instant);
-  const roundedM = Math.floor(p.m / tickMins) * tickMins;
-  return etWallToInstant(p.Y, p.M, p.D, p.h, roundedM);
+// -------------------- Bottom schedule --------------------
+function roundToTick(dt) {
+  const mins = dt.getUTCMinutes(); // IMPORTANT: operate on UTC components (our stored ET-wallclock timestamps)
+  const rounded = Math.floor(mins / tickMins) * tickMins;
+  return new Date(Date.UTC(
+    dt.getUTCFullYear(),
+    dt.getUTCMonth(),
+    dt.getUTCDate(),
+    dt.getUTCHours(),
+    rounded,
+    0, 0
+  ));
 }
 
 function ensureWindowStart() {
   if (windowStart) return;
-  windowStart = roundToTickEt(new Date()); // default to NOW (ET)
+  // Default to NOW in ET
+  windowStart = roundToTick(nowEtWallClockUTC());
 }
 
 function renderTimeRow() {
@@ -465,17 +463,21 @@ function renderTimeRow() {
   const parts = [];
   for (let i = 0; i < ticks; i++) {
     const dt = new Date(startMs + i * tickMins * 60000);
-    parts.push(`<div class="timeTick" style="width:${pxPerTick}px; flex:0 0 ${pxPerTick}px">${fmtTimeEt(dt).replace(" ET","")}</div>`);
+    const label = fmtET.format(dt); // ET label
+    parts.push(`<div class="timeTick" style="width:${pxPerTick}px; flex:0 0 ${pxPerTick}px">${escapeHtml(label)}</div>`);
   }
 
   const surfaceW = Math.round(windowMins * pxPerMin);
+
   timeRow.style.display = "flex";
   timeRow.style.width = `${surfaceW}px`;
   timeRow.style.maxWidth = `${surfaceW}px`;
+  timeRow.style.whiteSpace = "nowrap";
   timeRow.style.overflow = "hidden";
   timeRow.innerHTML = parts.join("");
 
-  windowLabel.textContent = `${fmtDayEt(windowStart)} • ${fmtTimeEt(windowStart)} → ${fmtTimeEt(new Date(endMs))}`;
+  const end = new Date(endMs);
+  windowLabel.textContent = `${fmtDay(windowStart)} • ${fmtTime(windowStart)} → ${fmtTime(end)}`;
 }
 
 function groupByChannel(events) {
@@ -545,13 +547,13 @@ function renderSchedule() {
       const rightMin = (ee.getTime() - startMs) / 60000;
 
       const left = clamp(leftMin * pxPerMin, -9999, 9999);
-      const width = clamp((rightMin - leftMin) * pxPerMin, 160, 99999); // keep thumbs readable
+      const width = clamp((rightMin - leftMin) * pxPerMin, 160, 99999);
 
       const thumb = e.thumbnail_url || (e.source_id ? `https://i.ytimg.com/vi/${e.source_id}/hqdefault.jpg` : "");
       const liveBadge = e.status === "live" ? `<span class="badgeLive">LIVE</span>` : "";
 
-      const startLabel = fmtTimeEt(s).replace(" ET", "");
-      const endLabel = fmtTimeEt(ee).replace(" ET", "");
+      const startLabel = fmtET.format(s);
+      const endLabel = fmtET.format(ee);
 
       return `
         <a class="block" href="${escapeHtml(e.watch_url || "#")}" target="_blank" rel="noreferrer"
@@ -591,16 +593,16 @@ function renderSchedule() {
 function shiftWindow(dir) {
   ensureWindowStart();
   windowStart = new Date(windowStart.getTime() + dir * windowMins * 60000);
-  windowStart = roundToTickEt(windowStart);
+  windowStart = roundToTick(windowStart);
   renderSchedule();
 }
 
 function jumpToNow() {
-  windowStart = roundToTickEt(new Date());
+  windowStart = roundToTick(nowEtWallClockUTC());
   renderSchedule();
 }
 
-// ==================== LOAD SCHEDULE ====================
+// -------------------- Fetch schedule.json --------------------
 async function loadSchedule() {
   if (nowOn) nowOn.textContent = "Loading…";
   if (upNext) upNext.textContent = "Loading…";
@@ -630,16 +632,16 @@ async function loadSchedule() {
 
   rebuildFilters(allEvents);
 
-  // default schedule window to NOW (ET) every refresh
+  // Default schedule window to NOW (ET) every refresh
   windowStart = null;
 
-  const now = new Date();
-  if (lastUpdated) lastUpdated.textContent = `Last updated: ${fmtDayEt(now)} ${fmtTimeEt(now)}`;
+  const nowET = nowEtWallClockUTC();
+  if (lastUpdated) lastUpdated.textContent = `Last updated: ${fmtDay(nowET)} ${fmtTime(nowET)}`;
 
   applyFilters();
 }
 
-// ==================== WIRE ====================
+// -------------------- Wire up --------------------
 on(leagueFilter, "change", applyFilters);
 on(platformFilter, "change", applyFilters);
 on(searchInput, "input", applyFilters);

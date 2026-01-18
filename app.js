@@ -1,9 +1,6 @@
-// SimGolf.TV Guide - app.js (ET-correct + stable + no schedule scrollbars)
+// SimGolf.TV Guide - app.js (stable + aligned schedule header)
 
 const SCHEDULE_URL = "schedule.json";
-
-// ==================== TIME (ET-CORRECT) ====================
-const ET_TZ = "America/New_York";
 
 const $ = (id) => document.getElementById(id);
 const on = (el, evt, fn) => { if (el) el.addEventListener(evt, fn); };
@@ -33,90 +30,36 @@ const nextWindow = $("nextWindow");
 const jumpNowBtn = $("jumpNow");
 const windowLabel = $("windowLabel");
 
-// -------------------- ET helpers --------------------
-// We treat schedule strings as *ET wall clock* and convert them to a UTC Date.
-// This makes layout consistent for all users regardless of their local timezone.
+// -------------------- Time helpers --------------------
 function parseET(str) {
   if (!str) return null;
   const [d, t] = str.split(" ");
   if (!d || !t) return null;
   const [Y, M, D] = d.split("-").map(Number);
   const [h, m] = t.split(":").map(Number);
-  // Interpret components as ET wall-clock but store as UTC timestamp
-  return new Date(Date.UTC(Y, (M - 1), D, h, m, 0, 0));
+  return new Date(Y, (M - 1), D, h, m, 0, 0);
 }
 
-const fmtET = new Intl.DateTimeFormat("en-US", {
-  timeZone: ET_TZ,
-  hour: "numeric",
-  minute: "2-digit",
-  hour12: true
-});
-
-const fmtETDay = new Intl.DateTimeFormat("en-US", {
-  timeZone: ET_TZ,
-  weekday: "short",
-  month: "short",
-  day: "numeric"
-});
-
+function startOfDay(dt) {
+  return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), 0, 0, 0, 0);
+}
+function endOfDay(dt) {
+  return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), 23, 59, 59, 999);
+}
 function fmtTime(dt) {
   if (!dt) return "";
-  // dt is stored as UTC timestamp; format in ET
-  return `${fmtET.format(dt)} ET`;
+  const h = dt.getHours();
+  const m = dt.getMinutes().toString().padStart(2, "0");
+  const ampm = h >= 12 ? "PM" : "AM";
+  const hr = ((h + 11) % 12) + 1;
+  return `${hr}:${m} ${ampm} ET`;
 }
-
 function fmtDay(dt) {
   if (!dt) return "";
-  return fmtETDay.format(dt);
+  const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return `${days[dt.getDay()]}, ${months[dt.getMonth()]} ${dt.getDate()}`;
 }
-
-// Get “now” as a Date whose UTC timestamp corresponds to the current ET wall-clock.
-// (We still store everything as UTC timestamps, but derived from ET wall time.)
-function nowEtWallClockUTC() {
-  const now = new Date();
-  // Extract ET parts of current moment
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: ET_TZ,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false
-  }).formatToParts(now);
-
-  const get = (type) => parts.find(p => p.type === type)?.value;
-  const Y = Number(get("year"));
-  const M = Number(get("month"));
-  const D = Number(get("day"));
-  const h = Number(get("hour"));
-  const m = Number(get("minute"));
-
-  return new Date(Date.UTC(Y, M - 1, D, h, m, 0, 0));
-}
-
-function startOfEtDayUTC(dtUtc) {
-  // dtUtc stored as UTC timestamp; derive ET day parts then build ET midnight UTC-stored
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: ET_TZ,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit"
-  }).formatToParts(dtUtc);
-
-  const get = (type) => parts.find(p => p.type === type)?.value;
-  const Y = Number(get("year"));
-  const M = Number(get("month"));
-  const D = Number(get("day"));
-  return new Date(Date.UTC(Y, M - 1, D, 0, 0, 0, 0));
-}
-
-function endOfEtDayUTC(dtUtc) {
-  const s = startOfEtDayUTC(dtUtc);
-  return new Date(s.getTime() + (24 * 60 * 60000) - 1);
-}
-
 function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
 function escapeHtml(s) {
   return String(s ?? "")
@@ -134,121 +77,18 @@ let windowStart = null;
 
 // Window configuration
 let windowMins = 240;     // 4 hours
-let tickMins = 30;        // time labels every 30 min
+let tickMins = 30;        // labels every 30 min
 let pxPerTick = 140;      // width per tick
 let pxPerMin = pxPerTick / tickMins;
 
-// -------------------- Styling overrides (kills scrollbars + fixes lane sizing) --------------------
-(function injectNoScrollCss() {
-  const css = `
-    #timeRow, #rows { overflow: hidden !important; }
-    .row { overflow: hidden !important; }
-    .lane {
-      position: relative !important;
-      overflow: hidden !important;
-      min-height: 76px;
-      border-left: 1px solid rgba(255,255,255,0.06);
-    }
-    .timeTick{
-      font-weight:800;
-      font-size:12px;
-      color: rgba(255,255,255,0.78);
-      padding: 12px 14px;
-      border-right: 1px solid rgba(255,255,255,0.06);
-    }
-    .block{
-      position:absolute;
-      top: 10px;
-      bottom: 10px;
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,0.10);
-      background: rgba(0,0,0,0.20);
-      overflow:hidden;
-      text-decoration:none !important;
-    }
-    .block:hover{ filter: brightness(1.06); }
-    .blockMedia{
-      position:absolute;
-      inset:0;
-      background-size: cover;
-      background-position: center;
-      transform: scale(1.01);
-    }
-    .blockOverlay{
-      position:absolute;
-      inset:0;
-      background: linear-gradient(180deg, rgba(0,0,0,0.10), rgba(0,0,0,0.55));
-    }
-    .blockContent{
-      position:absolute;
-      inset:0;
-      display:flex;
-      flex-direction:column;
-      justify-content:space-between;
-      padding: 10px 12px;
-      gap: 10px;
-      min-width:0;
-    }
-    .blockTop{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
-    .blockTitle{
-      font-weight: 900;
-      font-size: 12px;
-      line-height: 1.15;
-      color: rgba(255,255,255,0.94);
-      max-height: 2.4em;
-      overflow:hidden;
-      text-overflow: ellipsis;
-    }
-    .blockBottom{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      color: rgba(255,255,255,0.70);
-      font-size: 11px;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow: ellipsis;
-    }
-    .badgeLive{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      padding: 5px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(70,240,170,0.34);
-      background: rgba(50,240,160,0.12);
-      color: rgba(70,240,170,0.95);
-      font-size: 11px;
-      font-weight: 800;
-      white-space:nowrap;
-      flex: 0 0 auto;
-    }
-    .rowLabel .name{
-      font-weight: 900;
-      font-size: 12px;
-      color: rgba(255,255,255,0.92);
-      white-space: nowrap;
-      overflow:hidden;
-      text-overflow: ellipsis;
-    }
-    .rowLabel .subs{
-      margin-top: 2px;
-      font-size: 11px;
-      color: rgba(255,255,255,0.55);
-      white-space: nowrap;
-      overflow:hidden;
-      text-overflow: ellipsis;
-    }
-  `;
-  const style = document.createElement("style");
-  style.textContent = css;
-  document.head.appendChild(style);
-})();
+// Read label width from CSS var --labelW (single source of truth)
+function labelWidthPx() {
+  const v = getComputedStyle(document.documentElement).getPropertyValue("--labelW").trim();
+  const n = parseInt(v, 10);
+  return Number.isFinite(n) ? n : 220;
+}
 
 // -------------------- Event end-time logic --------------------
-// Default: 2 hours from start
-// LIVE: extend to max(start+2h, now+20m) so it stays visible while live
 function eventEnd(e) {
   const end = parseET(e.end_et);
   if (end) return end;
@@ -259,8 +99,8 @@ function eventEnd(e) {
   const defaultEnd = new Date(start.getTime() + 120 * 60000);
 
   if (e.status === "live") {
-    const nowET = nowEtWallClockUTC();
-    const liveHold = new Date(nowET.getTime() + 20 * 60000);
+    const now = new Date();
+    const liveHold = new Date(now.getTime() + 20 * 60000);
     return new Date(Math.max(defaultEnd.getTime(), liveHold.getTime()));
   }
 
@@ -288,6 +128,7 @@ function rebuildFilters(events) {
 
   const leagues = new Set();
   const platforms = new Set();
+
   events.forEach(e => {
     if (e.league) leagues.add(e.league);
     if (e.platform) platforms.add(e.platform);
@@ -374,14 +215,14 @@ function renderNowNext() {
     : `<div class="muted">No upcoming events found.</div>`;
 }
 
-// -------------------- Right tile: Today’s Guide (ET day) --------------------
+// -------------------- Right tile: Today’s Guide (full day) --------------------
 function renderTodaysGuide() {
   if (!infoTileBody) return;
   if (infoTileHeaderH2) infoTileHeaderH2.textContent = "Today's Guide";
 
-  const nowET = nowEtWallClockUTC();
-  const dayStart = startOfEtDayUTC(nowET).getTime();
-  const dayEnd = endOfEtDayUTC(nowET).getTime();
+  const now = new Date();
+  const dayStart = startOfDay(now).getTime();
+  const dayEnd = endOfDay(now).getTime();
 
   const todays = filteredEvents
     .filter(e => {
@@ -399,7 +240,7 @@ function renderTodaysGuide() {
 
   const items = todays.map(e => {
     const s = parseET(e.start_et);
-    const t = fmtET.format(s); // ET time label (no "ET" suffix here)
+    const t = fmtTime(s).replace(" ET", "");
     const isLive = e.status === "live";
     const badge = isLive ? `<span class="chipBadge">LIVE</span>` : "";
 
@@ -414,10 +255,12 @@ function renderTodaysGuide() {
 
   infoTileBody.innerHTML = `
     <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;">
-      <div class="muted">Today • ${fmtDay(nowET)}</div>
+      <div class="muted">Today • ${fmtDay(now)}</div>
       <div class="muted" style="font-size:12px;">${todays.length} shows</div>
     </div>
+
     <div class="chipList">${items}</div>
+
     <style>
       .chipList{display:flex; flex-direction:column; gap:8px; max-height:360px; overflow:auto; padding-right:4px;}
       .chip{display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:999px;
@@ -434,22 +277,14 @@ function renderTodaysGuide() {
 
 // -------------------- Bottom schedule --------------------
 function roundToTick(dt) {
-  const mins = dt.getUTCMinutes(); // IMPORTANT: operate on UTC components (our stored ET-wallclock timestamps)
+  const mins = dt.getMinutes();
   const rounded = Math.floor(mins / tickMins) * tickMins;
-  return new Date(Date.UTC(
-    dt.getUTCFullYear(),
-    dt.getUTCMonth(),
-    dt.getUTCDate(),
-    dt.getUTCHours(),
-    rounded,
-    0, 0
-  ));
+  return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), dt.getHours(), rounded, 0, 0);
 }
 
 function ensureWindowStart() {
   if (windowStart) return;
-  // Default to NOW in ET
-  windowStart = roundToTick(nowEtWallClockUTC());
+  windowStart = roundToTick(new Date());
 }
 
 function renderTimeRow() {
@@ -461,17 +296,22 @@ function renderTimeRow() {
 
   const ticks = Math.ceil(windowMins / tickMins) + 1;
   const parts = [];
+
+  // LEFT SPACER so ticks align with lane (after channel labels)
+  const labelW = labelWidthPx();
+  parts.push(`<div class="timeSpacer" style="flex:0 0 ${labelW}px; width:${labelW}px"></div>`);
+
   for (let i = 0; i < ticks; i++) {
     const dt = new Date(startMs + i * tickMins * 60000);
-    const label = fmtET.format(dt); // ET label
-    parts.push(`<div class="timeTick" style="width:${pxPerTick}px; flex:0 0 ${pxPerTick}px">${escapeHtml(label)}</div>`);
+    parts.push(`<div class="timeTick" style="width:${pxPerTick}px; flex:0 0 ${pxPerTick}px">${fmtTime(dt).replace(" ET","")}</div>`);
   }
 
   const surfaceW = Math.round(windowMins * pxPerMin);
+  const totalW = labelW + surfaceW;
 
   timeRow.style.display = "flex";
-  timeRow.style.width = `${surfaceW}px`;
-  timeRow.style.maxWidth = `${surfaceW}px`;
+  timeRow.style.width = `${totalW}px`;
+  timeRow.style.maxWidth = `${totalW}px`;
   timeRow.style.whiteSpace = "nowrap";
   timeRow.style.overflow = "hidden";
   timeRow.innerHTML = parts.join("");
@@ -529,6 +369,7 @@ function renderSchedule() {
 
   const surfaceW = Math.round(windowMins * pxPerMin);
   const rows = groupByChannel(windowEvents);
+  const labelW = labelWidthPx();
 
   rowsEl.innerHTML = rows.map(r => {
     const subs = r.maxSubs ? `${Number(r.maxSubs).toLocaleString()} subs` : "";
@@ -552,8 +393,8 @@ function renderSchedule() {
       const thumb = e.thumbnail_url || (e.source_id ? `https://i.ytimg.com/vi/${e.source_id}/hqdefault.jpg` : "");
       const liveBadge = e.status === "live" ? `<span class="badgeLive">LIVE</span>` : "";
 
-      const startLabel = fmtET.format(s);
-      const endLabel = fmtET.format(ee);
+      const startLabel = fmtTime(s).replace(" ET", "");
+      const endLabel = fmtTime(ee).replace(" ET", "");
 
       return `
         <a class="block" href="${escapeHtml(e.watch_url || "#")}" target="_blank" rel="noreferrer"
@@ -575,14 +416,14 @@ function renderSchedule() {
     }).join("");
 
     return `
-      <div class="row" style="display:flex; align-items:stretch; border-bottom: 1px solid rgba(255,255,255,0.06);">
-        <div class="rowLabel" style="min-width:220px; max-width:220px;">
+      <div class="row">
+        <div class="rowLabel" style="min-width:${labelW}px; max-width:${labelW}px; width:${labelW}px;">
           <div style="min-width:0;">
             <div class="name">${escapeHtml(r.channel)}</div>
             <div class="subs">${escapeHtml(subs)}</div>
           </div>
         </div>
-        <div class="lane" style="width:${surfaceW}px; ${laneBg}">
+        <div class="lane" style="width:${surfaceW}px; flex:0 0 ${surfaceW}px; ${laneBg}">
           ${blocks}
         </div>
       </div>
@@ -598,7 +439,7 @@ function shiftWindow(dir) {
 }
 
 function jumpToNow() {
-  windowStart = roundToTick(nowEtWallClockUTC());
+  windowStart = roundToTick(new Date());
   renderSchedule();
 }
 
@@ -632,11 +473,10 @@ async function loadSchedule() {
 
   rebuildFilters(allEvents);
 
-  // Default schedule window to NOW (ET) every refresh
   windowStart = null;
 
-  const nowET = nowEtWallClockUTC();
-  if (lastUpdated) lastUpdated.textContent = `Last updated: ${fmtDay(nowET)} ${fmtTime(nowET)}`;
+  const now = new Date();
+  if (lastUpdated) lastUpdated.textContent = `Last updated: ${fmtDay(now)} ${fmtTime(now)}`;
 
   applyFilters();
 }
@@ -656,7 +496,6 @@ on(prevWindow, "click", () => shiftWindow(-1));
 on(nextWindow, "click", () => shiftWindow(1));
 on(jumpNowBtn, "click", jumpToNow);
 
-// initial load
 loadSchedule().catch(err => {
   console.error(err);
   if (nowOn) nowOn.innerHTML = `<div class="muted">Error loading schedule.</div>`;

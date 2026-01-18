@@ -69,7 +69,7 @@ h1{
   font-size: 13px;
 }
 
-/* ========= Logo Badge (fills box, sharp) ========= */
+/* ========= Logo Badge ========= */
 .brandLogo{
   width: 56px;
   height: 56px;
@@ -107,42 +107,16 @@ h1{
   object-fit: contain;
   display:block;
   filter: drop-shadow(0 10px 18px rgba(0,0,0,0.55));
-  image-rendering: auto;
 }
 
-/* ====== LIVE GLOW (forced visible even if animation doesn't run) ====== */
-.brandLogo.isLive{
-  border-color: rgba(70,240,170,0.35) !important;
+/* ✅ Preference B: subtle glow when ANYTHING is live */
+.brandLogo.glow{
   box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,0.06),
-    0 14px 30px rgba(0,0,0,0.35),
+    inset 0 0 0 1px rgba(255,255,255,0.08),
+    0 18px 48px rgba(0,0,0,0.52),
     0 0 0 2px rgba(70,240,170,0.18),
-    0 0 24px rgba(70,240,170,0.20);
-  animation: brandLivePulse 1.8s ease-in-out infinite;
-}
-
-@keyframes brandLivePulse{
-  0%{
-    box-shadow:
-      inset 0 0 0 1px rgba(255,255,255,0.06),
-      0 14px 30px rgba(0,0,0,0.35),
-      0 0 0 2px rgba(70,240,170,0.18),
-      0 0 24px rgba(70,240,170,0.20);
-  }
-  55%{
-    box-shadow:
-      inset 0 0 0 1px rgba(255,255,255,0.06),
-      0 14px 30px rgba(0,0,0,0.35),
-      0 0 0 10px rgba(70,240,170,0.0),
-      0 0 28px rgba(70,240,170,0.10);
-  }
-  100%{
-    box-shadow:
-      inset 0 0 0 1px rgba(255,255,255,0.06),
-      0 14px 30px rgba(0,0,0,0.35),
-      0 0 0 2px rgba(70,240,170,0.0),
-      0 0 24px rgba(70,240,170,0.0);
-  }
+    0 0 32px rgba(70,240,170,0.12);
+  border-color: rgba(70,240,170,0.22);
 }
 
 /* ========= Controls ========= */
@@ -251,7 +225,7 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
   background: rgba(50,240,160,0.12);
 }
 
-/* ========= HERO cards (Now On / Up Next) ========= */
+/* ========= HERO cards ========= */
 .card{
   border-radius: var(--radius2);
   border: 1px solid rgba(255,255,255,0.10);
@@ -297,7 +271,7 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
 }
 .watchBtn:hover{ filter: brightness(1.06); text-decoration:none; }
 
-/* ========= Schedule Section ========= */
+/* ========= Schedule ========= */
 .scheduleSection{
   margin-top: 20px;
   border-radius: var(--radius);
@@ -364,7 +338,7 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
   border-top: 1px solid rgba(255,255,255,0.08);
 }
 
-/* Time header row (NO SCROLLBAR) */
+/* Time header row (NO scrolling) */
 .timeRow{
   display:flex;
   overflow: hidden;
@@ -395,10 +369,8 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
   border-bottom: 1px solid rgba(255,255,255,0.06);
 }
 
-/* IMPORTANT: NOT sticky (sticky was causing the blue label bar to overlay time) */
+/* Channel label */
 .rowLabel{
-  position: relative;
-  z-index: 2;
   display:flex;
   flex-direction:column;
   justify-content:center;
@@ -427,41 +399,17 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
   text-overflow: ellipsis;
 }
 
-.liveMini{
-  margin-top: 6px;
-  display:inline-flex;
-  align-items:center;
-  width: fit-content;
-  padding: 4px 9px;
-  border-radius: 999px;
-  border: 1px solid rgba(70,240,170,0.26);
-  background: rgba(50,240,160,0.10);
-  color: rgba(70,240,170,0.92);
-  font-size: 11px;
-  font-weight: 800;
-}
-
-/* Lane where blocks are positioned absolutely */
+/* Lane */
 .lane{
   position: relative;
+  flex: 1;
   min-height: var(--rowH);
   background-image: linear-gradient(to right, rgba(255,255,255,0.06) 1px, rgba(0,0,0,0) 1px);
-  background-size: 140px 1px; /* matches pxPerTick in app.js */
+  background-size: 140px 100%;
   overflow: hidden;
 }
 
-/* vertical now marker */
-.nowMarker{
-  position:absolute;
-  top:0;
-  bottom:0;
-  width:2px;
-  background: rgba(255,255,255,0.16);
-  box-shadow: 0 0 0 6px rgba(255,255,255,0.03);
-  pointer-events:none;
-}
-
-/* Show blocks */
+/* Blocks */
 .block{
   position: absolute;
   top: 8px;
@@ -476,10 +424,8 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
 .block:hover{
   border-color: rgba(255,255,255,0.16);
   filter: brightness(1.03);
-  text-decoration:none;
 }
 
-/* Big thumbnail background (no “crushed” look) */
 .blockMedia{
   position:absolute;
   inset:0;

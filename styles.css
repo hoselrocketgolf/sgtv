@@ -24,9 +24,6 @@
   --rowH: 76px;
   --cellH: 68px;
   --gutter: 18px;
-
-  /* IMPORTANT: single source of truth for the channel label width */
-  --labelW: 220px;
 }
 
 *{ box-sizing:border-box; }
@@ -106,17 +103,35 @@ h1{
   inset: 0;
   width: 100%;
   height: 100%;
-  padding: 2px;              /* was 8px — made it look small */
+  padding: 8px;
   object-fit: contain;
   display:block;
+  filter: drop-shadow(0 10px 18px rgba(0,0,0,0.55));
+}
 
-  /* Remove effects that make SVG look “soft” */
-  filter: none;
-
-  /* Helps some GPUs keep it crisp */
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  image-rendering: auto;
+/* Pulse the logo if ANY channel is live (JS toggles .isLive) */
+.brandLogo.isLive{
+  animation: brandLivePulse 1.8s ease-in-out infinite;
+}
+@keyframes brandLivePulse{
+  0%{
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,0.06),
+      0 14px 30px rgba(0,0,0,0.35),
+      0 0 0 0 rgba(70,240,170,0.18);
+  }
+  55%{
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,0.06),
+      0 14px 30px rgba(0,0,0,0.35),
+      0 0 0 10px rgba(70,240,170,0.0);
+  }
+  100%{
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,0.06),
+      0 14px 30px rgba(0,0,0,0.35),
+      0 0 0 0 rgba(70,240,170,0.0);
+  }
 }
 
 /* ========= Controls ========= */
@@ -339,24 +354,12 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
 }
 
 /* Time header row */
-/* IMPORTANT: time ticks must start AFTER the channel label column */
 .timeRow{
   display:flex;
-  overflow: hidden;          /* no native scrollbars */
+  overflow: hidden;
   white-space: nowrap;
   border-bottom: 1px solid rgba(255,255,255,0.08);
-  scrollbar-width: none;
 }
-.timeRow::-webkit-scrollbar{ height:0; }
-
-/* Left spacer to align with row labels */
-.timeSpacer{
-  flex: 0 0 var(--labelW);
-  width: var(--labelW);
-  border-right: 1px solid rgba(255,255,255,0.08);
-  background: linear-gradient(90deg, rgba(0,0,0,0.36), rgba(0,0,0,0.18));
-}
-
 .timeTick{
   padding: 12px 14px;
   font-weight: 800;
@@ -390,9 +393,8 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
   justify-content:center;
   gap:4px;
   padding: 10px 14px;
-  min-width: var(--labelW);
-  max-width: var(--labelW);
-  width: var(--labelW);
+  min-width: 220px;
+  max-width: 220px;
   background: linear-gradient(90deg, rgba(0,0,0,0.36), rgba(0,0,0,0.18));
   border-right: 1px solid rgba(255,255,255,0.08);
 }
@@ -414,34 +416,81 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
   text-overflow: ellipsis;
 }
 
+/* tiny "Live now" */
+.liveMini{
+  margin-top: 4px;
+  display:inline-flex;
+  width: fit-content;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(70,240,170,0.34);
+  background: rgba(50,240,160,0.10);
+  color: rgba(70,240,170,0.95);
+}
+
+/* Pulse rows that are live */
+.isLiveRow .rowLabel{
+  animation: liveRowPulse 1.8s ease-in-out infinite;
+}
+@keyframes liveRowPulse{
+  0%{ box-shadow: inset 0 0 0 0 rgba(70,240,170,0.10); }
+  55%{ box-shadow: inset 0 0 0 14px rgba(70,240,170,0.00); }
+  100%{ box-shadow: inset 0 0 0 0 rgba(70,240,170,0.00); }
+}
+
 /* Lane where blocks are positioned absolutely */
 .lane{
   position: relative;
-  flex: 0 0 auto; /* IMPORTANT: do not flex-grow; JS controls exact width */
+  flex: 1;
   min-height: var(--rowH);
   background-image: linear-gradient(to right, rgba(255,255,255,0.06) 1px, rgba(0,0,0,0) 1px);
-  background-size: 140px 1px; /* matches pxPerTick in app.js */
+  background-size: 140px 100%;
   overflow: hidden;
+}
+
+/* NOW column marker (vertical band + line) */
+.nowMarker{
+  position:absolute;
+  top:0;
+  bottom:0;
+  width: 2px;
+  background: rgba(120,220,255,0.65);
+  box-shadow: 0 0 0 6px rgba(120,220,255,0.08);
+  pointer-events:none;
+  z-index: 1;
+}
+.nowMarker::before{
+  content:"";
+  position:absolute;
+  top:0;
+  bottom:0;
+  left:-36px;
+  width: 72px;
+  background: rgba(120,220,255,0.06);
 }
 
 /* Show blocks */
 .block{
   position: absolute;
   top: 8px;
-  height: var(--cellH);
+  bottom: 8px;
   border-radius: 16px;
   border: 1px solid rgba(255,255,255,0.10);
   overflow:hidden;
   cursor:pointer;
   display:block;
   background: rgba(0,0,0,0.22);
+  z-index: 2;
 }
 .block:hover{
   border-color: rgba(255,255,255,0.16);
   filter: brightness(1.03);
+  text-decoration:none;
 }
 
-/* Big thumbnail background (no “crushed” look) */
+/* Big thumbnail background (not crushed) */
 .blockMedia{
   position:absolute;
   inset:0;
@@ -526,6 +575,5 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
   .heroGrid{ grid-template-columns: 1fr; }
   .controls{ flex-wrap:wrap; }
   .control.grow{ min-width: 220px; flex: 1 1 240px; }
-
-  :root{ --labelW: 180px; }
+  .rowLabel{ min-width: 180px; max-width: 180px; }
 }

@@ -255,9 +255,33 @@ function renderCard(e, forceLiveBadge = false) {
   const badge = live ? `<span class="pill live">LIVE</span>` : "";
   const subs = e.subscribers ? `${Number(e.subscribers).toLocaleString()} subs` : "";
 
-  return `
-    <div class="card${live ? " isLive" : ""}">
-      <div class="cardMedia" ${media}></div>
+ return `
+  <a class="card${live ? " isLive" : ""}" 
+     href="${escapeHtml(e.watch_url || "#")}" 
+     target="_blank" 
+     rel="noreferrer">
+
+    <div class="cardMedia" ${media}></div>
+
+    <div class="cardBody">
+      <div class="cardTitle">${escapeHtml(e.title || "")}</div>
+      <div class="cardMeta">
+        <span>${fmtTime(start)}</span>
+        <span>•</span>
+        <span>${escapeHtml(e.platform || "")}</span>
+        <span>•</span>
+        <span>${escapeHtml(e.channel || "")}</span>
+        ${subs ? `<span>•</span><span>${subs}</span>` : ""}
+        ${badge ? `<span>•</span>${badge}` : ""}
+      </div>
+    </div>
+
+    <div class="cardActions">
+      <span class="watchBtn">Watch</span>
+    </div>
+  </a>
+`;
+
       <div class="cardBody">
         <div class="cardTitle">${escapeHtml(e.title || "")}</div>
         <div class="cardMeta">

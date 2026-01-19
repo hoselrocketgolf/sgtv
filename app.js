@@ -26,6 +26,10 @@ const liveNav = $("liveNav");
 // Recent streams
 const recentStreams = $("recentStreams");
 const recentStreamsMeta = $("recentStreamsMeta");
+const recentPrev = $("recentPrev");
+const recentNext = $("recentNext");
+const recentCounter = $("recentCounter");
+const recentNav = $("recentNav");
 
 // Right tile (Today’s Guide)
 const infoTileBody = document.querySelector("#infoTile .tileBody");
@@ -145,6 +149,8 @@ let allEvents = [];
 let filteredEvents = [];
 let windowStart = null;
 let liveIndex = 0;
+let recentIndex = 0;
+let recentEvents = [];
 
 // Window configuration
 let windowMins = 240; // 4 hours
@@ -335,60 +341,54 @@ function renderNowNext() {
 }
 
 // -------------------- Recent streams --------------------
-function renderRecentCard(e) {
-  const start = parseET(e.start_et);
-  const thumb =
-    e.thumbnail_url ||
-    (e.source_id ? `https://i.ytimg.com/vi/${e.source_id}/hqdefault.jpg` : "");
-  const watchUrl = escapeHtml(e.watch_url || "#");
-  const badge = e.status === "live" ? `<span class="pill live">LIVE</span>` : "";
-
-  return `
-    <a class="recentCard" href="${watchUrl}" target="_blank" rel="noreferrer">
-      <div class="recentThumb" style="background-image:url('${encodeURI(thumb)}')"></div>
-      <div class="recentBody">
-        <div class="recentTitle">${escapeHtml(e.title || "")}</div>
-        <div class="recentMetaRow">
-          <span>${escapeHtml(fmtDay(start))}</span>
-          <span>•</span>
-          <span>${escapeHtml(fmtTime(start))}</span>
-          <span>•</span>
-          <span>${escapeHtml(e.channel || "")}</span>
-          ${badge ? `<span>•</span>${badge}` : ""}
-        </div>
-        <div class="recentPlatform">${escapeHtml(e.platform || "")}</div>
-      </div>
-    </a>
-  `;
-}
-
-function renderRecentStreams() {
-  if (!recentStreams) return;
-
+function getRecentStreams() {
   const now = Date.now();
   const cutoff = now - recentWindowHours * 60 * 60 * 1000;
 
-  const recent = allEvents.filter((e) => {
+  return allEvents.filter((e) => {
     const start = parseET(e.start_et);
     if (!start) return false;
     const end = eventEnd(e);
     if (!end) return false;
     const startTs = start.getTime();
     const endTs = end.getTime();
+    if (e.status === "live") return endTs >= cutoff;
     return startTs <= now && endTs >= cutoff;
   });
+}
 
-  if (recentStreamsMeta)
-    recentStreamsMeta.textContent = `${
-      recent.length ? `${recent.length} streams • ` : ""
-    }Past ${recentWindowHours} hours`;
+function renderRecentStreams({ reshuffle = true } = {}) {
+  if (!recentStreams) return;
 
+  const recent = getRecentStreams();
   if (!recent.length) {
+    if (recentStreamsMeta)
+      recentStreamsMeta.textContent = `Past ${recentWindowHours} hours`;
     recentStreams.innerHTML = `<div class="muted">No recent live streams in the past ${recentWindowHours} hours.</div>`;
+    if (recentNav) recentNav.classList.add("hidden");
     return;
   }
 
-  recentStreams.innerHTML = shuffleArray(recent).map(renderRecentCard).join("");
+  if (reshuffle || recentEvents.length !== recent.length) {
+    recentEvents = shuffleArray(recent);
+    recentIndex = 0;
+  }
+
+  const safeIndex = recentEvents.length ? recentIndex % recentEvents.length : 0;
+
+  if (recentStreamsMeta)
+    recentStreamsMeta.textContent = `${
+      recentEvents.length ? `${recentEvents.length} streams • ` : ""
+    }Past ${recentWindowHours} hours`;
+  if (recentNav) recentNav.classList.toggle("hidden", recentEvents.length <= 1);
+  if (recentCounter)
+    recentCounter.textContent = recentEvents.length
+      ? `${safeIndex + 1} / ${recentEvents.length}`
+      : "";
+  recentStreams.innerHTML = renderCard(
+    recentEvents[safeIndex],
+    recentEvents[safeIndex]?.status === "live"
+  );
 }
 
 // -------------------- Right tile: Today’s Guide (full day) --------------------
@@ -714,6 +714,16 @@ on(liveNext, "click", () => {
   if (!liveCount) return;
   liveIndex = (liveIndex + 1) % liveCount;
   renderNowNext();
+});
+on(recentPrev, "click", () => {
+  if (!recentEvents.length) return;
+  recentIndex = (recentIndex - 1 + recentEvents.length) % recentEvents.length;
+  renderRecentStreams({ reshuffle: false });
+});
+on(recentNext, "click", () => {
+  if (!recentEvents.length) return;
+  recentIndex = (recentIndex + 1) % recentEvents.length;
+  renderRecentStreams({ reshuffle: false });
 });
 
 // initial load

@@ -18,6 +18,10 @@ const refreshBtn = $("refreshBtn");
 const nowOn = $("nowOn");
 const upNext = $("upNext");
 const lastUpdated = $("lastUpdated");
+const livePrev = $("livePrev");
+const liveNext = $("liveNext");
+const liveCounter = $("liveCounter");
+const liveNav = $("liveNav");
 
 // Right tile (Today’s Guide)
 const infoTileBody = document.querySelector("#infoTile .tileBody");
@@ -127,6 +131,7 @@ function endOfDayLocal(dt) {
 let allEvents = [];
 let filteredEvents = [];
 let windowStart = null;
+let liveIndex = 0;
 
 // Window configuration
 let windowMins = 240; // 4 hours
@@ -183,12 +188,16 @@ function sortEvents(events) {
     const bLive = b.status === "live" ? 0 : 1;
     if (aLive !== bLive) return aLive - bLive;
 
+    const as = Number(a.subscribers || 0);
+    const bs = Number(b.subscribers || 0);
+    if (a.status === "live" && b.status === "live") {
+      if (as !== bs) return bs - as;
+    }
+
     const at = parseET(a.start_et)?.getTime() ?? Number.MAX_SAFE_INTEGER;
     const bt = parseET(b.start_et)?.getTime() ?? Number.MAX_SAFE_INTEGER;
     if (at !== bt) return at - bt;
 
-    const as = Number(a.subscribers || 0);
-    const bs = Number(b.subscribers || 0);
     return bs - as;
   });
 }
@@ -243,6 +252,7 @@ function applyFilters() {
   });
 
   filteredEvents = sortEvents(filteredEvents);
+  liveIndex = 0;
 
   renderNowNext();
   renderTodaysGuide();
@@ -292,8 +302,14 @@ function renderCard(e, forceLiveBadge = false) {
 function renderNowNext() {
   if (!nowOn || !upNext) return;
 
-  const live = filteredEvents.find((e) => e.status === "live");
+  const liveEvents = filteredEvents.filter((e) => e.status === "live");
   const upcoming = filteredEvents.find((e) => e.status !== "live");
+  const liveCount = liveEvents.length;
+  const safeIndex = liveCount ? liveIndex % liveCount : 0;
+  const live = liveEvents[safeIndex];
+
+  if (liveNav) liveNav.classList.toggle("hidden", liveCount <= 1);
+  if (liveCounter) liveCounter.textContent = liveCount ? `${safeIndex + 1} / ${liveCount}` : "";
 
   nowOn.innerHTML = live
     ? renderCard(live, true)
@@ -614,6 +630,18 @@ on(refreshBtn, "click", () =>
 on(prevWindow, "click", () => shiftWindow(-1));
 on(nextWindow, "click", () => shiftWindow(1));
 on(jumpNowBtn, "click", jumpToNow);
+on(livePrev, "click", () => {
+  const liveCount = filteredEvents.filter((e) => e.status === "live").length;
+  if (!liveCount) return;
+  liveIndex = (liveIndex - 1 + liveCount) % liveCount;
+  renderNowNext();
+});
+on(liveNext, "click", () => {
+  const liveCount = filteredEvents.filter((e) => e.status === "live").length;
+  if (!liveCount) return;
+  liveIndex = (liveIndex + 1) % liveCount;
+  renderNowNext();
+});
 
 // initial load
 loadSchedule().catch((err) => {

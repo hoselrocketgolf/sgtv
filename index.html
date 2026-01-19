@@ -85,12 +85,17 @@
         </div>
       </section>
 
-      <section class="recentSection" aria-label="Recent streams">
-        <div class="recentHeader">
+      <section class="tile recentSection" aria-label="Recent streams">
+        <div class="tileHeader">
           <h2>Recent Streams</h2>
-          <div class="recentMeta" id="recentStreamsMeta">Past 36 hours</div>
+          <div class="liveNav hidden" id="recentNav">
+            <button class="iconBtn small" id="recentPrev" aria-label="Previous recent stream">◀</button>
+            <span class="liveCounter" id="recentCounter">1 / 1</span>
+            <button class="iconBtn small" id="recentNext" aria-label="Next recent stream">▶</button>
+          </div>
         </div>
-        <div class="recentGrid" id="recentStreams">Loading…</div>
+        <div class="recentMeta" id="recentStreamsMeta">Past 36 hours</div>
+        <div id="recentStreams" class="tileBody">Loading…</div>
       </section>
 
       <section class="supportSection" aria-label="Support the site">

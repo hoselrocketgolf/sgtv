@@ -193,6 +193,103 @@ button{
   gap: 14px;
 }
 
+/* ========= Support ========= */
+.supportSection{
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow: var(--shadow);
+  padding: 16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap: 14px;
+}
+
+.supportHeader{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.supportHeader h2{
+  margin:0;
+  font-size: 16px;
+}
+
+.supportHeader p{
+  margin:0;
+  color: var(--muted2);
+  font-size: 12px;
+}
+
+.supportGrid{
+  display:grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.supportCard,
+.supportAdSlot{
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.25);
+  padding: 14px;
+  min-height: 88px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap: 6px;
+}
+
+.supportCard{
+  text-decoration: none;
+  transition: transform 140ms ease, filter 160ms ease, border-color 160ms ease;
+}
+
+.supportCard:hover{
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+  border-color: rgba(120,220,255,0.4);
+  text-decoration: none;
+}
+
+.supportCard.isDisabled{
+  opacity: 0.6;
+  cursor: default;
+  pointer-events: none;
+}
+
+.supportTitle{
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.supportMeta{
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.supportAdSlot{
+  background: rgba(0,0,0,0.18);
+  border-style: dashed;
+  border-color: rgba(255,255,255,0.22);
+  align-items:flex-start;
+}
+
+.supportAdLabel{
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted2);
+}
+
+.supportAdPlaceholder{
+  font-size: 12px;
+  color: rgba(255,255,255,0.78);
+}
+
 .tile{
   border-radius: var(--radius2);
   border: 1px solid rgba(255,255,255,0.10);
@@ -573,6 +670,8 @@ button{
     grid-template-columns: repeat(2, minmax(150px, 1fr)) minmax(200px, 1.6fr);
   }
   .control.refresh{ align-items:flex-start; }
+  .supportGrid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .supportAdSlot{ grid-column: span 2; }
 }
 
 @media (max-width: 980px){
@@ -583,6 +682,8 @@ button{
   }
   .control.grow{ min-width: 220px; grid-column: span 2; }
   .control.refresh{ align-items:flex-start; }
+  .supportGrid{ grid-template-columns: 1fr; }
+  .supportAdSlot{ grid-column: auto; }
 }
 
 .rowLabel .name {

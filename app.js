@@ -362,12 +362,37 @@ function roundToTick(dt) {
   return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), dt.getHours(), rounded, 0, 0);
 }
 
+function nowInET() {
+  const now = new Date();
+  const etParts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(now).reduce((acc, p) => {
+    acc[p.type] = p.value;
+    return acc;
+  }, {});
+
+  return new Date(
+    Number(etParts.year),
+    Number(etParts.month) - 1,
+    Number(etParts.day),
+    Number(etParts.hour),
+    Number(etParts.minute),
+    0,
+    0
+  );
+}
+
 function ensureWindowStart() {
   if (windowStart) return;
-  // ALWAYS default to NOW on refresh
-  readScheduleGeometryFromCss();
-  windowStart = roundToTick(new Date());
+  windowStart = roundToTick(nowInET());
 }
+
 
 function renderTimeRow() {
   if (!timeRow || !windowLabel) return;

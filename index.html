@@ -6,7 +6,7 @@
     <title>SimGolf.TV Guide</title>
 
     <!-- Cache-bust so Cloudflare/browser never mixes old JS with new CSS -->
-    <link rel="stylesheet" href="styles.css?v=20260119" />
+    <link rel="stylesheet" href="styles.css?v=20260120" />
   </head>
 
   <body>
@@ -55,6 +55,11 @@
         <div class="tile" id="nowTile">
           <div class="tileHeader">
             <h2>Now On</h2>
+            <div class="liveNav hidden" id="liveNav">
+              <button class="iconBtn small" id="livePrev" aria-label="Previous live stream">◀</button>
+              <span class="liveCounter" id="liveCounter">1 / 1</span>
+              <button class="iconBtn small" id="liveNext" aria-label="Next live stream">▶</button>
+            </div>
           </div>
           <div id="nowOn" class="tileBody">Loading…</div>
         </div>
@@ -125,7 +130,7 @@
       <footer class="footer"></footer>
     </main>
 
-    <script src="app.js?v=20260118"></script>
+    <script src="app.js?v=20260120"></script>
 
     <script>
       // Clicking logo triggers refresh button (or reload as fallback)

@@ -12,7 +12,7 @@
     ></script>
 
     <!-- Cache-bust so Cloudflare/browser never mixes old JS with new CSS -->
-    <link rel="stylesheet" href="styles.css?v=20260120" />
+    <link rel="stylesheet" href="styles.css?v=20260121" />
   </head>
 
   <body>
@@ -85,6 +85,14 @@
         </div>
       </section>
 
+      <section class="recentSection" aria-label="Recent streams">
+        <div class="recentHeader">
+          <h2>Recent Streams</h2>
+          <div class="recentMeta" id="recentStreamsMeta">Past 36 hours</div>
+        </div>
+        <div class="recentGrid" id="recentStreams">Loading…</div>
+      </section>
+
       <section class="supportSection" aria-label="Support the site">
         <div class="supportHeader">
           <h2>Support</h2>
@@ -146,7 +154,7 @@
       <footer class="footer"></footer>
     </main>
 
-    <script src="app.js?v=20260120"></script>
+    <script src="app.js?v=20260121"></script>
 
     <script>
       // Clicking logo triggers refresh button (or reload as fallback)

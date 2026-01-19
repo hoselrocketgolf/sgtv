@@ -563,7 +563,13 @@ function renderSchedule() {
         <div class="row">
           <div class="rowLabel">
             <div style="min-width:0;">
-              <div class="name">${escapeHtml(r.channel)}</div>
+              <a class="name"
+   href="${escapeHtml(r.list[0]?.watch_url || "#")}"
+   target="_blank"
+   rel="noreferrer">
+  ${escapeHtml(r.channel)}
+</a>
+
               <div class="subs">${escapeHtml(subs)}</div>
             </div>
           </div>

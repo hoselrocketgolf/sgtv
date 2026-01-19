@@ -23,6 +23,10 @@ const liveNext = $("liveNext");
 const liveCounter = $("liveCounter");
 const liveNav = $("liveNav");
 
+// Recent streams
+const recentStreams = $("recentStreams");
+const recentStreamsMeta = $("recentStreamsMeta");
+
 // Right tile (Today’s Guide)
 const infoTileBody = document.querySelector("#infoTile .tileBody");
 const infoTileHeaderH2 = document.querySelector("#infoTile .tileHeader h2");
@@ -54,6 +58,15 @@ function escapeHtml(s) {
 
 function clamp(n, a, b) {
   return Math.max(a, Math.min(b, n));
+}
+
+function shuffleArray(list) {
+  const arr = [...list];
+  for (let i = arr.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
 }
 
 function getOffsetMinutes(date, timeZone) {
@@ -135,6 +148,7 @@ let liveIndex = 0;
 
 // Window configuration
 let windowMins = 240; // 4 hours
+const recentWindowHours = 36;
 
 // Geometry read from CSS vars so header + blocks NEVER drift
 let tickMins = 30;
@@ -318,6 +332,63 @@ function renderNowNext() {
   upNext.innerHTML = upcoming
     ? renderCard(upcoming, false)
     : `<div class="muted">No upcoming events found.</div>`;
+}
+
+// -------------------- Recent streams --------------------
+function renderRecentCard(e) {
+  const start = parseET(e.start_et);
+  const thumb =
+    e.thumbnail_url ||
+    (e.source_id ? `https://i.ytimg.com/vi/${e.source_id}/hqdefault.jpg` : "");
+  const watchUrl = escapeHtml(e.watch_url || "#");
+  const badge = e.status === "live" ? `<span class="pill live">LIVE</span>` : "";
+
+  return `
+    <a class="recentCard" href="${watchUrl}" target="_blank" rel="noreferrer">
+      <div class="recentThumb" style="background-image:url('${encodeURI(thumb)}')"></div>
+      <div class="recentBody">
+        <div class="recentTitle">${escapeHtml(e.title || "")}</div>
+        <div class="recentMetaRow">
+          <span>${escapeHtml(fmtDay(start))}</span>
+          <span>•</span>
+          <span>${escapeHtml(fmtTime(start))}</span>
+          <span>•</span>
+          <span>${escapeHtml(e.channel || "")}</span>
+          ${badge ? `<span>•</span>${badge}` : ""}
+        </div>
+        <div class="recentPlatform">${escapeHtml(e.platform || "")}</div>
+      </div>
+    </a>
+  `;
+}
+
+function renderRecentStreams() {
+  if (!recentStreams) return;
+
+  const now = Date.now();
+  const cutoff = now - recentWindowHours * 60 * 60 * 1000;
+
+  const recent = allEvents.filter((e) => {
+    const start = parseET(e.start_et);
+    if (!start) return false;
+    const end = eventEnd(e);
+    if (!end) return false;
+    const startTs = start.getTime();
+    const endTs = end.getTime();
+    return startTs <= now && endTs >= cutoff;
+  });
+
+  if (recentStreamsMeta)
+    recentStreamsMeta.textContent = `${
+      recent.length ? `${recent.length} streams • ` : ""
+    }Past ${recentWindowHours} hours`;
+
+  if (!recent.length) {
+    recentStreams.innerHTML = `<div class="muted">No recent live streams in the past ${recentWindowHours} hours.</div>`;
+    return;
+  }
+
+  recentStreams.innerHTML = shuffleArray(recent).map(renderRecentCard).join("");
 }
 
 // -------------------- Right tile: Today’s Guide (full day) --------------------
@@ -578,6 +649,7 @@ function jumpToNow() {
 async function loadSchedule() {
   if (nowOn) nowOn.textContent = "Loading…";
   if (upNext) upNext.textContent = "Loading…";
+  if (recentStreams) recentStreams.textContent = "Loading…";
   if (rowsEl) rowsEl.innerHTML = "";
   if (emptyState) emptyState.style.display = "none";
 
@@ -612,6 +684,7 @@ async function loadSchedule() {
     lastUpdated.textContent = `Last updated: ${fmtDay(now)} ${fmtTime(now)}`;
 
   applyFilters();
+  renderRecentStreams();
 }
 
 // -------------------- Wire up --------------------

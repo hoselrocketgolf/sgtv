@@ -361,18 +361,6 @@ function getRecentStreams() {
 function renderRecentStreams({ reshuffle = true } = {}) {
   if (!recentStreams) return;
 
-  const liveNowCount = allEvents.filter((e) => e.status === "live").length;
-  if (liveNowCount) {
-    if (recentStreamsMeta)
-      recentStreamsMeta.textContent = `Live now • ${liveNowCount} stream${
-        liveNowCount === 1 ? "" : "s"
-      }`;
-    recentStreams.innerHTML =
-      `<div class="muted">Recent streams appear when no one is live.</div>`;
-    if (recentNav) recentNav.classList.add("hidden");
-    return;
-  }
-
   const recent = getRecentStreams();
   if (!recent.length) {
     if (recentStreamsMeta)

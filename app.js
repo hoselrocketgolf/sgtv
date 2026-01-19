@@ -280,10 +280,10 @@ function renderCard(e, forceLiveBadge = false) {
         ${subs ? `<span>•</span><span>${subs}</span>` : ""}
         ${badge ? `<span>•</span>${badge}` : ""}
       </div>
-    </div>
 
-    <div class="cardActions">
-      <a class="watchBtn" href="${watchUrl}" target="_blank" rel="noreferrer">Watch</a>
+      <div class="cardActions">
+        <a class="watchBtn" href="${watchUrl}" target="_blank" rel="noreferrer">Watch</a>
+      </div>
     </div>
   </div>
 `;

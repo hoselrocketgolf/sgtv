@@ -56,6 +56,15 @@ a:hover{ text-decoration: underline; }
   gap:16px;
 }
 
+.wrap{
+  max-width: 1180px;
+  margin: 18px auto 40px;
+  padding: 0 18px;
+  display:flex;
+  flex-direction:column;
+  gap: 18px;
+}
+
 .brand{
   display:flex;
   align-items:center;
@@ -117,9 +126,10 @@ h1{
 
 /* ========= Controls ========= */
 .controls{
-  display:flex;
+  display:grid;
   gap:12px;
-  align-items:flex-end;
+  align-items:end;
+  grid-template-columns: repeat(2, minmax(150px, 1fr)) minmax(240px, 2.2fr) auto;
   padding: 16px;
   border-radius: var(--radius);
   background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
@@ -134,7 +144,7 @@ h1{
   min-width: 130px;
 }
 
-.control.grow{ flex:1; min-width: 280px; }
+.control.grow{ min-width: 280px; }
 .control.refresh{ min-width: 140px; align-items:flex-end; }
 
 label{
@@ -150,6 +160,7 @@ select,input[type="text"]{
   background: rgba(0,0,0,0.25);
   color: rgba(255,255,255,0.95);
   outline: none;
+  width: 100%;
 }
 
 select:focus,input[type="text"]:focus{
@@ -178,7 +189,7 @@ button{
 /* ========= Hero tiles ========= */
 .heroGrid{
   display:grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
 }
 
@@ -189,6 +200,8 @@ button{
   min-height: 182px;
   padding: 14px;
   box-shadow: var(--shadow);
+  display:flex;
+  flex-direction:column;
 }
 
 .tileHeader{
@@ -206,6 +219,7 @@ button{
   margin-top: 12px;
   color: rgba(255,255,255,0.92);
   font-size: 13px;
+  flex: 1;
 }
 
 /* Card in tiles */
@@ -312,7 +326,6 @@ button{
 
 /* ========= Schedule Section ========= */
 .scheduleSection{
-  margin-top: 20px;
   border-radius: var(--radius);
   background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
   border: 1px solid rgba(255,255,255,0.10);
@@ -326,6 +339,7 @@ button{
   justify-content:space-between;
   padding: 16px 18px;
   gap: 16px;
+  flex-wrap: wrap;
 }
 
 .scheduleHeader h2{
@@ -552,11 +566,23 @@ button{
 .footer{ display:none; }
 
 /* ========= Responsive ========= */
+@media (max-width: 1200px){
+  .heroGrid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #infoTile{ grid-column: span 2; }
+  .controls{
+    grid-template-columns: repeat(2, minmax(150px, 1fr)) minmax(200px, 1.6fr);
+  }
+  .control.refresh{ align-items:flex-start; }
+}
+
 @media (max-width: 980px){
   :root{ --labelW: 180px; }
   .heroGrid{ grid-template-columns: 1fr; }
-  .controls{ flex-wrap:wrap; }
-  .control.grow{ min-width: 220px; flex: 1 1 240px; }
+  .controls{
+    grid-template-columns: repeat(2, minmax(140px, 1fr));
+  }
+  .control.grow{ min-width: 220px; grid-column: span 2; }
+  .control.refresh{ align-items:flex-start; }
 }
 
 .rowLabel .name {

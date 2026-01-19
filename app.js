@@ -255,7 +255,7 @@ function renderCard(e, forceLiveBadge = false) {
   const badge = live ? `<span class="pill live">LIVE</span>` : "";
   const subs = e.subscribers ? `${Number(e.subscribers).toLocaleString()} subs` : "";
 
- return `
+  return `
   <a class="card${live ? " isLive" : ""}" 
      href="${escapeHtml(e.watch_url || "#")}" 
      target="_blank" 
@@ -281,24 +281,6 @@ function renderCard(e, forceLiveBadge = false) {
     </div>
   </a>
 `;
-
-      <div class="cardBody">
-        <div class="cardTitle">${escapeHtml(e.title || "")}</div>
-        <div class="cardMeta">
-          <span>${fmtTime(start)}</span>
-          <span>•</span>
-          <span>${escapeHtml(e.platform || "")}</span>
-          <span>•</span>
-          <span>${escapeHtml(e.channel || "")}</span>
-          ${subs ? `<span>•</span><span>${subs}</span>` : ""}
-          ${badge ? `<span>•</span>${badge}` : ""}
-        </div>
-      </div>
-      <div class="cardActions">
-        <a class="watchBtn" href="${escapeHtml(e.watch_url || "#")}" target="_blank" rel="noreferrer">Watch</a>
-      </div>
-    </div>
-  `;
 }
 
 function renderNowNext() {
@@ -416,7 +398,6 @@ function ensureWindowStart() {
   if (windowStart) return;
   windowStart = roundToTick(nowInET());
 }
-
 
 function renderTimeRow() {
   if (!timeRow || !windowLabel) return;

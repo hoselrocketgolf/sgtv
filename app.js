@@ -155,6 +155,7 @@ let recentEvents = [];
 // Window configuration
 let windowMins = 240; // 4 hours
 const recentWindowHours = 36;
+const recentStreamCount = 10;
 
 // Geometry read from CSS vars so header + blocks NEVER drift
 let tickMins = 30;
@@ -381,8 +382,8 @@ function renderRecentStreams({ reshuffle = true } = {}) {
     return;
   }
 
-  if (reshuffle || recentEvents.length !== recent.length) {
-    recentEvents = shuffleArray(recent);
+  if (reshuffle || recentEvents.length !== Math.min(recent.length, recentStreamCount)) {
+    recentEvents = shuffleArray(recent).slice(0, recentStreamCount);
     recentIndex = 0;
   }
 

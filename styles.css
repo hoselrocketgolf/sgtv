@@ -211,17 +211,15 @@ button{
 /* Card in tiles */
 .card{
   display:flex;
-  gap: 12px;
+  gap: 14px;
   padding: 12px;
   border-radius: 14px;
   background: rgba(0,0,0,0.22);
   border: 1px solid rgba(255,255,255,0.08);
-  text-decoration: none;
 }
 
 .card:hover{
   filter: brightness(1.03);
-  text-decoration: none;
 }
 
 .card.isLive{
@@ -229,13 +227,20 @@ button{
   box-shadow: 0 0 0 1px rgba(70,240,170,0.12), 0 0 24px rgba(70,240,170,0.10);
 }
 
+.cardMediaLink{
+  display:block;
+  flex: 0 0 auto;
+  border-radius: 12px;
+  overflow:hidden;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.08);
+}
+
 .cardMedia{
-  width: 120px;
-  height: 70px;
+  width: 150px;
+  height: 90px;
   border-radius: 10px;
   background-position: center;
   background-size: cover;
-  flex: 0 0 auto;
 }
 
 .cardBody{
@@ -246,13 +251,21 @@ button{
   min-width:0;
 }
 
-.cardTitle{
+.cardTitleLink{
   font-weight: 800;
   font-size: 13px;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
+  color: rgba(255,255,255,0.96);
+  text-decoration:none;
+  display:inline-block;
 }
+
+.cardTitleLink:hover{
+  text-decoration: underline;
+}
+
 
 .cardMeta{
   display:flex;
@@ -543,14 +556,6 @@ button{
   .heroGrid{ grid-template-columns: 1fr; }
   .controls{ flex-wrap:wrap; }
   .control.grow{ min-width: 220px; flex: 1 1 240px; }
-}
-
-.card {
-  display: block;
-  text-decoration: none;
-}
-.card:hover {
-  text-decoration: none;
 }
 
 .rowLabel .name {

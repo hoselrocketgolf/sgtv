@@ -28,6 +28,7 @@
   /* schedule geometry (MUST match app.js; app.js reads these) */
   --tickMins: 30;
   --pxPerTick: 140px;
+  --labelW: 220px;
 }
 
 *{ box-sizing:border-box; }
@@ -138,124 +139,149 @@ h1{
 
 label{
   font-size: 12px;
-  color: var(--muted2);
+  color: rgba(255,255,255,0.62);
 }
 
-select, input{
-  height: 40px;
+select,input[type="text"]{
+  height: 44px;
+  padding: 0 14px;
   border-radius: 12px;
   border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(0,0,0,0.28);
-  color: var(--text);
-  padding: 0 12px;
+  background: rgba(0,0,0,0.25);
+  color: rgba(255,255,255,0.95);
   outline: none;
 }
-input::placeholder{ color: rgba(255,255,255,0.35); }
 
-#refreshBtn{
-  height: 42px;
+select:focus,input[type="text"]:focus{
+  border-color: rgba(120,220,255,0.6);
+  box-shadow: 0 0 0 3px rgba(120,220,255,0.16);
+}
+
+button{
+  font-family: inherit;
+}
+
+.refreshBtn{
+  height: 44px;
+  padding: 0 18px;
   border-radius: 14px;
-  padding: 0 18px;
-  border: 1px solid rgba(255,255,255,0.14);
-  background: linear-gradient(135deg, rgba(120,220,255,0.25), rgba(140,90,255,0.18));
+  border: 1px solid rgba(120,220,255,0.3);
+  background: rgba(120,220,255,0.14);
   color: rgba(255,255,255,0.92);
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
   cursor:pointer;
-}
-#refreshBtn:hover{ filter: brightness(1.05); }
-
-/* ========= Layout ========= */
-.wrap{
-  max-width: 1180px;
-  margin: 18px auto 40px;
-  padding: 0 18px;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.25);
 }
 
+.refreshBtn:hover{ filter: brightness(1.05); }
+.refreshBtn:active{ transform: translateY(1px); }
+
+/* ========= Hero tiles ========= */
 .heroGrid{
   display:grid;
-  grid-template-columns: 1.05fr 1.05fr 0.9fr;
-  gap: 18px;
-  margin-top: 18px;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 14px;
 }
 
 .tile{
-  border-radius: var(--radius);
-  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+  border-radius: var(--radius2);
   border: 1px solid rgba(255,255,255,0.10);
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+  min-height: 182px;
+  padding: 14px;
   box-shadow: var(--shadow);
-  overflow:hidden;
 }
 
 .tileHeader{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  padding: 16px 18px 10px;
 }
 
 .tileHeader h2{
   margin:0;
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .tileBody{
-  padding: 0 18px 18px;
+  margin-top: 12px;
+  color: rgba(255,255,255,0.92);
+  font-size: 13px;
 }
 
-/* Pills */
-.pill{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.12);
-  font-size: 12px;
-  color: rgba(255,255,255,0.82);
-  background: rgba(0,0,0,0.22);
-}
-.pill.live{
-  border-color: rgba(70,240,170,0.34);
-  color: rgba(70,240,170,0.95);
-  background: rgba(50,240,160,0.12);
-}
-
-/* ========= HERO cards (Now On / Up Next) ========= */
+/* Card in tiles */
 .card{
-  border-radius: var(--radius2);
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(0,0,0,0.22);
-  overflow:hidden;
-}
-.card.isLive{
-  border-color: rgba(70,240,170,0.22);
-  box-shadow: 0 0 0 1px rgba(70,240,170,0.10), 0 18px 46px rgba(0,0,0,0.45);
-}
-.cardMedia{
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  background-size: cover;
-  background-position: center;
+  display:flex;
+  gap: 12px;
+  padding: 12px;
   border-radius: 14px;
+  background: rgba(0,0,0,0.22);
+  border: 1px solid rgba(255,255,255,0.08);
+  text-decoration: none;
 }
-.cardBody{ padding-top: 12px; }
+
+.card:hover{
+  filter: brightness(1.03);
+  text-decoration: none;
+}
+
+.card.isLive{
+  border-color: rgba(70,240,170,0.35);
+  box-shadow: 0 0 0 1px rgba(70,240,170,0.12), 0 0 24px rgba(70,240,170,0.10);
+}
+
+.cardMedia{
+  width: 120px;
+  height: 70px;
+  border-radius: 10px;
+  background-position: center;
+  background-size: cover;
+  flex: 0 0 auto;
+}
+
+.cardBody{
+  flex: 1;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  min-width:0;
+}
+
 .cardTitle{
   font-weight: 800;
-  font-size: 14px;
-  line-height: 1.2;
-  margin: 10px 0 6px;
+  font-size: 13px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
+
 .cardMeta{
-  color: rgba(255,255,255,0.70);
-  font-size: 12px;
   display:flex;
-  flex-wrap:wrap;
+  flex-wrap: wrap;
   gap:6px;
+  font-size: 11px;
+  color: rgba(255,255,255,0.7);
 }
-.cardActions{ padding-top: 8px; }
+
+.cardActions{
+  display:flex;
+  align-items:flex-end;
+}
+
+.pill{
+  padding: 2px 8px;
+  font-size: 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.18);
+  color: rgba(255,255,255,0.92);
+}
+
+.pill.live{
+  color: rgba(70,240,170,0.95);
+  border-color: rgba(70,240,170,0.5);
+}
 
 .watchBtn{
-  display:inline-flex;
+  display:flex;
   align-items:center;
   justify-content:center;
   height: 38px;
@@ -343,6 +369,7 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
   overflow: hidden; /* no scrollbar */
   white-space: nowrap;
   border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding-left: var(--labelW);
 }
 
 /* JS sets exact tick width so it matches blocks */
@@ -379,8 +406,8 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
   justify-content:center;
   gap:4px;
   padding: 10px 14px;
-  min-width: 220px;
-  max-width: 220px;
+  min-width: var(--labelW);
+  max-width: var(--labelW);
   background: linear-gradient(90deg, rgba(0,0,0,0.36), rgba(0,0,0,0.18));
   border-right: 1px solid rgba(255,255,255,0.08);
 }
@@ -440,14 +467,15 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
   position:absolute;
   inset:0;
   background-size: cover;
-  background-position:center;
-  transform: scale(1.02);
+  background-position: center;
+  opacity: .55;
+  filter: saturate(1.05);
 }
 
 .blockOverlay{
   position:absolute;
   inset:0;
-  background: linear-gradient(90deg, rgba(0,0,0,0.55), rgba(0,0,0,0.18));
+  background: linear-gradient(90deg, rgba(0,0,0,0.65), rgba(0,0,0,0.2));
 }
 
 .blockContent{
@@ -457,44 +485,38 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
   display:flex;
   flex-direction:column;
   justify-content:space-between;
-  gap:6px;
-  min-width:0;
+  z-index: 1;
+  gap: 8px;
 }
 
 .blockTop{
   display:flex;
-  align-items:flex-start;
+  align-items:center;
   justify-content:space-between;
-  gap:10px;
+  gap: 8px;
 }
 
 .blockTitle{
-  font-weight: 900;
   font-size: 12px;
+  font-weight: 800;
   color: rgba(255,255,255,0.95);
-  line-height: 1.15;
-  max-height: 2.4em;
+  white-space:nowrap;
   overflow:hidden;
+  text-overflow: ellipsis;
 }
 
 .badgeLive{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  padding: 5px 10px;
+  font-size: 10px;
+  padding: 3px 7px;
   border-radius: 999px;
-  border: 1px solid rgba(70,240,170,0.34);
-  background: rgba(50,240,160,0.12);
+  border: 1px solid rgba(70,240,170,0.6);
   color: rgba(70,240,170,0.95);
-  font-size: 11px;
-  font-weight: 800;
-  white-space:nowrap;
+  background: rgba(70,240,170,0.12);
 }
 
 .blockBottom{
   display:flex;
   align-items:center;
-  justify-content:space-between;
   gap:10px;
   font-size: 11px;
   color: rgba(255,255,255,0.75);
@@ -517,12 +539,11 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
 
 /* ========= Responsive ========= */
 @media (max-width: 980px){
+  :root{ --labelW: 180px; }
   .heroGrid{ grid-template-columns: 1fr; }
   .controls{ flex-wrap:wrap; }
   .control.grow{ min-width: 220px; flex: 1 1 240px; }
-  .rowLabel{ min-width: 180px; max-width: 180px; }
 }
-
 
 .card {
   display: block;
@@ -538,5 +559,3 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
 .rowLabel .name:hover {
   text-decoration: underline;
 }
-
-

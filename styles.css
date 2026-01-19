@@ -532,3 +532,11 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
   text-decoration: none;
 }
 
+.rowLabel .name {
+  text-decoration: none;
+}
+.rowLabel .name:hover {
+  text-decoration: underline;
+}
+
+

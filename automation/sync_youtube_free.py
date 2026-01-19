@@ -23,6 +23,8 @@ MAX_UPLOAD_SCAN = int(env_or_default("MAX_UPLOAD_SCAN", "30"))
 UPLOAD_LOOKBACK_DAYS = int(env_or_default("UPLOAD_LOOKBACK_DAYS", "30"))
 # How far ahead to keep upcoming streams (days).
 UPCOMING_HORIZON_DAYS = int(env_or_default("UPCOMING_HORIZON_DAYS", "7"))
+# How far back to keep ended live streams (hours).
+RECENT_ENDED_HOURS = int(env_or_default("RECENT_ENDED_HOURS", "36"))
 
 USER_AGENT = "Mozilla/5.0 (compatible; sgtv-bot/2.1)"
 REQ_HEADERS = {
@@ -205,10 +207,10 @@ def pick_thumb(snippet: dict) -> str:
             return u
     return ""
 
-def classify_video(item: dict) -> tuple[str | None, str | None]:
+def classify_video(item: dict) -> tuple[str | None, str | None, str | None]:
     """
-    Returns (status, start_iso)
-      status: "live" | "upcoming" | None
+    Returns (status, start_iso, end_iso)
+      status: "live" | "upcoming" | "ended" | None
     """
     lsd = (item.get("liveStreamingDetails") or {})
     snippet = (item.get("snippet") or {})
@@ -218,21 +220,25 @@ def classify_video(item: dict) -> tuple[str | None, str | None]:
     actual_end = lsd.get("actualEndTime")
     scheduled_start = lsd.get("scheduledStartTime")
 
+    # Ended if started and ended
+    if actual_start and actual_end:
+        return "ended", actual_start, actual_end
+
     # Live if started and not ended
     if actual_start and not actual_end:
-        return "live", actual_start
+        return "live", actual_start, None
 
     # Upcoming if scheduled but not started
     if scheduled_start and not actual_start:
-        return "upcoming", scheduled_start
+        return "upcoming", scheduled_start, None
 
     # Fallbacks (rare)
     if live_content == "live" and actual_start and not actual_end:
-        return "live", actual_start
+        return "live", actual_start, None
     if live_content == "upcoming" and scheduled_start:
-        return "upcoming", scheduled_start
+        return "upcoming", scheduled_start, None
 
-    return None, None
+    return None, None, None
 
 def is_stale_upcoming(start_iso: str, now: datetime) -> bool:
     """
@@ -255,6 +261,7 @@ def main():
     print("Scanning uploads per channel:", MAX_UPLOAD_SCAN)
     print("Upload lookback days:", UPLOAD_LOOKBACK_DAYS)
     print("Upcoming horizon days:", UPCOMING_HORIZON_DAYS)
+    print("Recent ended hours:", RECENT_ENDED_HOURS)
 
     channel_ids = [c["channel_id"] for c in channels]
     meta = fetch_channels_meta(channel_ids)
@@ -290,6 +297,7 @@ def main():
 
     now = now_utc()
     upcoming_horizon = now + timedelta(days=UPCOMING_HORIZON_DAYS)
+    ended_cutoff = now - timedelta(hours=RECENT_ENDED_HOURS)
 
     for cid, vids in per_channel_candidate.items():
         m = meta.get(cid) or {}
@@ -314,7 +322,7 @@ def main():
             if not item:
                 continue
 
-            status, start_iso = classify_video(item)
+            status, start_iso, end_iso = classify_video(item)
             if not status or not start_iso:
                 continue
 
@@ -326,6 +334,10 @@ def main():
             if status == "upcoming":
                 start_dt = parse_iso(start_iso)
                 if start_dt and start_dt > upcoming_horizon:
+                    continue
+            if status == "ended":
+                end_dt = parse_iso(end_iso) if end_iso else None
+                if not end_dt or end_dt < ended_cutoff:
                     continue
 
             if vid in seen_video_ids:
@@ -341,7 +353,7 @@ def main():
 
             events.append({
                 "start_et": iso_to_et_fmt(start_iso),
-                "end_et": "",
+                "end_et": iso_to_et_fmt(end_iso) if end_iso else "",
                 "title": title,
                 "league": "",
                 "platform": "YouTube",

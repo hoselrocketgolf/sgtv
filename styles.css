@@ -522,3 +522,13 @@ input::placeholder{ color: rgba(255,255,255,0.35); }
   .control.grow{ min-width: 220px; flex: 1 1 240px; }
   .rowLabel{ min-width: 180px; max-width: 180px; }
 }
+
+
+.card {
+  display: block;
+  text-decoration: none;
+}
+.card:hover {
+  text-decoration: none;
+}
+

@@ -347,7 +347,9 @@ function getRecentStreams() {
   const cutoff = now - recentWindowHours * 60 * 60 * 1000;
 
   return allEvents.filter((e) => {
-    if (e.status === "live" || e.status === "upcoming" || e.status === "scheduled") return false;
+    const status = (e.status || "").toLowerCase();
+    if (status === "live" || status === "upcoming" || status === "scheduled") return false;
+
     const start = parseET(e.start_et);
     if (!start) return false;
     const end = eventEnd(e);

@@ -135,18 +135,22 @@ let windowMins = 240; // 4 hours
 let tickMins = 30;
 let pxPerTick = 140;
 let pxPerMin = pxPerTick / tickMins;
+let labelW = 220;
 
 function readScheduleGeometryFromCss() {
   const cs = getComputedStyle(document.documentElement);
 
   const tickRaw = cs.getPropertyValue("--tickMins").trim();
   const pxTickRaw = cs.getPropertyValue("--pxPerTick").trim();
+  const labelRaw = cs.getPropertyValue("--labelW").trim();
 
   const t = Number.parseFloat(tickRaw);
   const p = Number.parseFloat(pxTickRaw);
+  const l = Number.parseFloat(labelRaw);
 
   if (Number.isFinite(t) && t > 0) tickMins = t;
   if (Number.isFinite(p) && p > 0) pxPerTick = p;
+  if (Number.isFinite(l) && l > 0) labelW = l;
 
   pxPerMin = pxPerTick / tickMins;
 }
@@ -393,10 +397,11 @@ function renderTimeRow() {
   }
 
   const surfaceW = Math.round(windowMins * pxPerMin);
+  const totalW = surfaceW + labelW;
 
   timeRow.style.display = "flex";
-  timeRow.style.width = `${surfaceW}px`;
-  timeRow.style.maxWidth = `${surfaceW}px`;
+  timeRow.style.width = `${totalW}px`;
+  timeRow.style.maxWidth = `${totalW}px`;
   timeRow.style.whiteSpace = "nowrap";
   timeRow.style.overflow = "hidden";
   timeRow.innerHTML = parts.join("");

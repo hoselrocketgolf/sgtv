@@ -17,7 +17,12 @@ OUT_PATH = env_or_default("OUT_PATH", "schedule.json")
 YT_API_KEY = (os.environ.get("YT_API_KEY") or "").strip()
 
 # How many recent uploads to scan per channel (more = better live detection, still cheap)
-MAX_UPLOAD_SCAN = int(env_or_default("MAX_UPLOAD_SCAN", "50"))
+MAX_UPLOAD_SCAN = int(env_or_default("MAX_UPLOAD_SCAN", "30"))
+# Ignore uploads older than this many days when scanning playlist items.
+# This reduces API usage as you scale channel count.
+UPLOAD_LOOKBACK_DAYS = int(env_or_default("UPLOAD_LOOKBACK_DAYS", "30"))
+# How far ahead to keep upcoming streams (days).
+UPCOMING_HORIZON_DAYS = int(env_or_default("UPCOMING_HORIZON_DAYS", "7"))
 
 USER_AGENT = "Mozilla/5.0 (compatible; sgtv-bot/2.1)"
 REQ_HEADERS = {
@@ -135,9 +140,15 @@ def fetch_channels_meta(channel_ids: list[str]) -> dict:
                 }
     return meta
 
-def fetch_uploads_video_ids(uploads_playlist_id: str, max_results: int = 50) -> list[str]:
+def fetch_uploads_video_ids(
+    uploads_playlist_id: str,
+    max_results: int = 50,
+    lookback_days: int = 30
+) -> list[str]:
     vids = []
     page_token = None
+    now = now_utc()
+    cutoff = now - timedelta(days=lookback_days)
 
     # PlaylistItems maxResults per page is 50
     while len(vids) < max_results:
@@ -152,8 +163,14 @@ def fetch_uploads_video_ids(uploads_playlist_id: str, max_results: int = 50) -> 
 
         resp = yt_api("playlistItems", params)
 
-        for it in resp.get("items", []):
-            vid = (((it.get("contentDetails") or {}).get("videoId")) or "").strip()
+        items = resp.get("items", [])
+        for it in items:
+            content = it.get("contentDetails") or {}
+            vid = (content.get("videoId") or "").strip()
+            published_at = content.get("videoPublishedAt") or ""
+            published_dt = parse_iso(published_at)
+            if published_dt and published_dt < cutoff:
+                return vids
             if vid:
                 vids.append(vid)
 
@@ -236,6 +253,8 @@ def main():
 
     print("Loaded channels from sheet:", len(channels))
     print("Scanning uploads per channel:", MAX_UPLOAD_SCAN)
+    print("Upload lookback days:", UPLOAD_LOOKBACK_DAYS)
+    print("Upcoming horizon days:", UPCOMING_HORIZON_DAYS)
 
     channel_ids = [c["channel_id"] for c in channels]
     meta = fetch_channels_meta(channel_ids)
@@ -256,7 +275,11 @@ def main():
             continue
 
         uploads = m["uploads_playlist_id"]
-        vids = fetch_uploads_video_ids(uploads, max_results=MAX_UPLOAD_SCAN)
+        vids = fetch_uploads_video_ids(
+            uploads,
+            max_results=MAX_UPLOAD_SCAN,
+            lookback_days=UPLOAD_LOOKBACK_DAYS
+        )
         per_channel_candidate[cid] = vids
         all_candidate_vids.extend(vids)
 
@@ -266,7 +289,7 @@ def main():
     video_details = fetch_videos_details(sorted(set(all_candidate_vids)))
 
     now = now_utc()
-    upcoming_horizon = now + timedelta(days=7)
+    upcoming_horizon = now + timedelta(days=UPCOMING_HORIZON_DAYS)
 
     for cid, vids in per_channel_candidate.items():
         m = meta.get(cid) or {}

@@ -346,13 +346,18 @@ function getRecentStreams() {
   const cutoff = now - recentWindowHours * 60 * 60 * 1000;
 
   return allEvents.filter((e) => {
+    if (e.status === "live") {
+      const start = parseET(e.start_et) || new Date(now);
+      const end = eventEnd(e) || new Date(now + 20 * 60000);
+      return end.getTime() >= cutoff;
+    }
+
     const start = parseET(e.start_et);
     if (!start) return false;
     const end = eventEnd(e);
     if (!end) return false;
     const startTs = start.getTime();
     const endTs = end.getTime();
-    if (e.status === "live") return endTs >= cutoff;
     return startTs <= now && endTs >= cutoff;
   });
 }
@@ -662,7 +667,7 @@ async function loadSchedule() {
 
   allEvents = sortEvents(
     data
-      .filter((e) => e && e.start_et && e.watch_url)
+      .filter((e) => e && e.watch_url && (e.start_et || e.status === "live"))
       .map((e) => ({
         ...e,
         status: e.status || "upcoming",

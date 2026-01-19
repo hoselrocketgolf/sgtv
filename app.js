@@ -346,24 +346,31 @@ function getRecentStreams() {
   const cutoff = now - recentWindowHours * 60 * 60 * 1000;
 
   return allEvents.filter((e) => {
-    if (e.status === "live") {
-      const start = parseET(e.start_et) || new Date(now);
-      const end = eventEnd(e) || new Date(now + 20 * 60000);
-      return end.getTime() >= cutoff;
-    }
-
+    if (e.status === "live" || e.status === "upcoming" || e.status === "scheduled") return false;
     const start = parseET(e.start_et);
     if (!start) return false;
     const end = eventEnd(e);
     if (!end) return false;
     const startTs = start.getTime();
     const endTs = end.getTime();
-    return startTs <= now && endTs >= cutoff;
+    return startTs <= now && endTs >= cutoff && endTs <= now;
   });
 }
 
 function renderRecentStreams({ reshuffle = true } = {}) {
   if (!recentStreams) return;
+
+  const liveNowCount = allEvents.filter((e) => e.status === "live").length;
+  if (liveNowCount) {
+    if (recentStreamsMeta)
+      recentStreamsMeta.textContent = `Live now • ${liveNowCount} stream${
+        liveNowCount === 1 ? "" : "s"
+      }`;
+    recentStreams.innerHTML =
+      `<div class="muted">Recent streams appear when no one is live.</div>`;
+    if (recentNav) recentNav.classList.add("hidden");
+    return;
+  }
 
   const recent = getRecentStreams();
   if (!recent.length) {

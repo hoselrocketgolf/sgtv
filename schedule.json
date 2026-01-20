@@ -1,18 +1,5 @@
 [
   {
-    "start_et": "2026-01-19 20:13",
-    "end_et": "",
-    "title": "\ud83d\udd34LIVE | ARC NUTTERS | MANY MEN MONDAY | #ShartInMyButtCallMrShartButt #BUNGULATE",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "TheBurntPeanut",
-    "watch_url": "https://www.youtube.com/watch?v=Mix2kvR1Cw8",
-    "source_id": "Mix2kvR1Cw8",
-    "status": "live",
-    "thumbnail_url": "https://i.ytimg.com/vi/Mix2kvR1Cw8/maxresdefault_live.jpg",
-    "subscribers": 1330000
-  },
-  {
     "start_et": "2026-01-18 14:02",
     "end_et": "2026-01-18 17:10",
     "title": "3 vs 3 Sunday Match - Grip n Sip,Whiskey & KRob verses Hoosier, Crushinit & RyanASU",
@@ -24,19 +11,6 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/V6YhDvrd950/maxresdefault.jpg",
     "subscribers": 38
-  },
-  {
-    "start_et": "2026-01-18 14:49",
-    "end_et": "2026-01-18 15:36",
-    "title": "3 Man Break 50 attempt with 2 guys",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Flyinfatkid",
-    "watch_url": "https://www.youtube.com/watch?v=6cmjkyTWfyo",
-    "source_id": "6cmjkyTWfyo",
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/6cmjkyTWfyo/maxresdefault.jpg",
-    "subscribers": 148
   },
   {
     "start_et": "2026-01-18 17:24",
@@ -75,7 +49,7 @@
     "source_id": "RiNjR7nDzsw",
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/RiNjR7nDzsw/maxresdefault.jpg",
-    "subscribers": 997
+    "subscribers": 998
   },
   {
     "start_et": "2026-01-18 21:53",
@@ -115,6 +89,19 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/sAO0aD-DAjw/maxresdefault.jpg",
     "subscribers": 822
+  },
+  {
+    "start_et": "2026-01-19 20:13",
+    "end_et": "2026-01-20 03:29",
+    "title": "\ud83d\udd34LIVE | ARC NUTTERS | MANY MEN MONDAY | #ShartInMyButtCallMrShartButt #BUNGULATE",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "TheBurntPeanut",
+    "watch_url": "https://www.youtube.com/watch?v=Mix2kvR1Cw8",
+    "source_id": "Mix2kvR1Cw8",
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/Mix2kvR1Cw8/maxresdefault.jpg",
+    "subscribers": 1330000
   },
   {
     "start_et": "2026-01-19 21:45",

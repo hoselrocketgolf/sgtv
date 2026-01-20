@@ -13,32 +13,6 @@
     "subscribers": 1320000
   },
   {
-    "start_et": "2026-01-19 21:45",
-    "end_et": "",
-    "title": "Twisted Sticks Scramble & Other Events on SGT and GSPRO",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "DLud Golf",
-    "watch_url": "https://www.youtube.com/watch?v=wk8xLk1Ua7w",
-    "source_id": "wk8xLk1Ua7w",
-    "status": "live",
-    "thumbnail_url": "https://i.ytimg.com/vi/wk8xLk1Ua7w/maxresdefault_live.jpg",
-    "subscribers": 1870
-  },
-  {
-    "start_et": "2026-01-19 22:30",
-    "end_et": "",
-    "title": "GSPro - N-OG-IVEME League 2026 Round 1",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Jayme Bristow Golf",
-    "watch_url": "https://www.youtube.com/watch?v=3GFK7g8Pg9Q",
-    "source_id": "3GFK7g8Pg9Q",
-    "status": "live",
-    "thumbnail_url": "https://i.ytimg.com/vi/3GFK7g8Pg9Q/maxresdefault_live.jpg",
-    "subscribers": 119
-  },
-  {
     "start_et": "2026-01-18 14:02",
     "end_et": "2026-01-18 17:10",
     "title": "3 vs 3 Sunday Match - Grip n Sip,Whiskey & KRob verses Hoosier, Crushinit & RyanASU",
@@ -101,7 +75,7 @@
     "source_id": "RiNjR7nDzsw",
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/RiNjR7nDzsw/maxresdefault.jpg",
-    "subscribers": 994
+    "subscribers": 995
   },
   {
     "start_et": "2026-01-18 21:53",
@@ -143,17 +117,30 @@
     "subscribers": 822
   },
   {
-    "start_et": "2026-01-19 20:44",
-    "end_et": "2026-01-19 22:11",
-    "title": "New week new events! WEB +",
+    "start_et": "2026-01-19 21:45",
+    "end_et": "2026-01-19 23:27",
+    "title": "Twisted Sticks Scramble & Other Events on SGT and GSPRO",
     "league": "",
     "platform": "YouTube",
-    "channel": "Garbage Garage Golf",
-    "watch_url": "https://www.youtube.com/watch?v=yNi_ROfEkKQ",
-    "source_id": "yNi_ROfEkKQ",
+    "channel": "DLud Golf",
+    "watch_url": "https://www.youtube.com/watch?v=wk8xLk1Ua7w",
+    "source_id": "wk8xLk1Ua7w",
     "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/yNi_ROfEkKQ/maxresdefault_live.jpg",
-    "subscribers": 94
+    "thumbnail_url": "https://i.ytimg.com/vi/wk8xLk1Ua7w/maxresdefault_live.jpg",
+    "subscribers": 1870
+  },
+  {
+    "start_et": "2026-01-19 22:30",
+    "end_et": "2026-01-19 23:07",
+    "title": "GSPro - N-OG-IVEME League 2026 Round 1",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Jayme Bristow Golf",
+    "watch_url": "https://www.youtube.com/watch?v=3GFK7g8Pg9Q",
+    "source_id": "3GFK7g8Pg9Q",
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/3GFK7g8Pg9Q/maxresdefault_live.jpg",
+    "subscribers": 119
   },
   {
     "start_et": "2026-01-22 14:00",

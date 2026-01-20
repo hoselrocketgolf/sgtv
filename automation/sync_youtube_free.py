@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 import urllib.request
 import urllib.parse
+import urllib.error
 
 ET_TZ = ZoneInfo("America/New_York")
 
@@ -279,141 +280,151 @@ def main():
         print("Missing YT_API_KEY env var. Skipping sync to avoid failing scheduled workflow.")
         return
 
-    channels = load_channels_from_sheet()
-    if not channels:
-        print("No channels found in channel sheet CSV (check publish link + headers). Skipping sync.")
+    try:
+        channels = load_channels_from_sheet()
+        if not channels:
+            print("No channels found in channel sheet CSV (check publish link + headers). Skipping sync.")
+            return
+
+        print("Loaded channels from sheet:", len(channels))
+        print("Scanning uploads per channel:", MAX_UPLOAD_SCAN)
+        print("Upload lookback days:", UPLOAD_LOOKBACK_DAYS)
+        print("Upcoming horizon days:", UPCOMING_HORIZON_DAYS)
+        print("Recent ended hours:", RECENT_ENDED_HOURS)
+        print("Search live max results:", SEARCH_LIVE_MAX_RESULTS)
+
+        channel_ids = [c["channel_id"] for c in channels]
+        meta = fetch_channels_meta(channel_ids)
+
+        sheet_by_id = {c["channel_id"]: c for c in channels}
+
+        events = []
+        seen_video_ids = set()
+
+        all_candidate_vids = []
+        per_channel_candidate = {}
+
+        # Gather candidates
+        for cid in channel_ids:
+            m = meta.get(cid)
+            if not m:
+                print("WARN: channel meta missing (bad channel_id?):", cid)
+                continue
+
+            uploads = m["uploads_playlist_id"]
+            vids = fetch_uploads_video_ids(
+                uploads,
+                max_results=MAX_UPLOAD_SCAN,
+                lookback_days=UPLOAD_LOOKBACK_DAYS
+            )
+            live_vids = fetch_search_live_video_ids(cid, SEARCH_LIVE_MAX_RESULTS)
+            if live_vids:
+                vids = list(dict.fromkeys(live_vids + vids))
+            per_channel_candidate[cid] = vids
+            all_candidate_vids.extend(vids)
+
+            time.sleep(0.05)
+
+        # Fetch details for all unique candidates
+        video_details = fetch_videos_details(sorted(set(all_candidate_vids)))
+
+        now = now_utc()
+        upcoming_horizon = now + timedelta(days=UPCOMING_HORIZON_DAYS)
+        ended_cutoff = now - timedelta(hours=RECENT_ENDED_HOURS)
+
+        for cid, vids in per_channel_candidate.items():
+            m = meta.get(cid) or {}
+            sheet = sheet_by_id.get(cid) or {}
+
+            subs_api = int(m.get("subscribers") or 0)
+            subs_sheet = int(sheet.get("sheet_subscribers") or 0)
+            subs = subs_api if subs_api > 0 else subs_sheet
+
+            handle = (sheet.get("handle") or "").strip().lstrip("@")
+            sheet_name = (sheet.get("display_name") or "").strip()
+            yt_title = (m.get("channel_title") or "").strip()
+            channel_name = sheet_name or (f"@{handle}" if handle else "") or yt_title or ""
+
+            print("-----")
+            print(f"Channel: {cid} name: {channel_name} subs(api): {subs_api} subs(sheet): {subs_sheet}")
+
+            found_live = False
+
+            for vid in vids:
+                item = video_details.get(vid)
+                if not item:
+                    continue
+
+                status, start_iso, end_iso = classify_video(item)
+                if not status or not start_iso:
+                    continue
+
+                # Kill stale "upcoming" that are already in the past (canceled/never-live)
+                if status == "upcoming" and is_stale_upcoming(start_iso, now):
+                    continue
+
+                # Upcoming filter window (next 7 days only)
+                if status == "upcoming":
+                    start_dt = parse_iso(start_iso)
+                    if start_dt and start_dt > upcoming_horizon:
+                        continue
+                if status == "ended":
+                    end_dt = parse_iso(end_iso) if end_iso else None
+                    if not end_dt or end_dt < ended_cutoff:
+                        continue
+
+                if vid in seen_video_ids:
+                    continue
+                seen_video_ids.add(vid)
+
+                snippet = item.get("snippet") or {}
+                title = (snippet.get("title") or "").strip()
+                thumb = pick_thumb(snippet) or f"https://i.ytimg.com/vi/{vid}/hqdefault.jpg"
+
+                if status == "live":
+                    found_live = True
+
+                events.append({
+                    "start_et": iso_to_et_fmt(start_iso),
+                    "end_et": iso_to_et_fmt(end_iso) if end_iso else "",
+                    "title": title,
+                    "league": "",
+                    "platform": "YouTube",
+                    "channel": channel_name,
+                    "watch_url": f"https://www.youtube.com/watch?v={vid}",
+                    "source_id": vid,
+                    "status": status,
+                    "thumbnail_url": thumb,
+                    "subscribers": subs
+                })
+
+            if not found_live:
+                print("No LIVE detected right now.")
+
+        # Sort: live first, then by time, tie by subs desc
+        def sort_key(e):
+            live_rank = 0 if e.get("status") == "live" else 1
+            return (
+                live_rank,
+                e.get("start_et", "9999-99-99 99:99"),
+                -(int(e.get("subscribers") or 0))
+            )
+
+        events.sort(key=sort_key)
+
+        with open(OUT_PATH, "w", encoding="utf-8") as f:
+            json.dump(events, f, indent=2)
+
+        print(f"-----\nWrote {len(events)} events to {OUT_PATH}")
+    except urllib.error.HTTPError as exc:
+        if exc.code == 403:
+            print("YouTube API request returned 403 (invalid key or quota). Skipping sync.")
+            return
+        print(f"YouTube API request failed with HTTP {exc.code}. Skipping sync.")
         return
-
-    print("Loaded channels from sheet:", len(channels))
-    print("Scanning uploads per channel:", MAX_UPLOAD_SCAN)
-    print("Upload lookback days:", UPLOAD_LOOKBACK_DAYS)
-    print("Upcoming horizon days:", UPCOMING_HORIZON_DAYS)
-    print("Recent ended hours:", RECENT_ENDED_HOURS)
-    print("Search live max results:", SEARCH_LIVE_MAX_RESULTS)
-
-    channel_ids = [c["channel_id"] for c in channels]
-    meta = fetch_channels_meta(channel_ids)
-
-    sheet_by_id = {c["channel_id"]: c for c in channels}
-
-    events = []
-    seen_video_ids = set()
-
-    all_candidate_vids = []
-    per_channel_candidate = {}
-
-    # Gather candidates
-    for cid in channel_ids:
-        m = meta.get(cid)
-        if not m:
-            print("WARN: channel meta missing (bad channel_id?):", cid)
-            continue
-
-        uploads = m["uploads_playlist_id"]
-        vids = fetch_uploads_video_ids(
-            uploads,
-            max_results=MAX_UPLOAD_SCAN,
-            lookback_days=UPLOAD_LOOKBACK_DAYS
-        )
-        live_vids = fetch_search_live_video_ids(cid, SEARCH_LIVE_MAX_RESULTS)
-        if live_vids:
-            vids = list(dict.fromkeys(live_vids + vids))
-        per_channel_candidate[cid] = vids
-        all_candidate_vids.extend(vids)
-
-        time.sleep(0.05)
-
-    # Fetch details for all unique candidates
-    video_details = fetch_videos_details(sorted(set(all_candidate_vids)))
-
-    now = now_utc()
-    upcoming_horizon = now + timedelta(days=UPCOMING_HORIZON_DAYS)
-    ended_cutoff = now - timedelta(hours=RECENT_ENDED_HOURS)
-
-    for cid, vids in per_channel_candidate.items():
-        m = meta.get(cid) or {}
-        sheet = sheet_by_id.get(cid) or {}
-
-        subs_api = int(m.get("subscribers") or 0)
-        subs_sheet = int(sheet.get("sheet_subscribers") or 0)
-        subs = subs_api if subs_api > 0 else subs_sheet
-
-        handle = (sheet.get("handle") or "").strip().lstrip("@")
-        sheet_name = (sheet.get("display_name") or "").strip()
-        yt_title = (m.get("channel_title") or "").strip()
-        channel_name = sheet_name or (f"@{handle}" if handle else "") or yt_title or ""
-
-        print("-----")
-        print(f"Channel: {cid} name: {channel_name} subs(api): {subs_api} subs(sheet): {subs_sheet}")
-
-        found_live = False
-
-        for vid in vids:
-            item = video_details.get(vid)
-            if not item:
-                continue
-
-            status, start_iso, end_iso = classify_video(item)
-            if not status or not start_iso:
-                continue
-
-            # Kill stale "upcoming" that are already in the past (canceled/never-live)
-            if status == "upcoming" and is_stale_upcoming(start_iso, now):
-                continue
-
-            # Upcoming filter window (next 7 days only)
-            if status == "upcoming":
-                start_dt = parse_iso(start_iso)
-                if start_dt and start_dt > upcoming_horizon:
-                    continue
-            if status == "ended":
-                end_dt = parse_iso(end_iso) if end_iso else None
-                if not end_dt or end_dt < ended_cutoff:
-                    continue
-
-            if vid in seen_video_ids:
-                continue
-            seen_video_ids.add(vid)
-
-            snippet = item.get("snippet") or {}
-            title = (snippet.get("title") or "").strip()
-            thumb = pick_thumb(snippet) or f"https://i.ytimg.com/vi/{vid}/hqdefault.jpg"
-
-            if status == "live":
-                found_live = True
-
-            events.append({
-                "start_et": iso_to_et_fmt(start_iso),
-                "end_et": iso_to_et_fmt(end_iso) if end_iso else "",
-                "title": title,
-                "league": "",
-                "platform": "YouTube",
-                "channel": channel_name,
-                "watch_url": f"https://www.youtube.com/watch?v={vid}",
-                "source_id": vid,
-                "status": status,
-                "thumbnail_url": thumb,
-                "subscribers": subs
-            })
-
-        if not found_live:
-            print("No LIVE detected right now.")
-
-    # Sort: live first, then by time, tie by subs desc
-    def sort_key(e):
-        live_rank = 0 if e.get("status") == "live" else 1
-        return (
-            live_rank,
-            e.get("start_et", "9999-99-99 99:99"),
-            -(int(e.get("subscribers") or 0))
-        )
-
-    events.sort(key=sort_key)
-
-    with open(OUT_PATH, "w", encoding="utf-8") as f:
-        json.dump(events, f, indent=2)
-
-    print(f"-----\nWrote {len(events)} events to {OUT_PATH}")
+    except Exception as exc:
+        print(f"Unexpected error during sync: {exc}. Skipping sync.")
+        return
 
 if __name__ == "__main__":
     main()

@@ -26,8 +26,8 @@ UPLOAD_LOOKBACK_DAYS = int(env_or_default("UPLOAD_LOOKBACK_DAYS", "30"))
 UPCOMING_HORIZON_DAYS = int(env_or_default("UPCOMING_HORIZON_DAYS", "7"))
 # How far back to keep ended live streams (hours).
 RECENT_ENDED_HOURS = int(env_or_default("RECENT_ENDED_HOURS", "36"))
-# How many live results to pull from Search API per channel.
-SEARCH_LIVE_MAX_RESULTS = int(env_or_default("SEARCH_LIVE_MAX_RESULTS", "5"))
+# How many live results to pull from Search API per channel (0 disables Search API usage).
+SEARCH_LIVE_MAX_RESULTS = int(env_or_default("SEARCH_LIVE_MAX_RESULTS", "0"))
 
 USER_AGENT = "Mozilla/5.0 (compatible; sgtv-bot/2.1)"
 REQ_HEADERS = {
@@ -292,6 +292,8 @@ def main():
         print("Upcoming horizon days:", UPCOMING_HORIZON_DAYS)
         print("Recent ended hours:", RECENT_ENDED_HOURS)
         print("Search live max results:", SEARCH_LIVE_MAX_RESULTS)
+        if SEARCH_LIVE_MAX_RESULTS == 0:
+            print("Search API disabled to reduce quota usage.")
 
         channel_ids = [c["channel_id"] for c in channels]
         meta = fetch_channels_meta(channel_ids)
@@ -317,9 +319,10 @@ def main():
                 max_results=MAX_UPLOAD_SCAN,
                 lookback_days=UPLOAD_LOOKBACK_DAYS
             )
-            live_vids = fetch_search_live_video_ids(cid, SEARCH_LIVE_MAX_RESULTS)
-            if live_vids:
-                vids = list(dict.fromkeys(live_vids + vids))
+            if SEARCH_LIVE_MAX_RESULTS > 0:
+                live_vids = fetch_search_live_video_ids(cid, SEARCH_LIVE_MAX_RESULTS)
+                if live_vids:
+                    vids = list(dict.fromkeys(live_vids + vids))
             per_channel_candidate[cid] = vids
             all_candidate_vids.extend(vids)
 

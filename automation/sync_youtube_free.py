@@ -27,7 +27,7 @@ UPCOMING_HORIZON_DAYS = int(env_or_default("UPCOMING_HORIZON_DAYS", "7"))
 # How far back to keep ended live streams (hours).
 RECENT_ENDED_HOURS = int(env_or_default("RECENT_ENDED_HOURS", "36"))
 # Treat "live" streams older than this many hours as stale and drop them.
-MAX_LIVE_HOURS = int(env_or_default("MAX_LIVE_HOURS", "8"))
+MAX_LIVE_HOURS = int(env_or_default("MAX_LIVE_HOURS", "4"))
 # How many live results to pull from Search API per channel (0 disables Search API usage).
 SEARCH_LIVE_MAX_RESULTS = int(env_or_default("SEARCH_LIVE_MAX_RESULTS", "0"))
 

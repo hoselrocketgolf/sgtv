@@ -1,16 +1,29 @@
 [
   {
-    "start_et": "2026-01-18 21:53",
-    "end_et": "2026-01-18 23:18",
-    "title": "SticeGolf Garage Live - With GarbageGarageGolf in da house",
+    "start_et": "2026-01-20 11:18",
+    "end_et": "",
+    "title": "Triple Bogey is live at the PGA Show Demo Day!",
     "league": "",
     "platform": "YouTube",
-    "channel": "SticeGolf",
-    "watch_url": "https://www.youtube.com/watch?v=rY9N2rqVXjs",
-    "source_id": "rY9N2rqVXjs",
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/rY9N2rqVXjs/maxresdefault.jpg",
-    "subscribers": 218
+    "channel": "Triple Bogey Golf",
+    "watch_url": "https://www.youtube.com/watch?v=Eh4R_jI-td0",
+    "source_id": "Eh4R_jI-td0",
+    "status": "live",
+    "thumbnail_url": "https://i.ytimg.com/vi/Eh4R_jI-td0/hqdefault_live.jpg",
+    "subscribers": 8770
+  },
+  {
+    "start_et": "2026-01-20 11:49",
+    "end_et": "",
+    "title": "\ud83d\udd34 LIVE Playing a 2026 US OPEN Qualifier Course . . How do I stack up??",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "McGolfinTV",
+    "watch_url": "https://www.youtube.com/watch?v=jj_ILK-l97I",
+    "source_id": "jj_ILK-l97I",
+    "status": "live",
+    "thumbnail_url": "https://i.ytimg.com/vi/jj_ILK-l97I/maxresdefault_live.jpg",
+    "subscribers": 822
   },
   {
     "start_et": "2026-01-18 23:58",
@@ -61,7 +74,7 @@
     "watch_url": "https://www.youtube.com/watch?v=wk8xLk1Ua7w",
     "source_id": "wk8xLk1Ua7w",
     "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/wk8xLk1Ua7w/maxresdefault_live.jpg",
+    "thumbnail_url": "https://i.ytimg.com/vi/wk8xLk1Ua7w/maxresdefault.jpg",
     "subscribers": 1870
   },
   {
@@ -74,7 +87,7 @@
     "watch_url": "https://www.youtube.com/watch?v=3GFK7g8Pg9Q",
     "source_id": "3GFK7g8Pg9Q",
     "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/3GFK7g8Pg9Q/maxresdefault_live.jpg",
+    "thumbnail_url": "https://i.ytimg.com/vi/3GFK7g8Pg9Q/maxresdefault.jpg",
     "subscribers": 119
   },
   {

@@ -686,7 +686,6 @@ async function loadSchedule() {
       .map((e) => ({
         ...e,
         status: e.status || "upcoming",
-        league: e.league || "",
         platform: e.platform || "",
         channel: e.channel || "",
         thumbnail_url: e.thumbnail_url || "",

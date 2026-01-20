@@ -128,20 +128,42 @@ function fmtTime(dt) {
   }).format(dt);
 }
 
-function fmtDay(dt) {
+function fmtDay(dt, timeZone) {
   if (!dt) return "";
   return new Intl.DateTimeFormat(undefined, {
     weekday: "short",
     month: "short",
     day: "numeric",
+    ...(timeZone ? { timeZone } : {}),
   }).format(dt);
 }
 
-function startOfDayLocal(dt) {
-  return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), 0, 0, 0, 0);
+function getZonedDateParts(date, timeZone) {
+  const dtf = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const parts = dtf.formatToParts(date).reduce((acc, p) => {
+    acc[p.type] = p.value;
+    return acc;
+  }, {});
+  return {
+    Y: Number(parts.year),
+    M: Number(parts.month),
+    D: Number(parts.day),
+  };
 }
-function endOfDayLocal(dt) {
-  return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), 23, 59, 59, 999);
+
+function startOfDayZoned(date, timeZone) {
+  const { Y, M, D } = getZonedDateParts(date, timeZone);
+  return zonedTimeToUtcDate({ Y, M, D, h: 0, m: 0 }, timeZone);
+}
+
+function endOfDayZoned(date, timeZone) {
+  const { Y, M, D } = getZonedDateParts(date, timeZone);
+  return zonedTimeToUtcDate({ Y, M, D, h: 23, m: 59 }, timeZone);
 }
 
 // -------------------- State --------------------
@@ -155,7 +177,7 @@ let recentEvents = [];
 // Window configuration
 let windowMins = 240; // 4 hours
 const recentWindowHours = 36;
-const recentStreamCount = 10;
+const recentStreamCount = 20;
 
 // Geometry read from CSS vars so header + blocks NEVER drift
 let tickMins = 30;
@@ -309,7 +331,7 @@ function renderCard(e, forceLiveBadge = false) {
         <span>•</span>
         <span>${escapeHtml(e.channel || "")}</span>
         ${subs ? `<span>•</span><span>${subs}</span>` : ""}
-        ${badge ? `<span>•</span>${badge}` : ""}
+        ${badge ? `<span>•</span>${badge}</span>` : ""}
       </div>
 
       <div class="cardActions">
@@ -323,8 +345,19 @@ function renderCard(e, forceLiveBadge = false) {
 function renderNowNext() {
   if (!nowOn || !upNext) return;
 
+  const now = Date.now();
   const liveEvents = filteredEvents.filter((e) => e.status === "live");
-  const upcoming = filteredEvents.find((e) => e.status !== "live");
+  const upcoming = filteredEvents
+    .filter((e) => {
+      if (e.status === "live") return false;
+      const start = parseET(e.start_et);
+      return start ? start.getTime() >= now : false;
+    })
+    .sort(
+      (a, b) =>
+        (parseET(a.start_et)?.getTime() ?? Number.MAX_SAFE_INTEGER) -
+        (parseET(b.start_et)?.getTime() ?? Number.MAX_SAFE_INTEGER)
+    )[0];
   const liveCount = liveEvents.length;
   const safeIndex = liveCount ? liveIndex % liveCount : 0;
   const live = liveEvents[safeIndex];
@@ -400,8 +433,8 @@ function renderTodaysGuide() {
   if (infoTileHeaderH2) infoTileHeaderH2.textContent = "Today's Guide";
 
   const now = new Date();
-  const dayStart = startOfDayLocal(now).getTime();
-  const dayEnd = endOfDayLocal(now).getTime();
+  const dayStart = startOfDayZoned(now, ET_TZ).getTime();
+  const dayEnd = endOfDayZoned(now, ET_TZ).getTime();
 
   const todays = filteredEvents
     .filter((e) => {
@@ -437,7 +470,7 @@ function renderTodaysGuide() {
 
   infoTileBody.innerHTML = `
     <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;">
-      <div class="muted">Today • ${fmtDay(now)}</div>
+      <div class="muted">Today • ${fmtDay(now, ET_TZ)} ET</div>
       <div class="muted" style="font-size:12px;">${todays.length} shows</div>
     </div>
 

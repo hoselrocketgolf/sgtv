@@ -275,9 +275,14 @@ def is_stale_upcoming(start_iso: str, now: datetime) -> bool:
 
 # --------- Main ---------
 def main():
+    if not YT_API_KEY:
+        print("Missing YT_API_KEY env var. Skipping sync to avoid failing scheduled workflow.")
+        return
+
     channels = load_channels_from_sheet()
     if not channels:
-        raise SystemExit("No channels found in channel sheet CSV (check publish link + headers).")
+        print("No channels found in channel sheet CSV (check publish link + headers). Skipping sync.")
+        return
 
     print("Loaded channels from sheet:", len(channels))
     print("Scanning uploads per channel:", MAX_UPLOAD_SCAN)

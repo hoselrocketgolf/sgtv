@@ -2,6 +2,8 @@
 // Stable schedule geometry + correct timezone conversion (ET -> viewer local)
 
 const SCHEDULE_URL = "schedule.json";
+const MAX_LIVE_AGE_HOURS = 4;
+const MAX_LIVE_FUTURE_MINS = 10;
 
 const $ = (id) => document.getElementById(id);
 const on = (el, evt, fn) => {
@@ -680,17 +682,35 @@ async function loadSchedule() {
   const data = await res.json();
   if (!Array.isArray(data)) throw new Error("schedule.json is not an array");
 
+  const now = Date.now();
+  const maxLiveAgeMs = MAX_LIVE_AGE_HOURS * 60 * 60 * 1000;
+  const maxLiveFutureMs = MAX_LIVE_FUTURE_MINS * 60 * 1000;
+
   allEvents = sortEvents(
     data
       .filter((e) => e && e.watch_url && (e.start_et || e.status === "live"))
-      .map((e) => ({
-        ...e,
-        status: e.status || "upcoming",
-        platform: e.platform || "",
-        channel: e.channel || "",
-        thumbnail_url: e.thumbnail_url || "",
-        subscribers: Number(e.subscribers || 0),
-      }))
+      .map((e) => {
+        let status = (e.status || "upcoming").toLowerCase();
+        const start = parseET(e.start_et);
+
+        if (status === "live" && start) {
+          const startTs = start.getTime();
+          if (startTs - now > maxLiveFutureMs) {
+            status = "upcoming";
+          } else if (now - startTs > maxLiveAgeMs) {
+            status = "ended";
+          }
+        }
+
+        return {
+          ...e,
+          status,
+          platform: e.platform || "",
+          channel: e.channel || "",
+          thumbnail_url: e.thumbnail_url || "",
+          subscribers: Number(e.subscribers || 0),
+        };
+      })
   );
 
   rebuildFilters(allEvents);
@@ -698,9 +718,9 @@ async function loadSchedule() {
   // IMPORTANT: default schedule window to NOW every refresh
   windowStart = null;
 
-  const now = new Date();
+  const nowDate = new Date();
   if (lastUpdated)
-    lastUpdated.textContent = `Last updated: ${fmtDay(now)} ${fmtTime(now)}`;
+    lastUpdated.textContent = `Last updated: ${fmtDay(nowDate)} ${fmtTime(nowDate)}`;
 
   applyFilters();
   renderRecentStreams();

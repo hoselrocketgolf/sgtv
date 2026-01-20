@@ -272,9 +272,7 @@ function applyFilters() {
   filteredEvents = allEvents.filter((e) => {
     if (p !== "all" && (e.platform || "") !== p) return false;
     if (q) {
-      const blob = `${e.title || ""} ${e.league || ""} ${e.platform || ""} ${
-        e.channel || ""
-      }`.toLowerCase();
+      const blob = `${e.title || ""} ${e.platform || ""} ${e.channel || ""}`.toLowerCase();
       if (!blob.includes(q)) return false;
     }
     return true;

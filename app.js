@@ -9,7 +9,6 @@ const on = (el, evt, fn) => {
 };
 
 // Controls
-const leagueFilter = $("leagueFilter");
 const platformFilter = $("platformFilter");
 const searchInput = $("searchInput");
 const refreshBtn = $("refreshBtn");
@@ -246,25 +245,15 @@ function sortEvents(events) {
 }
 
 function rebuildFilters(events) {
-  if (!leagueFilter || !platformFilter) return;
+  if (!platformFilter) return;
 
-  const leagues = new Set();
   const platforms = new Set();
 
   events.forEach((e) => {
-    if (e.league) leagues.add(e.league);
     if (e.platform) platforms.add(e.platform);
   });
 
-  const keepLeague = leagueFilter.value;
   const keepPlat = platformFilter.value;
-
-  leagueFilter.innerHTML =
-    `<option value="all">All</option>` +
-    [...leagues]
-      .sort()
-      .map((x) => `<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`)
-      .join("");
 
   platformFilter.innerHTML =
     `<option value="all">All</option>` +
@@ -273,17 +262,14 @@ function rebuildFilters(events) {
       .map((x) => `<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`)
       .join("");
 
-  if ([...leagues].includes(keepLeague)) leagueFilter.value = keepLeague;
   if ([...platforms].includes(keepPlat)) platformFilter.value = keepPlat;
 }
 
 function applyFilters() {
-  const l = leagueFilter ? leagueFilter.value : "all";
   const p = platformFilter ? platformFilter.value : "all";
   const q = searchInput ? searchInput.value.trim().toLowerCase() : "";
 
   filteredEvents = allEvents.filter((e) => {
-    if (l !== "all" && (e.league || "") !== l) return false;
     if (p !== "all" && (e.platform || "") !== p) return false;
     if (q) {
       const blob = `${e.title || ""} ${e.league || ""} ${e.platform || ""} ${
@@ -724,7 +710,6 @@ async function loadSchedule() {
 }
 
 // -------------------- Wire up --------------------
-on(leagueFilter, "change", applyFilters);
 on(platformFilter, "change", applyFilters);
 on(searchInput, "input", applyFilters);
 

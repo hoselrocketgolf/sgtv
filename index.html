@@ -32,13 +32,6 @@
 
       <div class="controls">
         <div class="control">
-          <label>League</label>
-          <select id="leagueFilter">
-            <option value="all">All</option>
-          </select>
-        </div>
-
-        <div class="control">
           <label>Platform</label>
           <select id="platformFilter">
             <option value="all">All</option>
@@ -77,29 +70,16 @@
           </div>
           <div id="upNext" class="tileBody">Loading…</div>
         </div>
-
-        <div class="tile" id="infoTile">
-          <div class="tileHeader">
-            <h2>Today's Guide</h2>
-          </div>
-          <div class="tileBody">Loading…</div>
-        </div>
       </section>
 
-      <section class="tile recentSection" aria-label="Recent streams">
+      <section class="tile infoSection" id="infoTile">
         <div class="tileHeader">
-          <h2>Recent Streams</h2>
-          <div class="liveNav hidden" id="recentNav">
-            <button class="iconBtn small" id="recentPrev" aria-label="Previous recent stream">◀</button>
-            <span class="liveCounter" id="recentCounter">1 / 1</span>
-            <button class="iconBtn small" id="recentNext" aria-label="Next recent stream">▶</button>
-          </div>
+          <h2>Today's Guide</h2>
         </div>
-        <div class="recentMeta" id="recentStreamsMeta">Past 36 hours</div>
-        <div id="recentStreams" class="tileBody">Loading…</div>
+        <div class="tileBody">Loading…</div>
       </section>
 
-      <section class="supportSection" aria-label="Support the site">
+      <section class="supportSection compact" aria-label="Support the site">
         <div class="supportHeader">
           <h2>Support</h2>
           <p>Support (click an ad to support the site).</p>
@@ -155,6 +135,19 @@
         <div class="empty" id="emptyState" style="display:none;">
           No matching events.
         </div>
+      </section>
+
+      <section class="tile recentSection" aria-label="Recent streams">
+        <div class="tileHeader">
+          <h2>Recent Streams</h2>
+          <div class="liveNav hidden" id="recentNav">
+            <button class="iconBtn small" id="recentPrev" aria-label="Previous recent stream">◀</button>
+            <span class="liveCounter" id="recentCounter">1 / 1</span>
+            <button class="iconBtn small" id="recentNext" aria-label="Next recent stream">▶</button>
+          </div>
+        </div>
+        <div class="recentMeta" id="recentStreamsMeta">Past 36 hours</div>
+        <div id="recentStreams" class="tileBody">Loading…</div>
       </section>
 
       <footer class="footer"></footer>

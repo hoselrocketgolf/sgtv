@@ -572,6 +572,10 @@ function renderSchedule() {
   const surfaceW = Math.round(windowMins * pxPerMin);
   const rows = groupByChannel(windowEvents);
 
+  const totalW = surfaceW + labelW;
+  rowsEl.style.width = `${totalW}px`;
+  rowsEl.style.maxWidth = `${totalW}px`;
+
   rowsEl.innerHTML = rows
     .map((r) => {
       const subs = r.maxSubs ? `${Number(r.maxSubs).toLocaleString()} subs` : "";

@@ -1,31 +1,5 @@
 [
   {
-    "start_et": "2026-01-21 14:04",
-    "end_et": "",
-    "title": "PRO Tour | SGT West - Stadium Course | Round 1 of 2 | TBooms & Swing Yard",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Swing Yard",
-    "watch_url": "https://www.youtube.com/watch?v=2a1qLzQigqA",
-    "source_id": "2a1qLzQigqA",
-    "status": "live",
-    "thumbnail_url": "https://i.ytimg.com/vi/2a1qLzQigqA/maxresdefault_live.jpg",
-    "subscribers": 995
-  },
-  {
-    "start_et": "2026-01-19 20:13",
-    "end_et": "2026-01-20 03:29",
-    "title": "\ud83d\udd34LIVE | ARC NUTTERS | MANY MEN MONDAY | #ShartInMyButtCallMrShartButt #BUNGULATE",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "TheBurntPeanut",
-    "watch_url": "https://www.youtube.com/watch?v=Mix2kvR1Cw8",
-    "source_id": "Mix2kvR1Cw8",
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/Mix2kvR1Cw8/maxresdefault.jpg",
-    "subscribers": 1340000
-  },
-  {
     "start_et": "2026-01-20 11:18",
     "end_et": "2026-01-20 16:08",
     "title": "Live at the PGA Show Demo Day!",
@@ -205,6 +179,32 @@
     "source_id": "4zj1dEIJ2Wc",
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/4zj1dEIJ2Wc/maxresdefault.jpg",
+    "subscribers": 17100
+  },
+  {
+    "start_et": "2026-01-21 14:04",
+    "end_et": "2026-01-21 14:49",
+    "title": "PRO Tour | SGT West - Stadium Course | Round 1 of 2 | TBooms & Swing Yard",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Swing Yard",
+    "watch_url": "https://www.youtube.com/watch?v=2a1qLzQigqA",
+    "source_id": "2a1qLzQigqA",
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/2a1qLzQigqA/maxresdefault_live.jpg",
+    "subscribers": 995
+  },
+  {
+    "start_et": "2026-01-21 15:16",
+    "end_et": "2026-01-21 15:22",
+    "title": "Joe Lagowski Golf is live",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Joe Lagowski Golf",
+    "watch_url": "https://www.youtube.com/watch?v=QLhHOISJo10",
+    "source_id": "QLhHOISJo10",
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/QLhHOISJo10/maxresdefault.jpg",
     "subscribers": 17100
   },
   {

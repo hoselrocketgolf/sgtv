@@ -174,6 +174,7 @@ let windowStart = null;
 let liveIndex = 0;
 let recentIndex = 0;
 let recentEvents = [];
+let isLoadingSchedule = false;
 
 // Window configuration
 let windowMins = 240; // 4 hours
@@ -673,61 +674,67 @@ function jumpToNow() {
 
 // -------------------- Fetch schedule.json --------------------
 async function loadSchedule() {
+  if (isLoadingSchedule) return;
+  isLoadingSchedule = true;
   if (nowOn) nowOn.textContent = "Loading…";
   if (upNext) upNext.textContent = "Loading…";
   if (recentStreams) recentStreams.textContent = "Loading…";
   if (rowsEl) rowsEl.innerHTML = "";
   if (emptyState) emptyState.style.display = "none";
 
-  const bust = `${SCHEDULE_URL}?v=${Date.now()}`;
-  const res = await fetch(bust, { cache: "no-store" });
-  if (!res.ok) throw new Error(`Failed to fetch schedule.json (${res.status})`);
+  try {
+    const bust = `${SCHEDULE_URL}?v=${Date.now()}`;
+    const res = await fetch(bust, { cache: "no-store" });
+    if (!res.ok) throw new Error(`Failed to fetch schedule.json (${res.status})`);
 
-  const data = await res.json();
-  if (!Array.isArray(data)) throw new Error("schedule.json is not an array");
+    const data = await res.json();
+    if (!Array.isArray(data)) throw new Error("schedule.json is not an array");
 
-  const now = Date.now();
-  const maxLiveAgeMs = MAX_LIVE_AGE_HOURS * 60 * 60 * 1000;
-  const maxLiveFutureMs = MAX_LIVE_FUTURE_MINS * 60 * 1000;
+    const now = Date.now();
+    const maxLiveAgeMs = MAX_LIVE_AGE_HOURS * 60 * 60 * 1000;
+    const maxLiveFutureMs = MAX_LIVE_FUTURE_MINS * 60 * 1000;
 
-  allEvents = sortEvents(
-    data
-      .filter((e) => e && e.watch_url && (e.start_et || e.status === "live"))
-      .map((e) => {
-        let status = (e.status || "upcoming").toLowerCase();
-        const start = parseET(e.start_et);
+    allEvents = sortEvents(
+      data
+        .filter((e) => e && e.watch_url && (e.start_et || e.status === "live"))
+        .map((e) => {
+          let status = (e.status || "upcoming").toLowerCase();
+          const start = parseET(e.start_et);
 
-        if (status === "live" && start) {
-          const startTs = start.getTime();
-          if (startTs - now > maxLiveFutureMs) {
-            status = "upcoming";
-          } else if (now - startTs > maxLiveAgeMs) {
-            status = "ended";
+          if (status === "live" && start) {
+            const startTs = start.getTime();
+            if (startTs - now > maxLiveFutureMs) {
+              status = "upcoming";
+            } else if (now - startTs > maxLiveAgeMs) {
+              status = "ended";
+            }
           }
-        }
 
-        return {
-          ...e,
-          status,
-          platform: e.platform || "",
-          channel: e.channel || "",
-          thumbnail_url: e.thumbnail_url || "",
-          subscribers: Number(e.subscribers || 0),
-        };
-      })
-  );
+          return {
+            ...e,
+            status,
+            platform: e.platform || "",
+            channel: e.channel || "",
+            thumbnail_url: e.thumbnail_url || "",
+            subscribers: Number(e.subscribers || 0),
+          };
+        })
+    );
 
-  rebuildFilters(allEvents);
+    rebuildFilters(allEvents);
 
-  // IMPORTANT: default schedule window to NOW every refresh
-  windowStart = null;
+    // IMPORTANT: default schedule window to NOW every refresh
+    windowStart = null;
 
-  const nowDate = new Date();
-  if (lastUpdated)
-    lastUpdated.textContent = `Last updated: ${fmtDay(nowDate)} ${fmtTime(nowDate)}`;
+    const nowDate = new Date();
+    if (lastUpdated)
+      lastUpdated.textContent = `Last updated: ${fmtDay(nowDate)} ${fmtTime(nowDate)}`;
 
-  applyFilters();
-  renderRecentStreams();
+    applyFilters();
+    renderRecentStreams();
+  } finally {
+    isLoadingSchedule = false;
+  }
 }
 
 // -------------------- Wire up --------------------
@@ -774,3 +781,7 @@ loadSchedule().catch((err) => {
   if (nowOn) nowOn.innerHTML = `<div class="muted">Error loading schedule.</div>`;
   if (upNext) upNext.innerHTML = `<div class="muted">${escapeHtml(err.message)}</div>`;
 });
+
+setInterval(() => {
+  loadSchedule().catch((err) => console.error(err));
+}, 120000);

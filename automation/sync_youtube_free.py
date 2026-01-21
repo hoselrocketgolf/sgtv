@@ -98,8 +98,15 @@ def load_schedule_from_sheet(csv_url: str) -> list[dict]:
         thumbnail_url = get_val(normalized_row, ["thumbnail_url", "thumb", "thumbnail"])
         subscribers = get_val(normalized_row, ["subscribers", "subs"])
 
-        if not watch_url or not start_et:
+        if not watch_url:
             continue
+
+        status_normalized = (status or "").strip().lower()
+        if not start_et:
+            if status_normalized == "live":
+                start_et = now_et_fmt()
+            else:
+                continue
 
         try:
             subs = int(float(subscribers.replace(",", ""))) if subscribers else 0
@@ -114,7 +121,7 @@ def load_schedule_from_sheet(csv_url: str) -> list[dict]:
             "platform": platform,
             "channel": channel,
             "watch_url": watch_url,
-            "status": status or "upcoming",
+            "status": status_normalized or "upcoming",
             "thumbnail_url": thumbnail_url,
             "subscribers": subs,
         })
@@ -166,6 +173,9 @@ def load_channels_from_sheet():
 def iso_to_et_fmt(iso: str) -> str:
     dt = datetime.fromisoformat(iso.replace("Z", "+00:00")).astimezone(ET_TZ)
     return dt.strftime("%Y-%m-%d %H:%M")
+
+def now_et_fmt() -> str:
+    return datetime.now(ET_TZ).strftime("%Y-%m-%d %H:%M")
 
 def now_utc() -> datetime:
     return datetime.now(timezone.utc)

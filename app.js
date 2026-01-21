@@ -814,9 +814,22 @@ async function loadSchedule() {
       data
         .filter((e) => e && e.watch_url && (e.start_et || e.status === "live"))
         .map((e) => {
-          let status = (e.status || "upcoming").toLowerCase();
+          const rawStatus = String(e.status || "").trim().toLowerCase();
+          let status = rawStatus || "upcoming";
           const start = parseET(e.start_et);
+          const explicitEnd = parseET(e.end_et);
           let startOverride = null;
+
+          if (!rawStatus && start) {
+            const inferredEnd = explicitEnd || new Date(start.getTime() + 120 * 60000);
+            if (start.getTime() <= now && inferredEnd.getTime() >= now) {
+              status = "live";
+            } else if (start.getTime() > now) {
+              status = "upcoming";
+            } else {
+              status = "ended";
+            }
+          }
 
           if (status === "live") {
             if (start) {

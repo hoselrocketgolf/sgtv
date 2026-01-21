@@ -800,11 +800,11 @@ button{
 
 @media (max-width: 720px){
   :root{
-    --labelW: 140px;
-    --pxPerTick: 96px;
-    --rowH: 64px;
-    --cellH: 56px;
-    --gutter: 14px;
+    --labelW: 120px;
+    --pxPerTick: 88px;
+    --rowH: 60px;
+    --cellH: 52px;
+    --gutter: 12px;
   }
 
   .top{
@@ -818,6 +818,7 @@ button{
   }
 
   .brand{
+    flex-direction: column;
     align-items:flex-start;
   }
 
@@ -828,12 +829,13 @@ button{
   }
 
   h1{
-    font-size: 20px;
+    font-size: 19px;
   }
 
   .subtitle{
-    font-size: 11px;
+    font-size: 10px;
     line-height: 1.4;
+    text-transform: none;
   }
 
   .controls{
@@ -878,6 +880,7 @@ button{
 
   .card{
     flex-direction: column;
+    gap: 10px;
   }
 
   .cardMediaLink{
@@ -886,7 +889,15 @@ button{
 
   .cardMedia{
     width: 100%;
-    height: 170px;
+    height: 160px;
+  }
+
+  .cardTitleLink{
+    font-size: 12px;
+  }
+
+  .cardMeta{
+    font-size: 10px;
   }
 
   .cardActions{
@@ -912,15 +923,22 @@ button{
   }
 
   .scheduleTools{
-    flex-wrap: wrap;
+    display:grid;
     width: 100%;
-    justify-content: space-between;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .scheduleTools .iconBtn,
+  .scheduleTools .nowBtn{
+    width: 100%;
   }
 
   .windowLabel{
     min-width: auto;
     width: 100%;
     text-align: left;
+    grid-column: 1 / -1;
   }
 
   .guide{

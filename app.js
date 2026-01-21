@@ -167,7 +167,7 @@ function parseCsv(text) {
 }
 
 function normalizeCsvHeaders(headers) {
-  return headers.map((h) => h.trim().toLowerCase());
+  return headers.map((h) => h.trim().replace(/^\uFEFF/, "").toLowerCase());
 }
 
 function findCsvValue(row, headers, keys) {
@@ -217,6 +217,20 @@ function csvRowsToEvents(csvText) {
       subscribers,
     };
   });
+}
+
+function parseScheduleData(rawText, preferCsv) {
+  const trimmed = rawText.trim();
+  if (preferCsv) return csvRowsToEvents(rawText);
+  if (trimmed.startsWith("[") || trimmed.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(rawText);
+      if (Array.isArray(parsed)) return parsed;
+    } catch (err) {
+      // fall through to CSV parsing
+    }
+  }
+  return csvRowsToEvents(rawText);
 }
 
 function fmtTime(dt) {
@@ -788,8 +802,9 @@ async function loadSchedule() {
     if (!res.ok) throw new Error(`Failed to fetch schedule (${res.status})`);
 
     const rawText = await res.text();
-    const data = (CSV_URL || "").trim() ? csvRowsToEvents(rawText) : JSON.parse(rawText);
-    if (!Array.isArray(data)) throw new Error("Schedule data is not an array");
+    const data = parseScheduleData(rawText, Boolean((CSV_URL || "").trim()));
+    if (!Array.isArray(data) || !data.length)
+      throw new Error("Schedule data is missing or empty");
 
     const now = Date.now();
     const maxLiveAgeMs = MAX_LIVE_AGE_HOURS * 60 * 60 * 1000;

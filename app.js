@@ -824,7 +824,13 @@ async function loadSchedule() {
           const isLiveWindow =
             start && inferredEnd ? start.getTime() <= now && inferredEnd.getTime() >= now : false;
 
-          if (isLiveWindow) {
+          const liveFutureTooFar = start
+            ? start.getTime() - now > maxLiveFutureMs
+            : false;
+
+          if (rawStatus === "live" && liveFutureTooFar) {
+            status = "upcoming";
+          } else if (isLiveWindow) {
             status = "live";
           } else if (!rawStatus && start) {
             const inferredEnd = explicitEnd || new Date(start.getTime() + 120 * 60000);
@@ -841,7 +847,8 @@ async function loadSchedule() {
             if (start) {
               const startTs = start.getTime();
               if (startTs - now > maxLiveFutureMs) {
-                startOverride = new Date(now);
+                status = "upcoming";
+                startOverride = null;
               } else if (now - startTs > maxLiveAgeMs) {
                 status = "ended";
               }

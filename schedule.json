@@ -1,44 +1,5 @@
 [
   {
-    "start_et": "2026-01-20 11:18",
-    "end_et": "",
-    "title": "Triple Bogey is live at the PGA Show Demo Day!",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Triple Bogey Golf",
-    "watch_url": "https://www.youtube.com/watch?v=Eh4R_jI-td0",
-    "source_id": "Eh4R_jI-td0",
-    "status": "live",
-    "thumbnail_url": "https://i.ytimg.com/vi/Eh4R_jI-td0/hqdefault_live.jpg",
-    "subscribers": 8770
-  },
-  {
-    "start_et": "2026-01-20 11:49",
-    "end_et": "",
-    "title": "\ud83d\udd34 LIVE Playing a 2026 US OPEN Qualifier Course . . How do I stack up??",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "McGolfinTV",
-    "watch_url": "https://www.youtube.com/watch?v=jj_ILK-l97I",
-    "source_id": "jj_ILK-l97I",
-    "status": "live",
-    "thumbnail_url": "https://i.ytimg.com/vi/jj_ILK-l97I/maxresdefault_live.jpg",
-    "subscribers": 822
-  },
-  {
-    "start_et": "2026-01-19 11:46",
-    "end_et": "2026-01-19 14:54",
-    "title": "\ud83d\udd34 LIVE from South Florida Golf Course | Lex McGuffin plays GOLF!!   ??",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "McGolfinTV",
-    "watch_url": "https://www.youtube.com/watch?v=sAO0aD-DAjw",
-    "source_id": "sAO0aD-DAjw",
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/sAO0aD-DAjw/maxresdefault.jpg",
-    "subscribers": 822
-  },
-  {
     "start_et": "2026-01-19 20:13",
     "end_et": "2026-01-20 03:29",
     "title": "\ud83d\udd34LIVE | ARC NUTTERS | MANY MEN MONDAY | #ShartInMyButtCallMrShartButt #BUNGULATE",
@@ -49,7 +10,7 @@
     "source_id": "Mix2kvR1Cw8",
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/Mix2kvR1Cw8/maxresdefault.jpg",
-    "subscribers": 1330000
+    "subscribers": 1340000
   },
   {
     "start_et": "2026-01-19 21:45",
@@ -78,6 +39,136 @@
     "subscribers": 119
   },
   {
+    "start_et": "2026-01-20 11:18",
+    "end_et": "2026-01-20 16:08",
+    "title": "Live at the PGA Show Demo Day!",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Triple Bogey Golf",
+    "watch_url": "https://www.youtube.com/watch?v=Eh4R_jI-td0",
+    "source_id": "Eh4R_jI-td0",
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/Eh4R_jI-td0/maxresdefault.jpg",
+    "subscribers": 8790
+  },
+  {
+    "start_et": "2026-01-20 11:49",
+    "end_et": "2026-01-20 16:08",
+    "title": "\ud83d\udd34 LIVE Playing a 2026 US OPEN Qualifier Course . . How do I stack up??",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "McGolfinTV",
+    "watch_url": "https://www.youtube.com/watch?v=jj_ILK-l97I",
+    "source_id": "jj_ILK-l97I",
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/jj_ILK-l97I/maxresdefault.jpg",
+    "subscribers": 823
+  },
+  {
+    "start_et": "2026-01-20 13:18",
+    "end_et": "2026-01-20 13:45",
+    "title": "Par 3 Tour | Loomis Trail Golf on SGT | Round 1 of 2 | TBooms & Swing Yard",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Swing Yard",
+    "watch_url": "https://www.youtube.com/watch?v=m5RGVRfGqSs",
+    "source_id": "m5RGVRfGqSs",
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/m5RGVRfGqSs/maxresdefault.jpg",
+    "subscribers": 995
+  },
+  {
+    "start_et": "2026-01-20 13:50",
+    "end_et": "2026-01-20 14:41",
+    "title": "TIPS Tour | SGT West - Jack's Tournament Course | Round 1 of 2 | TBooms & Swing Yard",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Swing Yard",
+    "watch_url": "https://www.youtube.com/watch?v=XE73cI7xMPU",
+    "source_id": "XE73cI7xMPU",
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/XE73cI7xMPU/maxresdefault.jpg",
+    "subscribers": 995
+  },
+  {
+    "start_et": "2026-01-20 15:45",
+    "end_et": "2026-01-20 16:02",
+    "title": "GSPRO NEW BETA UPDATE FIRST LOOK",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "DLud Golf",
+    "watch_url": "https://www.youtube.com/watch?v=SirOEQdfEmU",
+    "source_id": "SirOEQdfEmU",
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/SirOEQdfEmU/maxresdefault.jpg",
+    "subscribers": 1870
+  },
+  {
+    "start_et": "2026-01-20 17:57",
+    "end_et": "2026-01-20 20:16",
+    "title": "Live Garage Simulator Golf - SGT FlyinFatKid's League & Maybe Something Else",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "TurbodTalon Golf",
+    "watch_url": "https://www.youtube.com/watch?v=HGSXoqgRE7A",
+    "source_id": "HGSXoqgRE7A",
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/HGSXoqgRE7A/maxresdefault_live.jpg",
+    "subscribers": 179
+  },
+  {
+    "start_et": "2026-01-20 20:11",
+    "end_et": "2026-01-21 03:17",
+    "title": "\ud83d\udd34LIVE | ARC NUTTERS | TESTICULAR TORSION TUESDAY | #ShartOnMyForehead&DripItIntoMyMouth #BUNGULATE",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "TheBurntPeanut",
+    "watch_url": "https://www.youtube.com/watch?v=UHVWz4YlLIM",
+    "source_id": "UHVWz4YlLIM",
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/UHVWz4YlLIM/maxresdefault.jpg",
+    "subscribers": 1340000
+  },
+  {
+    "start_et": "2026-01-20 20:44",
+    "end_et": "2026-01-20 23:59",
+    "title": "Twisted Tuesday - Stice and GarbageGarageGolf take on Twisted Sticks",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "SticeGolf",
+    "watch_url": "https://www.youtube.com/watch?v=H1fOIVSl1Bw",
+    "source_id": "H1fOIVSl1Bw",
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/H1fOIVSl1Bw/maxresdefault_live.jpg",
+    "subscribers": 219
+  },
+  {
+    "start_et": "2026-01-20 21:27",
+    "end_et": "2026-01-20 22:04",
+    "title": "Blitz Quest Medalist R3- Sim Golf Tour (-7) Cold Shanked One",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Band Sagger",
+    "watch_url": "https://www.youtube.com/watch?v=qICgsI8UHQ0",
+    "source_id": "qICgsI8UHQ0",
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/qICgsI8UHQ0/maxresdefault_live.jpg",
+    "subscribers": 538
+  },
+  {
+    "start_et": "2026-01-20 23:02",
+    "end_et": "2026-01-21 00:52",
+    "title": "Twisted Sticks Events on SGT and GSPRO",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "DLud Golf",
+    "watch_url": "https://www.youtube.com/watch?v=1VFipd-kkhg",
+    "source_id": "1VFipd-kkhg",
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/1VFipd-kkhg/maxresdefault_live.jpg",
+    "subscribers": 1870
+  },
+  {
     "start_et": "2026-01-22 14:00",
     "end_et": "",
     "title": "Mixed Club Break 50 Challenge with Joshomatic & Simplyme80",
@@ -88,6 +179,6 @@
     "source_id": "fDECEGpGHkU",
     "status": "upcoming",
     "thumbnail_url": "https://i.ytimg.com/vi/fDECEGpGHkU/maxresdefault_live.jpg",
-    "subscribers": 59
+    "subscribers": 60
   }
 ]

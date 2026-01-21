@@ -120,6 +120,11 @@ function parseET(str) {
   return zonedTimeToUtcDate({ Y, M, D, h, m }, ET_TZ);
 }
 
+function getEventStart(e) {
+  if (e?.start_override instanceof Date) return e.start_override;
+  return parseET(e?.start_et);
+}
+
 function fmtTime(dt) {
   if (!dt) return "";
   // viewer local time
@@ -213,7 +218,7 @@ function eventEnd(e) {
   const end = parseET(e.end_et);
   if (end) return end;
 
-  const start = parseET(e.start_et);
+  const start = getEventStart(e);
   if (!start) return null;
 
   const defaultEnd = new Date(start.getTime() + 120 * 60000);
@@ -239,8 +244,8 @@ function sortEvents(events) {
       if (as !== bs) return bs - as;
     }
 
-    const at = parseET(a.start_et)?.getTime() ?? Number.MAX_SAFE_INTEGER;
-    const bt = parseET(b.start_et)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+    const at = getEventStart(a)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+    const bt = getEventStart(b)?.getTime() ?? Number.MAX_SAFE_INTEGER;
     if (at !== bt) return at - bt;
 
     return bs - as;
@@ -291,7 +296,7 @@ function applyFilters() {
 
 // -------------------- Hero cards --------------------
 function renderCard(e, forceLiveBadge = false) {
-  const start = parseET(e.start_et);
+  const start = getEventStart(e);
   const media = e.thumbnail_url
     ? `style="background-image:url('${encodeURI(e.thumbnail_url)}')"`
     : "";
@@ -337,13 +342,13 @@ function renderNowNext() {
   const upcoming = filteredEvents
     .filter((e) => {
       if (e.status === "live") return false;
-      const start = parseET(e.start_et);
+      const start = getEventStart(e);
       return start ? start.getTime() >= now : false;
     })
     .sort(
       (a, b) =>
-        (parseET(a.start_et)?.getTime() ?? Number.MAX_SAFE_INTEGER) -
-        (parseET(b.start_et)?.getTime() ?? Number.MAX_SAFE_INTEGER)
+        (getEventStart(a)?.getTime() ?? Number.MAX_SAFE_INTEGER) -
+        (getEventStart(b)?.getTime() ?? Number.MAX_SAFE_INTEGER)
     )[0];
   const liveCount = liveEvents.length;
   const safeIndex = liveCount ? liveIndex % liveCount : 0;
@@ -370,7 +375,7 @@ function getRecentStreams() {
     const status = (e.status || "").toLowerCase();
     if (status === "live" || status === "upcoming" || status === "scheduled") return false;
 
-    const start = parseET(e.start_et);
+    const start = getEventStart(e);
     if (!start) return false;
     const end = eventEnd(e);
     if (!end) return false;
@@ -425,12 +430,12 @@ function renderTodaysGuide() {
 
   const todays = filteredEvents
     .filter((e) => {
-      const s = parseET(e.start_et);
+      const s = getEventStart(e);
       if (!s) return false;
       const st = s.getTime();
       return st >= dayStart && st <= dayEnd;
     })
-    .sort((a, b) => (parseET(a.start_et)?.getTime() ?? 0) - (parseET(b.start_et)?.getTime() ?? 0));
+    .sort((a, b) => (getEventStart(a)?.getTime() ?? 0) - (getEventStart(b)?.getTime() ?? 0));
 
   if (!todays.length) {
     infoTileBody.innerHTML = `<div class="muted">No events scheduled for today.</div>`;
@@ -439,7 +444,7 @@ function renderTodaysGuide() {
 
   const items = todays
     .map((e) => {
-      const s = parseET(e.start_et);
+      const s = getEventStart(e);
       const t = fmtTime(s);
       const isLive = e.status === "live";
       // Preference B: keep LIVE only in the chip (not extra “live now” rows)
@@ -556,7 +561,7 @@ function renderSchedule() {
   const endMs = startMs + windowMins * 60000;
 
   const windowEvents = filteredEvents.filter((e) => {
-    const s = parseET(e.start_et);
+    const s = getEventStart(e);
     if (!s) return false;
     const ee = eventEnd(e);
     if (!ee) return false;
@@ -583,7 +588,7 @@ function renderSchedule() {
 
       const blocks = r.list
         .map((e) => {
-          const s = parseET(e.start_et);
+          const s = getEventStart(e);
           const ee = eventEnd(e);
           if (!s || !ee) return "";
 
@@ -700,13 +705,18 @@ async function loadSchedule() {
         .map((e) => {
           let status = (e.status || "upcoming").toLowerCase();
           const start = parseET(e.start_et);
+          let startOverride = null;
 
-          if (status === "live" && start) {
-            const startTs = start.getTime();
-            if (startTs - now > maxLiveFutureMs) {
-              status = "upcoming";
-            } else if (now - startTs > maxLiveAgeMs) {
-              status = "ended";
+          if (status === "live") {
+            if (start) {
+              const startTs = start.getTime();
+              if (startTs - now > maxLiveFutureMs) {
+                startOverride = new Date(now);
+              } else if (now - startTs > maxLiveAgeMs) {
+                status = "ended";
+              }
+            } else {
+              startOverride = new Date(now);
             }
           }
 
@@ -717,6 +727,7 @@ async function loadSchedule() {
             channel: e.channel || "",
             thumbnail_url: e.thumbnail_url || "",
             subscribers: Number(e.subscribers || 0),
+            start_override: startOverride,
           };
         })
     );

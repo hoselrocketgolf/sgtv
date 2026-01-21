@@ -13,32 +13,6 @@
     "subscribers": 1340000
   },
   {
-    "start_et": "2026-01-19 21:45",
-    "end_et": "2026-01-19 23:27",
-    "title": "Twisted Sticks Scramble & Other Events on SGT and GSPRO",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "DLud Golf",
-    "watch_url": "https://www.youtube.com/watch?v=wk8xLk1Ua7w",
-    "source_id": "wk8xLk1Ua7w",
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/wk8xLk1Ua7w/maxresdefault.jpg",
-    "subscribers": 1870
-  },
-  {
-    "start_et": "2026-01-19 22:30",
-    "end_et": "2026-01-19 23:07",
-    "title": "GSPro - N-OG-IVEME League 2026 Round 1",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Jayme Bristow Golf",
-    "watch_url": "https://www.youtube.com/watch?v=3GFK7g8Pg9Q",
-    "source_id": "3GFK7g8Pg9Q",
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/3GFK7g8Pg9Q/maxresdefault.jpg",
-    "subscribers": 120
-  },
-  {
     "start_et": "2026-01-20 11:18",
     "end_et": "2026-01-20 16:08",
     "title": "Live at the PGA Show Demo Day!",
@@ -165,7 +139,7 @@
     "watch_url": "https://www.youtube.com/watch?v=1VFipd-kkhg",
     "source_id": "1VFipd-kkhg",
     "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/1VFipd-kkhg/maxresdefault_live.jpg",
+    "thumbnail_url": "https://i.ytimg.com/vi/1VFipd-kkhg/maxresdefault.jpg",
     "subscribers": 1870
   },
   {
@@ -179,6 +153,32 @@
     "source_id": "PNgbrCa2xJs",
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/PNgbrCa2xJs/maxresdefault.jpg",
+    "subscribers": 17000
+  },
+  {
+    "start_et": "2026-01-21 11:17",
+    "end_et": "2026-01-21 11:23",
+    "title": "Live from the Laon Swingcraft VTrack booth",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Joe Lagowski Golf",
+    "watch_url": "https://www.youtube.com/watch?v=xZqGcaPClbk",
+    "source_id": "xZqGcaPClbk",
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/xZqGcaPClbk/maxresdefault.jpg",
+    "subscribers": 17000
+  },
+  {
+    "start_et": "2026-01-21 12:30",
+    "end_et": "2026-01-21 12:33",
+    "title": "Joe Lagowski Golf is live",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Joe Lagowski Golf",
+    "watch_url": "https://www.youtube.com/watch?v=_239ljSr7AQ",
+    "source_id": "_239ljSr7AQ",
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/_239ljSr7AQ/maxresdefault.jpg",
     "subscribers": 17000
   },
   {

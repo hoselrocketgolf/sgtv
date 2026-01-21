@@ -36,7 +36,7 @@
     "source_id": "3GFK7g8Pg9Q",
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/3GFK7g8Pg9Q/maxresdefault.jpg",
-    "subscribers": 119
+    "subscribers": 120
   },
   {
     "start_et": "2026-01-20 11:18",
@@ -113,7 +113,7 @@
     "watch_url": "https://www.youtube.com/watch?v=HGSXoqgRE7A",
     "source_id": "HGSXoqgRE7A",
     "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/HGSXoqgRE7A/maxresdefault_live.jpg",
+    "thumbnail_url": "https://i.ytimg.com/vi/HGSXoqgRE7A/maxresdefault.jpg",
     "subscribers": 179
   },
   {
@@ -152,7 +152,7 @@
     "watch_url": "https://www.youtube.com/watch?v=qICgsI8UHQ0",
     "source_id": "qICgsI8UHQ0",
     "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/qICgsI8UHQ0/maxresdefault_live.jpg",
+    "thumbnail_url": "https://i.ytimg.com/vi/qICgsI8UHQ0/maxresdefault.jpg",
     "subscribers": 538
   },
   {
@@ -171,7 +171,7 @@
   {
     "start_et": "2026-01-21 09:16",
     "end_et": "2026-01-21 09:22",
-    "title": "Joe Lagowski Golf is live",
+    "title": "Live from the Square booth at the 2026 PGA Show",
     "league": "",
     "platform": "YouTube",
     "channel": "Joe Lagowski Golf",
@@ -180,6 +180,32 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/PNgbrCa2xJs/maxresdefault.jpg",
     "subscribers": 17000
+  },
+  {
+    "start_et": "2026-01-21 19:15",
+    "end_et": "",
+    "title": "Designer Club Scramble with KHthe8TH at Hanover Golf Club",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Strong Design Studio",
+    "watch_url": "https://www.youtube.com/watch?v=obifd-sYIQ8",
+    "source_id": "obifd-sYIQ8",
+    "status": "upcoming",
+    "thumbnail_url": "https://i.ytimg.com/vi/obifd-sYIQ8/maxresdefault_live.jpg",
+    "subscribers": 60
+  },
+  {
+    "start_et": "2026-01-21 22:00",
+    "end_et": "",
+    "title": "@pakgolfstudios GGG & Zona attempt to break 50! Twisted Sticks Designer Challenge at Whistler!",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Garbage Garage Golf",
+    "watch_url": "https://www.youtube.com/watch?v=cHHuqEn4MiU",
+    "source_id": "cHHuqEn4MiU",
+    "status": "upcoming",
+    "thumbnail_url": "https://i.ytimg.com/vi/cHHuqEn4MiU/maxresdefault_live.jpg",
+    "subscribers": 94
   },
   {
     "start_et": "2026-01-22 14:00",

@@ -820,7 +820,13 @@ async function loadSchedule() {
           const explicitEnd = parseET(e.end_et);
           let startOverride = null;
 
-          if (!rawStatus && start) {
+          const inferredEnd = start ? explicitEnd || new Date(start.getTime() + 120 * 60000) : null;
+          const isLiveWindow =
+            start && inferredEnd ? start.getTime() <= now && inferredEnd.getTime() >= now : false;
+
+          if (isLiveWindow) {
+            status = "live";
+          } else if (!rawStatus && start) {
             const inferredEnd = explicitEnd || new Date(start.getTime() + 120 * 60000);
             if (start.getTime() <= now && inferredEnd.getTime() >= now) {
               status = "live";

@@ -798,6 +798,186 @@ button{
   .supportAdSlot{ grid-column: auto; }
 }
 
+@media (max-width: 720px){
+  :root{
+    --labelW: 140px;
+    --pxPerTick: 96px;
+    --rowH: 64px;
+    --cellH: 56px;
+    --gutter: 14px;
+  }
+
+  .top{
+    margin-top: 20px;
+    gap: 14px;
+  }
+
+  .wrap{
+    margin: 16px auto 36px;
+    gap: 16px;
+  }
+
+  .brand{
+    align-items:flex-start;
+  }
+
+  .brandLogo{
+    width: 56px;
+    height: 56px;
+    border-radius: 18px;
+  }
+
+  h1{
+    font-size: 20px;
+  }
+
+  .subtitle{
+    font-size: 11px;
+    line-height: 1.4;
+  }
+
+  .controls{
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .control,
+  .control.grow{
+    min-width: 0;
+  }
+
+  .control.refresh{
+    align-items: stretch;
+  }
+
+  select,
+  input,
+  .refreshBtn{
+    height: 42px;
+    border-radius: 12px;
+  }
+
+  .tile,
+  .supportSection,
+  .scheduleSection{
+    border-radius: 20px;
+  }
+
+  .tile{
+    padding: 14px;
+  }
+
+  .tileHeader h2{
+    font-size: 12px;
+  }
+
+  .tileBody{
+    font-size: 12px;
+  }
+
+  .card{
+    flex-direction: column;
+  }
+
+  .cardMediaLink{
+    width: 100%;
+  }
+
+  .cardMedia{
+    width: 100%;
+    height: 170px;
+  }
+
+  .cardActions{
+    width: 100%;
+  }
+
+  .watchBtn{
+    width: 100%;
+  }
+
+  .supportSection.compact{
+    padding: 12px 14px;
+  }
+
+  .supportCard,
+  .supportAdSlot{
+    padding: 12px;
+  }
+
+  .scheduleHeader{
+    padding: 14px 16px;
+    gap: 12px;
+  }
+
+  .scheduleTools{
+    flex-wrap: wrap;
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .windowLabel{
+    min-width: auto;
+    width: 100%;
+    text-align: left;
+  }
+
+  .guide{
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .timeRow{
+    padding-left: var(--labelW);
+  }
+
+  .rowLabel{
+    padding: 8px 10px;
+  }
+
+  .rowLabel .name{
+    font-size: 11px;
+  }
+
+  .rowLabel .subs{
+    font-size: 10px;
+  }
+
+  .block{
+    top: 6px;
+    border-radius: 16px;
+  }
+
+  .blockTitle{
+    font-size: 11px;
+  }
+
+  .blockBottom{
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 560px){
+  .top,
+  .wrap{
+    padding: 0 16px;
+  }
+
+  .brand{
+    gap: 12px;
+  }
+
+  .brandLogo{
+    width: 52px;
+    height: 52px;
+  }
+
+  .cardMedia{
+    height: 150px;
+  }
+}
+
 .rowLabel .name {
   text-decoration: none;
 }

@@ -2,6 +2,7 @@
 // Stable schedule geometry + correct timezone conversion (ET -> viewer local)
 
 const SCHEDULE_URL = "schedule.json";
+const CSV_URL = "";
 const MAX_LIVE_AGE_HOURS = 4;
 const MAX_LIVE_FUTURE_MINS = 10;
 
@@ -123,6 +124,99 @@ function parseET(str) {
 function getEventStart(e) {
   if (e?.start_override instanceof Date) return e.start_override;
   return parseET(e?.start_et);
+}
+
+function parseCsv(text) {
+  const rows = [];
+  let row = [];
+  let value = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i += 1) {
+    const ch = text[i];
+    if (ch === '"') {
+      if (inQuotes && text[i + 1] === '"') {
+        value += '"';
+        i += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+    if (!inQuotes && ch === ",") {
+      row.push(value);
+      value = "";
+      continue;
+    }
+    if (!inQuotes && ch === "\n") {
+      row.push(value);
+      rows.push(row);
+      row = [];
+      value = "";
+      continue;
+    }
+    if (ch !== "\r") value += ch;
+  }
+
+  if (value.length || row.length) {
+    row.push(value);
+    rows.push(row);
+  }
+
+  return rows;
+}
+
+function normalizeCsvHeaders(headers) {
+  return headers.map((h) => h.trim().toLowerCase());
+}
+
+function findCsvValue(row, headers, keys) {
+  for (const key of keys) {
+    const idx = headers.indexOf(key);
+    if (idx !== -1 && row[idx] !== undefined) {
+      return row[idx].trim();
+    }
+  }
+  return "";
+}
+
+function csvRowsToEvents(csvText) {
+  const rows = parseCsv(csvText);
+  if (!rows.length) return [];
+  const headers = normalizeCsvHeaders(rows[0]);
+  const dataRows = rows.slice(1).filter((r) => r.some((cell) => cell.trim().length));
+
+  return dataRows.map((row) => {
+    const start = findCsvValue(row, headers, [
+      "start_et",
+      "start",
+      "time",
+      "start time",
+      "start_time",
+    ]);
+    const end = findCsvValue(row, headers, ["end_et", "end", "end time", "end_time"]);
+    const title = findCsvValue(row, headers, ["title", "event", "name"]);
+    const league = findCsvValue(row, headers, ["league", "tour"]);
+    const platform = findCsvValue(row, headers, ["platform"]);
+    const channel = findCsvValue(row, headers, ["channel", "channel_name", "host"]);
+    const watchUrl = findCsvValue(row, headers, ["watch_url", "url", "link", "watch", "watch url"]);
+    const status = findCsvValue(row, headers, ["status", "live_status"]);
+    const thumbnailUrl = findCsvValue(row, headers, ["thumbnail_url", "thumb", "thumbnail"]);
+    const subscribers = findCsvValue(row, headers, ["subscribers", "subs"]);
+
+    return {
+      start_et: start,
+      end_et: end,
+      title,
+      league,
+      platform,
+      channel,
+      watch_url: watchUrl,
+      status,
+      thumbnail_url: thumbnailUrl,
+      subscribers,
+    };
+  });
 }
 
 function fmtTime(dt) {
@@ -688,12 +782,14 @@ async function loadSchedule() {
   if (emptyState) emptyState.style.display = "none";
 
   try {
-    const bust = `${SCHEDULE_URL}?v=${Date.now()}`;
+    const url = (CSV_URL || "").trim() ? CSV_URL : SCHEDULE_URL;
+    const bust = `${url}${url.includes("?") ? "&" : "?"}v=${Date.now()}`;
     const res = await fetch(bust, { cache: "no-store" });
-    if (!res.ok) throw new Error(`Failed to fetch schedule.json (${res.status})`);
+    if (!res.ok) throw new Error(`Failed to fetch schedule (${res.status})`);
 
-    const data = await res.json();
-    if (!Array.isArray(data)) throw new Error("schedule.json is not an array");
+    const rawText = await res.text();
+    const data = (CSV_URL || "").trim() ? csvRowsToEvents(rawText) : JSON.parse(rawText);
+    if (!Array.isArray(data)) throw new Error("Schedule data is not an array");
 
     const now = Date.now();
     const maxLiveAgeMs = MAX_LIVE_AGE_HOURS * 60 * 60 * 1000;

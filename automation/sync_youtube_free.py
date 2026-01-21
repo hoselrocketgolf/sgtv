@@ -14,6 +14,7 @@ def env_or_default(name: str, default: str) -> str:
     return v if v else default
 
 CHANNEL_SHEET_CSV = env_or_default("CHANNEL_SHEET_CSV", DEFAULT_CHANNEL_SHEET_CSV)
+SCHEDULE_SHEET_CSV = (os.environ.get("SCHEDULE_SHEET_CSV") or "").strip()
 OUT_PATH = env_or_default("OUT_PATH", "schedule.json")
 YT_API_KEY = (os.environ.get("YT_API_KEY") or "").strip()
 
@@ -59,6 +60,70 @@ def yt_api(endpoint: str, params: dict) -> dict:
 def parse_simple_csv(text: str):
     f = io.StringIO(text)
     return list(csv.DictReader(f))
+
+def normalize_headers(headers: list[str]) -> list[str]:
+    return [h.strip().lstrip("\ufeff").lower() for h in headers]
+
+def load_schedule_from_sheet(csv_url: str) -> list[dict]:
+    csv_text = http_get(csv_url)
+    f = io.StringIO(csv_text)
+    reader = csv.DictReader(f)
+    if not reader.fieldnames:
+        return []
+
+    headers = normalize_headers(reader.fieldnames)
+    key_map = {h: i for i, h in enumerate(headers)}
+
+    def get_val(row: dict, keys: list[str]) -> str:
+        for key in keys:
+            if key in key_map and key in row:
+                return (row.get(key) or "").strip()
+        return ""
+
+    events = []
+    for row in reader:
+        normalized_row = {}
+        for raw_key, value in row.items():
+            norm_key = raw_key.strip().lstrip("\ufeff").lower()
+            normalized_row[norm_key] = (value or "").strip()
+
+        start_et = get_val(normalized_row, ["start_et", "start", "time", "start time", "start_time"])
+        end_et = get_val(normalized_row, ["end_et", "end", "end time", "end_time"])
+        title = get_val(normalized_row, ["title", "event", "name"])
+        league = get_val(normalized_row, ["league", "tour"])
+        platform = get_val(normalized_row, ["platform"])
+        channel = get_val(normalized_row, ["channel", "channel_name", "host"])
+        watch_url = get_val(normalized_row, ["watch_url", "url", "link", "watch", "watch url"])
+        status = get_val(normalized_row, ["status", "live_status"])
+        thumbnail_url = get_val(normalized_row, ["thumbnail_url", "thumb", "thumbnail"])
+        subscribers = get_val(normalized_row, ["subscribers", "subs"])
+
+        if not watch_url or not start_et:
+            continue
+
+        try:
+            subs = int(float(subscribers.replace(",", ""))) if subscribers else 0
+        except Exception:
+            subs = 0
+
+        events.append({
+            "start_et": start_et,
+            "end_et": end_et,
+            "title": title,
+            "league": league,
+            "platform": platform,
+            "channel": channel,
+            "watch_url": watch_url,
+            "status": status or "upcoming",
+            "thumbnail_url": thumbnail_url,
+            "subscribers": subs,
+        })
+
+    return events
+
+def write_schedule(events: list[dict], out_path: str) -> None:
+    with open(out_path, "w", encoding="utf-8") as f:
+        json.dump(events, f, indent=2)
 
 def load_channels_from_sheet():
     """
@@ -278,6 +343,18 @@ def is_stale_upcoming(start_iso: str, now: datetime) -> bool:
 
 # --------- Main ---------
 def main():
+    if SCHEDULE_SHEET_CSV:
+        try:
+            events = load_schedule_from_sheet(SCHEDULE_SHEET_CSV)
+            if events:
+                events.sort(key=lambda e: (e.get("start_et", "9999-99-99 99:99")))
+                write_schedule(events, OUT_PATH)
+                print(f"Wrote {len(events)} events to {OUT_PATH} from schedule sheet.")
+                return
+            print("Schedule sheet returned no rows. Falling back to YouTube API.")
+        except Exception as exc:
+            print(f"Failed to load schedule sheet: {exc}. Falling back to YouTube API.")
+
     if not YT_API_KEY:
         print("Missing YT_API_KEY env var. Skipping sync to avoid failing scheduled workflow.")
         return
@@ -423,8 +500,7 @@ def main():
 
         events.sort(key=sort_key)
 
-        with open(OUT_PATH, "w", encoding="utf-8") as f:
-            json.dump(events, f, indent=2)
+        write_schedule(events, OUT_PATH)
 
         print(f"-----\nWrote {len(events)} events to {OUT_PATH}")
     except urllib.error.HTTPError as exc:

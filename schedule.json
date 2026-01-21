@@ -1,5 +1,18 @@
 [
   {
+    "start_et": "2026-01-21 14:04",
+    "end_et": "",
+    "title": "PRO Tour | SGT West - Stadium Course | Round 1 of 2 | TBooms & Swing Yard",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Swing Yard",
+    "watch_url": "https://www.youtube.com/watch?v=2a1qLzQigqA",
+    "source_id": "2a1qLzQigqA",
+    "status": "live",
+    "thumbnail_url": "https://i.ytimg.com/vi/2a1qLzQigqA/maxresdefault_live.jpg",
+    "subscribers": 995
+  },
+  {
     "start_et": "2026-01-19 20:13",
     "end_et": "2026-01-20 03:29",
     "title": "\ud83d\udd34LIVE | ARC NUTTERS | MANY MEN MONDAY | #ShartInMyButtCallMrShartButt #BUNGULATE",
@@ -23,7 +36,7 @@
     "source_id": "Eh4R_jI-td0",
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/Eh4R_jI-td0/maxresdefault.jpg",
-    "subscribers": 8790
+    "subscribers": 8800
   },
   {
     "start_et": "2026-01-20 11:49",
@@ -113,7 +126,7 @@
     "watch_url": "https://www.youtube.com/watch?v=H1fOIVSl1Bw",
     "source_id": "H1fOIVSl1Bw",
     "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/H1fOIVSl1Bw/maxresdefault_live.jpg",
+    "thumbnail_url": "https://i.ytimg.com/vi/H1fOIVSl1Bw/maxresdefault.jpg",
     "subscribers": 219
   },
   {
@@ -153,12 +166,12 @@
     "source_id": "PNgbrCa2xJs",
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/PNgbrCa2xJs/maxresdefault.jpg",
-    "subscribers": 17000
+    "subscribers": 17100
   },
   {
     "start_et": "2026-01-21 11:17",
     "end_et": "2026-01-21 11:23",
-    "title": "Live from the Laon Swingcraft VTrack booth",
+    "title": "Live from the Laon Swingcraft VTrack booth at the 2026 PGA Show",
     "league": "",
     "platform": "YouTube",
     "channel": "Joe Lagowski Golf",
@@ -166,12 +179,12 @@
     "source_id": "xZqGcaPClbk",
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/xZqGcaPClbk/maxresdefault.jpg",
-    "subscribers": 17000
+    "subscribers": 17100
   },
   {
     "start_et": "2026-01-21 12:30",
     "end_et": "2026-01-21 12:33",
-    "title": "Joe Lagowski Golf is live",
+    "title": "Live from the Garmin Booth at the 2026 PGA show",
     "league": "",
     "platform": "YouTube",
     "channel": "Joe Lagowski Golf",
@@ -179,7 +192,20 @@
     "source_id": "_239ljSr7AQ",
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/_239ljSr7AQ/maxresdefault.jpg",
-    "subscribers": 17000
+    "subscribers": 17100
+  },
+  {
+    "start_et": "2026-01-21 13:23",
+    "end_et": "2026-01-21 13:26",
+    "title": "Live from the Rapsodo Booth at the PGA show",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Joe Lagowski Golf",
+    "watch_url": "https://www.youtube.com/watch?v=4zj1dEIJ2Wc",
+    "source_id": "4zj1dEIJ2Wc",
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/4zj1dEIJ2Wc/maxresdefault.jpg",
+    "subscribers": 17100
   },
   {
     "start_et": "2026-01-21 19:15",

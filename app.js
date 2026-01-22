@@ -533,6 +533,7 @@ function renderTodaysGuide() {
   if (infoTileHeaderH2) infoTileHeaderH2.textContent = "Today's Guide";
 
   const now = new Date();
+  const nowTs = now.getTime();
   const dayStart = startOfDayZoned(now, ET_TZ).getTime();
   const dayEnd = endOfDayZoned(now, ET_TZ).getTime();
 
@@ -541,7 +542,11 @@ function renderTodaysGuide() {
       const s = getEventStart(e);
       if (!s) return false;
       const st = s.getTime();
-      return st >= dayStart && st <= dayEnd;
+      if (st < dayStart || st > dayEnd) return false;
+      if (e.status === "live") return true;
+      const end = eventEnd(e)?.getTime();
+      if (!Number.isFinite(end)) return st >= nowTs;
+      return end >= nowTs;
     })
     .sort((a, b) => (getEventStart(a)?.getTime() ?? 0) - (getEventStart(b)?.getTime() ?? 0));
 

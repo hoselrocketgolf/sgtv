@@ -307,6 +307,14 @@ function endOfDayZoned(date, timeZone) {
   return zonedTimeToUtcDate({ Y, M, D, h: 23, m: 59 }, timeZone);
 }
 
+function startOfDayLocal(date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+}
+
+function endOfDayLocal(date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
+}
+
 // -------------------- State --------------------
 let allEvents = [];
 let filteredEvents = [];
@@ -559,8 +567,8 @@ function renderTodaysGuide() {
 
   const now = new Date();
   const nowTs = now.getTime();
-  const dayStart = startOfDayZoned(now, ET_TZ).getTime();
-  const dayEnd = endOfDayZoned(now, ET_TZ).getTime();
+  const dayStart = startOfDayLocal(now).getTime();
+  const dayEnd = endOfDayLocal(now).getTime();
 
   const todays = filteredEvents
     .filter((e) => {
@@ -609,15 +617,8 @@ function renderTodaysGuide() {
 function ensureWindowStart() {
   if (windowStart) return;
 
-  const now = new Date();
-  const nowRounded = roundToTick(now);
-
-  const nextEvent = filteredEvents.find((e) => {
-    const s = getEventStart(e);
-    return s ? s.getTime() >= nowRounded.getTime() : false;
-  });
-
-  windowStart = nextEvent ? roundToTick(getEventStart(nextEvent)) : nowRounded;
+  const nowRounded = roundToTick(new Date());
+  windowStart = nowRounded;
 }
 
 function roundToTick(dt) {

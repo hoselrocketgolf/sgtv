@@ -121,6 +121,16 @@ function parseET(str) {
   return zonedTimeToUtcDate({ Y, M, D, h, m }, ET_TZ);
 }
 
+function isYouTubeUrl(url) {
+  if (!url) return false;
+  return /(?:youtube\.com|youtu\.be)/i.test(url);
+}
+
+function hasLiveThumbnail(url) {
+  if (!url) return false;
+  return /_live\.jpg(?:\?|$)/i.test(url);
+}
+
 function getEventStart(e) {
   if (e?.start_override instanceof Date) return e.start_override;
   return parseET(e?.start_et);
@@ -828,6 +838,8 @@ async function loadSchedule() {
           const inferredEnd = start ? explicitEnd || new Date(start.getTime() + 120 * 60000) : null;
           const isLiveWindow =
             start && inferredEnd ? start.getTime() <= now && inferredEnd.getTime() >= now : false;
+          const liveEligible =
+            !isYouTubeUrl(e.watch_url) || hasLiveThumbnail(e.thumbnail_url);
 
           const liveFutureTooFar = start
             ? start.getTime() - now > maxLiveFutureMs
@@ -835,12 +847,24 @@ async function loadSchedule() {
 
           if (rawStatus === "live" && liveFutureTooFar) {
             status = "upcoming";
+          } else if (rawStatus === "live" && !liveEligible) {
+            if (start) {
+              if (start.getTime() > now) {
+                status = "upcoming";
+              } else if (inferredEnd && inferredEnd.getTime() < now) {
+                status = "ended";
+              } else {
+                status = "upcoming";
+              }
+            } else {
+              status = "upcoming";
+            }
           } else if (isLiveWindow) {
-            status = "live";
+            status = liveEligible ? "live" : "upcoming";
           } else if (!rawStatus && start) {
             const inferredEnd = explicitEnd || new Date(start.getTime() + 120 * 60000);
             if (start.getTime() <= now && inferredEnd.getTime() >= now) {
-              status = "live";
+              status = liveEligible ? "live" : "upcoming";
             } else if (start.getTime() > now) {
               status = "upcoming";
             } else {

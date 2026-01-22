@@ -30,21 +30,6 @@
     "subscribers": 219
   },
   {
-    "start_et": "2026-01-20 21:27",
-    "end_et": "2026-01-20 22:04",
-    "title": "Blitz Quest Medalist R3- Sim Golf Tour (-7) Cold Shanked One",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Band Sagger",
-    "watch_url": "https://www.youtube.com/watch?v=qICgsI8UHQ0",
-    "source_id": "qICgsI8UHQ0",
-    "type": "",
-    "is_premiere": false,
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/qICgsI8UHQ0/maxresdefault.jpg",
-    "subscribers": 538
-  },
-  {
     "start_et": "2026-01-20 23:02",
     "end_et": "2026-01-21 00:52",
     "title": "Twisted Sticks Events on SGT and GSPRO",
@@ -132,7 +117,7 @@
     "is_premiere": false,
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/2a1qLzQigqA/maxresdefault.jpg",
-    "subscribers": 996
+    "subscribers": 995
   },
   {
     "start_et": "2026-01-21 15:16",
@@ -238,6 +223,21 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/aypw3fcnkB0/maxresdefault_live.jpg",
     "subscribers": 1870
+  },
+  {
+    "start_et": "2026-01-22 10:28",
+    "end_et": "2026-01-22 10:36",
+    "title": "Joe Lagowski Golf is live",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Joe Lagowski Golf",
+    "watch_url": "https://www.youtube.com/watch?v=C9nZpXDT8zI",
+    "source_id": "C9nZpXDT8zI",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/C9nZpXDT8zI/maxresdefault.jpg",
+    "subscribers": 17100
   },
   {
     "start_et": "2026-01-22 14:00",

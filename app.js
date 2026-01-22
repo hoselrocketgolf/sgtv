@@ -591,26 +591,27 @@ function renderTodaysGuide() {
   const items = todays.map((e) => {
     const start = getEventStart(e);
     const isLive = e.status === "live";
-    const badge = isLive ? `<span class="chipBadge">LIVE</span>` : "";
+    const badge = isLive ? `<span class="guideBadge">LIVE</span>` : "";
+    const watchUrl = escapeHtml(e.watch_url || "#");
     return `
-      <div class="listRow">
-        <div class="listTime">${fmtTime(start)}</div>
-        <div class="listTitle">
-          <div class="titleRow">
-            <span>${escapeHtml(e.title || "")}</span>
+      <a class="guideRow" href="${watchUrl}" target="_blank" rel="noreferrer">
+        <div class="guideTime">${fmtTime(start)}</div>
+        <div class="guideTitle">
+          <div class="guideTitleRow">
+            <span class="guideTitleText">${escapeHtml(e.title || "")}</span>
             ${badge}
           </div>
-          <div class="listMeta">
+          <div class="guideMeta">
             <span>${escapeHtml(e.platform || "")}</span>
             <span>•</span>
             <span>${escapeHtml(e.channel || "")}</span>
           </div>
         </div>
-      </div>
+      </a>
     `;
   });
 
-  infoTileBody.innerHTML = items.join("");
+  infoTileBody.innerHTML = `<div class="guideList">${items.join("")}</div>`;
 }
 
 // -------------------- Schedule table --------------------

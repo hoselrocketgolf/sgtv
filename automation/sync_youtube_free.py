@@ -1,4 +1,4 @@
-import os, csv, io, json, time
+import os, csv, io, json, time, re
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 import urllib.request
@@ -32,7 +32,7 @@ MAX_LIVE_HOURS = int(env_or_default("MAX_LIVE_HOURS", "4"))
 # How many live results to pull from Search API per channel (0 disables Search API usage).
 SEARCH_LIVE_MAX_RESULTS = int(env_or_default("SEARCH_LIVE_MAX_RESULTS", "0"))
 
-USER_AGENT = "Mozilla/5.0 (compatible; sgtv-bot/2.1)"
+USER_AGENT = "Mozilla/5.0 (compatible; sgtv-bot/2.2)"
 REQ_HEADERS = {
     "User-Agent": USER_AGENT,
     "Accept-Language": "en-US,en;q=0.9",
@@ -138,9 +138,10 @@ def write_schedule(events: list[dict], out_path: str) -> None:
 
 def load_channels_from_sheet():
     """
-    Sheet headers expected:
-      handle, display_name, channel_id, subscribers
-    Only channel_id is required.
+    Sheet headers expected (case-insensitive):
+      platform, handle, display_name, channel_id, tiktok_url, subscribers
+    For YouTube rows, channel_id is required.
+    For TikTok rows, handle or tiktok_url is required.
     """
     csv_text = http_get(CHANNEL_SHEET_CSV)
     rows = parse_simple_csv(csv_text)
@@ -151,12 +152,18 @@ def load_channels_from_sheet():
 
     channels = []
     for r in rows:
-        cid = (r.get("channel_id") or "").strip()
-        if not cid:
-            continue
+        platform = (r.get("platform") or "").strip()
+        platform_norm = platform.lower() if platform else "youtube"
 
+        cid = (r.get("channel_id") or "").strip()
         handle = (r.get("handle") or "").strip().lstrip("@")
         display = (r.get("display_name") or "").strip()
+        tiktok_url = (r.get("tiktok_url") or "").strip()
+
+        if platform_norm == "youtube" and not cid:
+            continue
+        if platform_norm == "tiktok" and not (handle or tiktok_url):
+            continue
 
         sub_raw = (r.get("subscribers") or "").strip().replace(",", "")
         try:
@@ -165,13 +172,84 @@ def load_channels_from_sheet():
             sheet_subs = 0
 
         channels.append({
+            "platform": platform if platform else "YouTube",
             "channel_id": cid,
             "handle": handle,
             "display_name": display,
-            "sheet_subscribers": sheet_subs
+            "tiktok_url": tiktok_url,
+            "sheet_subscribers": sheet_subs,
         })
 
     return channels
+
+# --------- TikTok helpers ---------
+def normalize_tiktok_handle(handle: str, tiktok_url: str) -> str:
+    if handle:
+        return handle.lstrip("@")
+    if not tiktok_url:
+        return ""
+    match = re.search(r"/@([^/?#]+)", tiktok_url)
+    return match.group(1) if match else ""
+
+def ensure_tiktok_live_url(handle: str, tiktok_url: str) -> str:
+    if tiktok_url:
+        return tiktok_url if "/live" in tiktok_url else f"{tiktok_url.rstrip('/')}/live"
+    if handle:
+        return f"https://www.tiktok.com/@{handle}/live"
+    return ""
+
+def fetch_tiktok_live_data(handle: str) -> dict | None:
+    if not handle:
+        return None
+    url = f"https://www.tiktok.com/api-live/user/room/?aid=1988&uniqueId={urllib.parse.quote(handle)}"
+    try:
+        return http_get_json(url)
+    except Exception:
+        return None
+
+def extract_tiktok_room_id(payload: dict | None) -> str:
+    if not payload or not isinstance(payload, dict):
+        return ""
+    data = payload.get("data") or {}
+    candidates = [data, data.get("room") or {}, data.get("liveRoom") or {}]
+    for obj in candidates:
+        for key in ["roomId", "room_id", "liveRoomId", "live_room_id"]:
+            val = obj.get(key)
+            if val:
+                return str(val)
+    return ""
+
+def extract_tiktok_cover(payload: dict | None) -> str:
+    if not payload or not isinstance(payload, dict):
+        return ""
+    data = payload.get("data") or {}
+    room = data.get("room") or data.get("liveRoom") or {}
+    for key in ["coverUrl", "cover", "coverImage", "coverUrlList"]:
+        val = room.get(key) or data.get(key)
+        if isinstance(val, list) and val:
+            return str(val[0])
+        if isinstance(val, str) and val:
+            return val
+    return ""
+
+def fetch_tiktok_live_status(handle: str, tiktok_url: str) -> tuple[bool, str, str]:
+    payload = fetch_tiktok_live_data(handle)
+    room_id = extract_tiktok_room_id(payload)
+    if room_id:
+        return True, room_id, extract_tiktok_cover(payload)
+
+    if not tiktok_url:
+        return False, "", ""
+
+    try:
+        html = http_get(tiktok_url)
+    except Exception:
+        return False, "", ""
+
+    match = re.search(r'"roomId":"(\d+)"', html)
+    if not match:
+        match = re.search(r'"liveRoomId":"(\d+)"', html)
+    return (match is not None), (match.group(1) if match else ""), ""
 
 # --------- Time helpers ---------
 def iso_to_et_fmt(iso: str) -> str:
@@ -383,10 +461,6 @@ def main():
         except Exception as exc:
             print(f"Failed to load schedule sheet: {exc}. Falling back to YouTube API.")
 
-    if not YT_API_KEY:
-        print("Missing YT_API_KEY env var. Skipping sync to avoid failing scheduled workflow.")
-        return
-
     try:
         channels = load_channels_from_sheet()
         if not channels:
@@ -394,135 +468,180 @@ def main():
             return
 
         print("Loaded channels from sheet:", len(channels))
-        print("Scanning uploads per channel:", MAX_UPLOAD_SCAN)
-        print("Upload lookback days:", UPLOAD_LOOKBACK_DAYS)
-        print("Upcoming horizon days:", UPCOMING_HORIZON_DAYS)
-        print("Recent ended hours:", RECENT_ENDED_HOURS)
-        print("Max live hours:", MAX_LIVE_HOURS)
-        print("Search live max results:", SEARCH_LIVE_MAX_RESULTS)
-        if SEARCH_LIVE_MAX_RESULTS == 0:
-            print("Search API disabled to reduce quota usage.")
 
-        channel_ids = [c["channel_id"] for c in channels]
-        meta = fetch_channels_meta(channel_ids)
-
-        sheet_by_id = {c["channel_id"]: c for c in channels}
+        youtube_channels = [
+            c for c in channels if (c.get("platform") or "").strip().lower() == "youtube"
+        ]
+        tiktok_channels = [
+            c for c in channels if (c.get("platform") or "").strip().lower() == "tiktok"
+        ]
 
         events = []
-        seen_video_ids = set()
-
-        all_candidate_vids = []
-        per_channel_candidate = {}
-
-        # Gather candidates
-        for cid in channel_ids:
-            m = meta.get(cid)
-            if not m:
-                print("WARN: channel meta missing (bad channel_id?):", cid)
-                continue
-
-            uploads = m["uploads_playlist_id"]
-            vids = fetch_uploads_video_ids(
-                uploads,
-                max_results=MAX_UPLOAD_SCAN,
-                lookback_days=UPLOAD_LOOKBACK_DAYS
-            )
-            if SEARCH_LIVE_MAX_RESULTS > 0:
-                live_vids = fetch_search_live_video_ids(cid, SEARCH_LIVE_MAX_RESULTS)
-                if live_vids:
-                    vids = list(dict.fromkeys(live_vids + vids))
-            per_channel_candidate[cid] = vids
-            all_candidate_vids.extend(vids)
-
-            time.sleep(0.05)
-
-        # Fetch details for all unique candidates
-        video_details = fetch_videos_details(sorted(set(all_candidate_vids)))
-
         now = now_utc()
-        upcoming_horizon = now + timedelta(days=UPCOMING_HORIZON_DAYS)
-        ended_cutoff = now - timedelta(hours=RECENT_ENDED_HOURS)
 
-        for cid, vids in per_channel_candidate.items():
-            m = meta.get(cid) or {}
-            sheet = sheet_by_id.get(cid) or {}
+        if tiktok_channels:
+            print("Scanning TikTok handles:", len(tiktok_channels))
+            for channel in tiktok_channels:
+                handle = normalize_tiktok_handle(channel.get("handle", ""), channel.get("tiktok_url", ""))
+                display_name = (channel.get("display_name") or "").strip()
+                subs = int(channel.get("sheet_subscribers") or 0)
+                live_url = ensure_tiktok_live_url(handle, channel.get("tiktok_url", ""))
 
-            subs_api = int(m.get("subscribers") or 0)
-            subs_sheet = int(sheet.get("sheet_subscribers") or 0)
-            subs = subs_api if subs_api > 0 else subs_sheet
-
-            handle = (sheet.get("handle") or "").strip().lstrip("@")
-            sheet_name = (sheet.get("display_name") or "").strip()
-            yt_title = (m.get("channel_title") or "").strip()
-            channel_name = sheet_name or (f"@{handle}" if handle else "") or yt_title or ""
-
-            print("-----")
-            print(f"Channel: {cid} name: {channel_name} subs(api): {subs_api} subs(sheet): {subs_sheet}")
-
-            found_live = False
-
-            for vid in vids:
-                item = video_details.get(vid)
-                if not item:
+                if not handle or not live_url:
                     continue
 
-                status, start_iso, end_iso = classify_video(item)
-                if not status or not start_iso:
+                is_live, room_id, cover = fetch_tiktok_live_status(handle, live_url)
+                if not is_live:
                     continue
 
-                is_premiere = looks_like_premiere(item)
-
-                if is_premiere and status == "ended":
-                    continue
-
-                # Kill stale "upcoming" that are already in the past (canceled/never-live)
-                if status == "upcoming" and is_stale_upcoming(start_iso, now):
-                    continue
-
-                if status == "live":
-                    start_dt = parse_iso(start_iso)
-                    if start_dt and start_dt < (now - timedelta(hours=MAX_LIVE_HOURS)):
-                        continue
-
-                # Upcoming filter window (next 7 days only)
-                if status == "upcoming":
-                    start_dt = parse_iso(start_iso)
-                    if start_dt and start_dt > upcoming_horizon:
-                        continue
-                if status == "ended":
-                    end_dt = parse_iso(end_iso) if end_iso else None
-                    if not end_dt or end_dt < ended_cutoff:
-                        continue
-
-                if vid in seen_video_ids:
-                    continue
-                seen_video_ids.add(vid)
-
-                snippet = item.get("snippet") or {}
-                title = (snippet.get("title") or "").strip()
-                thumb = pick_thumb(snippet) or f"https://i.ytimg.com/vi/{vid}/hqdefault.jpg"
-
-                if status == "live":
-                    found_live = True
+                channel_name = display_name or f"@{handle}"
+                title = f"{channel_name} is live on TikTok"
 
                 events.append({
-                    "start_et": iso_to_et_fmt(start_iso),
-                    "end_et": iso_to_et_fmt(end_iso) if end_iso else "",
+                    "start_et": now_et_fmt(),
+                    "end_et": "",
                     "title": title,
                     "league": "",
-                    "platform": "YouTube",
+                    "platform": "TikTok",
                     "channel": channel_name,
-                    "watch_url": f"https://www.youtube.com/watch?v={vid}",
-                    "source_id": vid,
-                    "type": "premiere" if is_premiere else "",
-                    "is_premiere": is_premiere,
-                    "status": status,
-                    "thumbnail_url": thumb,
+                    "watch_url": live_url,
+                    "source_id": room_id,
+                    "type": "",
+                    "is_premiere": False,
+                    "status": "live",
+                    "thumbnail_url": cover,
                     "subscribers": subs
                 })
 
-            if not found_live:
-                print("No LIVE detected right now.")
+        if youtube_channels and not YT_API_KEY:
+            print("Missing YT_API_KEY env var. Skipping YouTube sync.")
+        elif youtube_channels:
+            print("Scanning uploads per channel:", MAX_UPLOAD_SCAN)
+            print("Upload lookback days:", UPLOAD_LOOKBACK_DAYS)
+            print("Upcoming horizon days:", UPCOMING_HORIZON_DAYS)
+            print("Recent ended hours:", RECENT_ENDED_HOURS)
+            print("Max live hours:", MAX_LIVE_HOURS)
+            print("Search live max results:", SEARCH_LIVE_MAX_RESULTS)
+            if SEARCH_LIVE_MAX_RESULTS == 0:
+                print("Search API disabled to reduce quota usage.")
+
+            channel_ids = [c["channel_id"] for c in youtube_channels]
+            meta = fetch_channels_meta(channel_ids)
+
+            sheet_by_id = {c["channel_id"]: c for c in youtube_channels}
+
+            seen_video_ids = set()
+            all_candidate_vids = []
+            per_channel_candidate = {}
+
+            # Gather candidates
+            for cid in channel_ids:
+                m = meta.get(cid)
+                if not m:
+                    print("WARN: channel meta missing (bad channel_id?):", cid)
+                    continue
+
+                uploads = m["uploads_playlist_id"]
+                vids = fetch_uploads_video_ids(
+                    uploads,
+                    max_results=MAX_UPLOAD_SCAN,
+                    lookback_days=UPLOAD_LOOKBACK_DAYS
+                )
+                if SEARCH_LIVE_MAX_RESULTS > 0:
+                    live_vids = fetch_search_live_video_ids(cid, SEARCH_LIVE_MAX_RESULTS)
+                    if live_vids:
+                        vids = list(dict.fromkeys(live_vids + vids))
+                per_channel_candidate[cid] = vids
+                all_candidate_vids.extend(vids)
+
+                time.sleep(0.05)
+
+            # Fetch details for all unique candidates
+            video_details = fetch_videos_details(sorted(set(all_candidate_vids)))
+
+            upcoming_horizon = now + timedelta(days=UPCOMING_HORIZON_DAYS)
+            ended_cutoff = now - timedelta(hours=RECENT_ENDED_HOURS)
+
+            for cid, vids in per_channel_candidate.items():
+                m = meta.get(cid) or {}
+                sheet = sheet_by_id.get(cid) or {}
+
+                subs_api = int(m.get("subscribers") or 0)
+                subs_sheet = int(sheet.get("sheet_subscribers") or 0)
+                subs = subs_api if subs_api > 0 else subs_sheet
+
+                handle = (sheet.get("handle") or "").strip().lstrip("@")
+                sheet_name = (sheet.get("display_name") or "").strip()
+                yt_title = (m.get("channel_title") or "").strip()
+                channel_name = sheet_name or (f"@{handle}" if handle else "") or yt_title or ""
+
+                print("-----")
+                print(f"Channel: {cid} name: {channel_name} subs(api): {subs_api} subs(sheet): {subs_sheet}")
+
+                found_live = False
+
+                for vid in vids:
+                    item = video_details.get(vid)
+                    if not item:
+                        continue
+
+                    status, start_iso, end_iso = classify_video(item)
+                    if not status or not start_iso:
+                        continue
+
+                    is_premiere = looks_like_premiere(item)
+
+                    if is_premiere and status == "ended":
+                        continue
+
+                    # Kill stale "upcoming" that are already in the past (canceled/never-live)
+                    if status == "upcoming" and is_stale_upcoming(start_iso, now):
+                        continue
+
+                    if status == "live":
+                        start_dt = parse_iso(start_iso)
+                        if start_dt and start_dt < (now - timedelta(hours=MAX_LIVE_HOURS)):
+                            continue
+
+                    # Upcoming filter window (next 7 days only)
+                    if status == "upcoming":
+                        start_dt = parse_iso(start_iso)
+                        if start_dt and start_dt > upcoming_horizon:
+                            continue
+                    if status == "ended":
+                        end_dt = parse_iso(end_iso) if end_iso else None
+                        if not end_dt or end_dt < ended_cutoff:
+                            continue
+
+                    if vid in seen_video_ids:
+                        continue
+                    seen_video_ids.add(vid)
+
+                    snippet = item.get("snippet") or {}
+                    title = (snippet.get("title") or "").strip()
+                    thumb = pick_thumb(snippet) or f"https://i.ytimg.com/vi/{vid}/hqdefault.jpg"
+
+                    if status == "live":
+                        found_live = True
+
+                    events.append({
+                        "start_et": iso_to_et_fmt(start_iso),
+                        "end_et": iso_to_et_fmt(end_iso) if end_iso else "",
+                        "title": title,
+                        "league": "",
+                        "platform": "YouTube",
+                        "channel": channel_name,
+                        "watch_url": f"https://www.youtube.com/watch?v={vid}",
+                        "source_id": vid,
+                        "type": "premiere" if is_premiere else "",
+                        "is_premiere": is_premiere,
+                        "status": status,
+                        "thumbnail_url": thumb,
+                        "subscribers": subs
+                    })
+
+                if not found_live:
+                    print("No LIVE detected right now.")
 
         # Sort: live first, then by time, tie by subs desc
         def sort_key(e):

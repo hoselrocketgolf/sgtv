@@ -121,6 +121,24 @@ function parseET(str) {
   return zonedTimeToUtcDate({ Y, M, D, h, m }, ET_TZ);
 }
 
+function getZonedDateParts(date, timeZone) {
+  const dtf = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const parts = dtf.formatToParts(date).reduce((acc, p) => {
+    acc[p.type] = p.value;
+    return acc;
+  }, {});
+  return {
+    Y: Number(parts.year),
+    M: Number(parts.month),
+    D: Number(parts.day),
+  };
+}
+
 function isYouTubeUrl(url) {
   if (!url) return false;
   return /(?:youtube\.com|youtu\.be)/i.test(url);
@@ -280,80 +298,148 @@ function fmtDayLong(dt) {
 }
 
 function startOfDayZoned(date, timeZone) {
-  const dtf = new Intl.DateTimeFormat("en-US", {
-    timeZone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
-  const parts = dtf.formatToParts(date).reduce((acc, p) => {
-    acc[p.type] = p.value;
-    return acc;
-  }, {});
-  return zonedTimeToUtcDate({
-    Y: Number(parts.year),
-    M: Number(parts.month),
-    D: Number(parts.day),
-    h: 0,
-    m: 0,
-  }, timeZone);
+  const { Y, M, D } = getZonedDateParts(date, timeZone);
+  return zonedTimeToUtcDate({ Y, M, D, h: 0, m: 0 }, timeZone);
 }
 
 function endOfDayZoned(date, timeZone) {
-  const start = startOfDayZoned(date, timeZone);
-  return new Date(start.getTime() + (24 * 60 * 60 * 1000 - 1));
+  const { Y, M, D } = getZonedDateParts(date, timeZone);
+  return zonedTimeToUtcDate({ Y, M, D, h: 23, m: 59 }, timeZone);
 }
 
+// -------------------- State --------------------
+let allEvents = [];
+let filteredEvents = [];
+let windowStart = null;
+let liveIndex = 0;
+let recentIndex = 0;
+let recentEvents = [];
+let isLoadingSchedule = false;
+
+// Window configuration
+let windowMins = 240; // 4 hours
+const recentWindowHours = 36;
+const recentStreamCount = 20;
+
+// Geometry read from CSS vars so header + blocks NEVER drift
+let tickMins = 30;
+let pxPerTick = 140;
+let pxPerMin = pxPerTick / tickMins;
+let labelW = 220;
+
+function readScheduleGeometryFromCss() {
+  const cs = getComputedStyle(document.documentElement);
+
+  const tickRaw = cs.getPropertyValue("--tickMins").trim();
+  const pxTickRaw = cs.getPropertyValue("--pxPerTick").trim();
+  const labelRaw = cs.getPropertyValue("--labelW").trim();
+
+  const t = Number.parseFloat(tickRaw);
+  const p = Number.parseFloat(pxTickRaw);
+  const l = Number.parseFloat(labelRaw);
+
+  if (Number.isFinite(t) && t > 0) tickMins = t;
+  if (Number.isFinite(p) && p > 0) pxPerTick = p;
+  if (Number.isFinite(l) && l > 0) labelW = l;
+
+  pxPerMin = pxPerTick / tickMins;
+}
+
+// -------------------- Event end-time logic --------------------
+// - Prefer explicit end_et if provided
+// - Default: 2 hours from start
+// - If LIVE: extend to max(start+2h, now+20m) so it stays visible while live
 function eventEnd(e) {
-  if (!e) return null;
   const end = parseET(e.end_et);
   if (end) return end;
 
   const start = getEventStart(e);
   if (!start) return null;
 
-  // fallback: 2 hrs for live/ended; 1 hr for upcoming
-  if (e.status === "live" || e.status === "ended") return new Date(start.getTime() + 2 * 60 * 60 * 1000);
-  return new Date(start.getTime() + 60 * 60 * 1000);
+  if (e.status === "live") {
+    const now = new Date();
+    return new Date(Math.max(start.getTime() + 120 * 60000, now.getTime() + 20 * 60000));
+  }
+
+  return new Date(start.getTime() + 120 * 60000);
 }
 
-function statusClass(e) {
-  if (!e?.status) return "";
-  const s = e.status.toLowerCase();
-  if (s === "live") return "live";
-  if (s === "ended") return "ended";
-  return "upcoming";
+function sortEvents(list) {
+  return [...list].sort((a, b) => {
+    const ar = a.status === "live";
+    const br = b.status === "live";
+    if (ar !== br) return ar ? -1 : 1;
+
+    const as = Number(a.subscribers || 0);
+    const bs = Number(b.subscribers || 0);
+    if (a.status === "live" && b.status === "live") {
+      if (as !== bs) return bs - as;
+    }
+
+    const at = getEventStart(a)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+    const bt = getEventStart(b)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+    if (at !== bt) return at - bt;
+
+    return bs - as;
+  });
 }
 
-function statusText(e) {
-  if (!e?.status) return "";
-  const s = e.status.toLowerCase();
-  if (s === "live") return "Live";
-  if (s === "ended") return "Ended";
-  return "Upcoming";
+function rebuildFilters(events) {
+  if (!platformFilter) return;
+
+  const platforms = new Set();
+
+  events.forEach((e) => {
+    if (e.platform) platforms.add(e.platform);
+  });
+
+  const keepPlat = platformFilter.value;
+
+  platformFilter.innerHTML =
+    `<option value="all">All</option>` +
+    [...platforms]
+      .sort()
+      .map((x) => `<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`)
+      .join("");
+
+  if ([...platforms].includes(keepPlat)) platformFilter.value = keepPlat;
 }
 
-function fmtSubs(n) {
-  if (!n || !Number.isFinite(Number(n))) return "";
-  const num = Number(n);
-  if (num >= 1000000) return `${(num / 1000000).toFixed(2)}M subs`;
-  if (num >= 1000) return `${(num / 1000).toFixed(1)}K subs`;
-  return `${num} subs`;
+function applyFilters() {
+  const p = platformFilter ? platformFilter.value : "all";
+  const q = searchInput ? searchInput.value.trim().toLowerCase() : "";
+
+  filteredEvents = allEvents.filter((e) => {
+    if (p !== "all" && (e.platform || "") !== p) return false;
+    if (q) {
+      const blob = `${e.title || ""} ${e.platform || ""} ${e.channel || ""}`.toLowerCase();
+      if (!blob.includes(q)) return false;
+    }
+    return true;
+  });
+
+  filteredEvents = sortEvents(filteredEvents);
+  liveIndex = 0;
+
+  renderNowNext();
+  renderTodaysGuide();
+  renderSchedule();
 }
 
-function renderCard(e, live) {
-  if (!e) return "";
+// -------------------- Hero cards --------------------
+function renderCard(e, forceLiveBadge = false) {
   const start = getEventStart(e);
-  const end = eventEnd(e);
-  const time = start && end ? `${fmtTime(start)}–${fmtTime(end)}` : fmtTime(start);
-  const subs = fmtSubs(e.subscribers);
+  const media = e.thumbnail_url
+    ? `style="background-image:url('${encodeURI(e.thumbnail_url)}')"`
+    : "";
+  const live = forceLiveBadge || e.status === "live";
   const badge = live ? `<span class="pill live">LIVE</span>` : "";
-  const thumbnail = e.thumbnail_url || "";
-  const media = thumbnail ? `style="background-image:url('${thumbnail}');"` : "";
-  const watchUrl = e.watch_url || "#";
+  const subs = e.subscribers ? `${Number(e.subscribers).toLocaleString()} subs` : "";
+
+  const watchUrl = escapeHtml(e.watch_url || "#");
 
   return `
-  <div class="card ${live ? "cardLive" : ""}">
+  <div class="card${live ? " isLive" : ""}">
     <a class="cardMediaLink" href="${watchUrl}" target="_blank" rel="noreferrer">
       <div class="cardMedia" ${media}></div>
     </a>
@@ -496,7 +582,6 @@ function renderTodaysGuide() {
 
   const items = todays.map((e) => {
     const start = getEventStart(e);
-    const end = eventEnd(e);
     const isLive = e.status === "live";
     const badge = isLive ? `<span class="chipBadge">LIVE</span>` : "";
     return `
@@ -521,351 +606,353 @@ function renderTodaysGuide() {
 }
 
 // -------------------- Schedule table --------------------
-const TIMESLOTS = [
-  "12a",
-  "1a",
-  "2a",
-  "3a",
-  "4a",
-  "5a",
-  "6a",
-  "7a",
-  "8a",
-  "9a",
-  "10a",
-  "11a",
-  "12p",
-  "1p",
-  "2p",
-  "3p",
-  "4p",
-  "5p",
-  "6p",
-  "7p",
-  "8p",
-  "9p",
-  "10p",
-  "11p",
-];
+function ensureWindowStart() {
+  if (windowStart) return;
 
-function fmtSlotLabel(date) {
-  const label = date.toLocaleTimeString(undefined, {
-    hour: "numeric",
-    minute: "2-digit",
+  const now = new Date();
+  const nowRounded = roundToTick(now);
+
+  const nextEvent = filteredEvents.find((e) => {
+    const s = getEventStart(e);
+    return s ? s.getTime() >= nowRounded.getTime() : false;
   });
-  return label.replace(":00", "").toLowerCase();
+
+  windowStart = nextEvent ? roundToTick(getEventStart(nextEvent)) : nowRounded;
 }
 
-function getSlotStart(date, slotIndex) {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  d.setMinutes(slotIndex * 60);
-  return d;
-}
-
-function getSlotStartIndex(date) {
-  const h = date.getHours();
-  return h;
-}
-
-function getSlotForEvent(date) {
-  return getSlotStartIndex(date);
+function roundToTick(dt) {
+  const mins = dt.getMinutes();
+  const rounded = Math.floor(mins / tickMins) * tickMins;
+  return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), dt.getHours(), rounded, 0, 0);
 }
 
 function renderTimeRow() {
-  if (!timeRow) return;
-  const now = new Date();
-  const row = TIMESLOTS.map((slot, idx) => {
-    const date = new Date();
-    date.setHours(idx, 0, 0, 0);
-    const isNow = idx === now.getHours();
-    return `<div class="timeCell ${isNow ? "timeNow" : ""}">${slot}</div>`;
-  });
-  timeRow.innerHTML = row.join("");
+  if (!timeRow || !windowLabel) return;
+  readScheduleGeometryFromCss();
+  ensureWindowStart();
+
+  const startMs = windowStart.getTime();
+  const endMs = startMs + windowMins * 60000;
+
+  const ticks = Math.ceil(windowMins / tickMins) + 1;
+  const parts = [];
+  for (let i = 0; i < ticks; i++) {
+    const dt = new Date(startMs + i * tickMins * 60000);
+    parts.push(
+      `<div class="timeTick" style="width:${pxPerTick}px; flex:0 0 ${pxPerTick}px">${escapeHtml(
+        fmtTime(dt)
+      )}</div>`
+    );
+  }
+
+  const surfaceW = Math.round(windowMins * pxPerMin);
+  const totalW = surfaceW + labelW;
+
+  timeRow.style.display = "flex";
+  timeRow.style.width = `${totalW}px`;
+  timeRow.style.maxWidth = `${totalW}px`;
+  timeRow.style.whiteSpace = "nowrap";
+  timeRow.style.overflow = "hidden";
+  timeRow.innerHTML = parts.join("");
+
+  const end = new Date(endMs);
+  windowLabel.textContent = `${fmtDay(windowStart)} • ${fmtTime(windowStart)} → ${fmtTime(end)}`;
 }
 
-function renderScheduleRows() {
-  if (!rowsEl) return;
-
-  const now = new Date();
-  const nowTs = now.getTime();
-
-  const eventsByDay = {};
-  for (const e of filteredEvents) {
-    const start = getEventStart(e);
-    if (!start) continue;
-    const dateKey = start.toISOString().slice(0, 10);
-    if (!eventsByDay[dateKey]) eventsByDay[dateKey] = [];
-    eventsByDay[dateKey].push(e);
+function groupByChannel(events) {
+  const map = new Map();
+  for (const e of events) {
+    const key = e.channel || "Unknown";
+    if (!map.has(key)) map.set(key, []);
+    map.get(key).push(e);
   }
 
-  const dates = Object.keys(eventsByDay).sort();
-  if (!dates.length) {
+  const rows = [...map.entries()].map(([channel, list]) => {
+    const hasLive = list.some((x) => x.status === "live");
+    const maxSubs = Math.max(...list.map((x) => Number(x.subscribers || 0)));
+    return { channel, list: sortEvents(list), hasLive, maxSubs };
+  });
+
+  rows.sort((a, b) => {
+    if (a.hasLive !== b.hasLive) return a.hasLive ? -1 : 1;
+    if (a.maxSubs !== b.maxSubs) return b.maxSubs - a.maxSubs;
+    return a.channel.localeCompare(b.channel);
+  });
+
+  return rows;
+}
+
+function renderSchedule() {
+  if (!rowsEl || !emptyState) return;
+
+  readScheduleGeometryFromCss();
+  ensureWindowStart();
+  renderTimeRow();
+
+  const startMs = windowStart.getTime();
+  const endMs = startMs + windowMins * 60000;
+
+  const windowEvents = filteredEvents.filter((e) => {
+    const s = getEventStart(e);
+    if (!s) return false;
+    const ee = eventEnd(e);
+    if (!ee) return false;
+    return ee.getTime() >= startMs && s.getTime() <= endMs; // overlaps window
+  });
+
+  if (!windowEvents.length) {
     rowsEl.innerHTML = "";
-    if (emptyState) emptyState.classList.remove("hidden");
+    emptyState.style.display = "";
     return;
   }
-  if (emptyState) emptyState.classList.add("hidden");
+  emptyState.style.display = "none";
 
-  const rows = dates.map((dateKey) => {
-    const events = eventsByDay[dateKey].sort(
-      (a, b) => (getEventStart(a)?.getTime() ?? 0) - (getEventStart(b)?.getTime() ?? 0)
-    );
-    const dayStart = new Date(dateKey + "T00:00:00");
-    const label = fmtDayLong(dayStart);
+  const surfaceW = Math.round(windowMins * pxPerMin);
+  const rows = groupByChannel(windowEvents);
 
-    const cards = events.map((e) => {
-      const start = getEventStart(e);
-      const end = eventEnd(e);
-      const durationMins = eventLengthMins(e);
+  const totalW = surfaceW + labelW;
+  rowsEl.style.width = `${totalW}px`;
+  rowsEl.style.maxWidth = `${totalW}px`;
 
-      const startSlot = getSlotForEvent(start);
-      const width = Math.max(1, Math.round((durationMins / 60) * 100));
-      const left = Math.round((startSlot / 24) * 100);
+  rowsEl.innerHTML = rows
+    .map((r) => {
+      const subs = r.maxSubs ? `${Number(r.maxSubs).toLocaleString()} subs` : "";
 
-      const statusClass = statusToPillClass(e);
-      const statusText = statusToText(e);
-      const liveBadge = e.status === "live" ? `<span class="badgeLive">LIVE</span>` : "";
+      const blocks = r.list
+        .map((e) => {
+          const s = getEventStart(e);
+          const ee = eventEnd(e);
+          if (!s || !ee) return "";
+
+          const leftMin = (s.getTime() - startMs) / 60000;
+          const rightMin = (ee.getTime() - startMs) / 60000;
+
+          const left = leftMin * pxPerMin;
+          const right = rightMin * pxPerMin;
+
+          // Clip to visible surface
+          const clippedLeft = clamp(left, 0, surfaceW);
+          const clippedRight = clamp(right, 0, surfaceW);
+
+          let width = clippedRight - clippedLeft;
+          if (width < 0) return "";
+
+          // Minimum width for usability, but never exceed the surface
+          const minW = 160;
+          width = Math.max(width, minW);
+          if (clippedLeft + width > surfaceW) width = surfaceW - clippedLeft;
+
+          const thumb =
+            e.thumbnail_url ||
+            (e.source_id ? `https://i.ytimg.com/vi/${e.source_id}/hqdefault.jpg` : "");
+          const liveBadge = e.status === "live" ? `<span class="badgeLive">LIVE</span>` : "";
+
+          return `
+            <a class="block ${e.status || ""}" href="${escapeHtml(
+              e.watch_url || "#"
+            )}" target="_blank" rel="noreferrer"
+              style="left:${clippedLeft}px; width:${width}px;">
+              <div class="blockTitle">
+                ${liveBadge}
+                <span>${escapeHtml(e.title || "")}</span>
+              </div>
+              <div class="blockMeta">${escapeHtml(e.platform || "")} • ${escapeHtml(
+                e.channel || ""
+              )}</div>
+              <div class="blockThumb" style="background-image:url('${encodeURI(thumb)}')"></div>
+            </a>
+          `;
+        })
+        .join("");
 
       return `
-        <div class="eventBlock ${statusClass}" style="left:${left}%;width:${width}%">
-          <div class="eventTime">${fmtClockTimeRange(start, end)}</div>
-          <div class="eventTitle">
-            ${liveBadge}
-            <span>${escapeHtml(e.title || "")}</span>
+        <div class="row">
+          <div class="rowLabel">
+            <div class="channel">${escapeHtml(r.channel)}</div>
+            <div class="subs">${escapeHtml(subs)}</div>
           </div>
-          <div class="eventMeta">
-            <span>${escapeHtml(e.platform || "")}</span>
-            <span>•</span>
-            <span>${escapeHtml(e.channel || "")}</span>
-            ${statusText ? `<span>•</span><span>${statusText}</span>` : ""}
+          <div class="lane" style="width:${surfaceW}px;">
+            ${blocks}
           </div>
         </div>
       `;
-    });
-
-    return `
-      <div class="dayRow">
-        <div class="dayLabel">${label}</div>
-        <div class="dayEvents">${cards.join("")}</div>
-      </div>
-    `;
-  });
-
-  rowsEl.innerHTML = rows.join("");
-}
-
-// -------------------- Data pipeline --------------------
-let allEvents = [];
-let filteredEvents = [];
-let liveIndex = 0;
-let recentIndex = 0;
-let recentEvents = [];
-
-const recentWindowHours = 36;
-const recentStreamCount = 20;
-
-function applyFilters() {
-  const platform = platformFilter?.value?.toLowerCase().trim() || "";
-  const q = searchInput?.value?.toLowerCase().trim() || "";
-
-  filteredEvents = allEvents.filter((e) => {
-    if (platform && (e.platform || "").toLowerCase() !== platform) return false;
-    if (q) {
-      const inTitle = (e.title || "").toLowerCase().includes(q);
-      const inChannel = (e.channel || "").toLowerCase().includes(q);
-      const inLeague = (e.league || "").toLowerCase().includes(q);
-      if (!inTitle && !inChannel && !inLeague) return false;
-    }
-    return true;
-  });
-}
-
-function filterLiveEvents() {
-  const now = Date.now();
-  const maxAge = now - MAX_LIVE_AGE_HOURS * 60 * 60 * 1000;
-  const maxFuture = now + MAX_LIVE_FUTURE_MINS * 60 * 1000;
-  return filteredEvents.filter((e) => {
-    const status = (e.status || "").toLowerCase();
-    if (status !== "live") return false;
-    const start = getEventStart(e);
-    if (!start) return false;
-    const ts = start.getTime();
-    return ts >= maxAge && ts <= maxFuture;
-  });
-}
-
-function renderLive() {
-  if (!nowOn) return;
-  const liveEvents = filterLiveEvents();
-
-  if (!liveEvents.length) {
-    nowOn.innerHTML = `<div class="muted">No live event right now.</div>`;
-    if (liveNav) liveNav.classList.add("hidden");
-    if (liveCounter) liveCounter.textContent = "";
-    return;
-  }
-
-  if (liveIndex >= liveEvents.length) liveIndex = 0;
-
-  const live = liveEvents[liveIndex];
-
-  nowOn.innerHTML = renderCard(live, true);
-  if (liveCounter) liveCounter.textContent = `${liveIndex + 1} / ${liveEvents.length}`;
-  if (liveNav) liveNav.classList.toggle("hidden", liveEvents.length <= 1);
-}
-
-function renderUpNext() {
-  if (!upNext) return;
-
-  const now = Date.now();
-  const upcoming = filteredEvents
-    .filter((e) => {
-      if (e.status === "live") return false;
-      const start = getEventStart(e);
-      return start ? start.getTime() >= now : false;
     })
-    .sort(
-      (a, b) =>
-        (getEventStart(a)?.getTime() ?? Number.MAX_SAFE_INTEGER) -
-        (getEventStart(b)?.getTime() ?? Number.MAX_SAFE_INTEGER)
-    )[0];
-
-  upNext.innerHTML = upcoming
-    ? renderCard(upcoming, false)
-    : `<div class="muted">No upcoming events found.</div>`;
+    .join("");
 }
 
-function renderBottomSchedule() {
-  renderTimeRow();
-  renderScheduleRows();
+function shiftWindow(dir) {
+  readScheduleGeometryFromCss();
+  ensureWindowStart();
+  windowStart = new Date(windowStart.getTime() + dir * windowMins * 60000);
+  windowStart = roundToTick(windowStart);
+  renderSchedule();
 }
 
-function renderAll() {
-  applyFilters();
-  renderLive();
-  renderUpNext();
-  renderRecentStreams({ reshuffle: false });
-  renderTodaysGuide();
-  renderBottomSchedule();
+function jumpToNow() {
+  readScheduleGeometryFromCss();
+  windowStart = roundToTick(new Date());
+  renderSchedule();
 }
 
-function updateLastUpdated(ts) {
-  if (!lastUpdated) return;
-  const date = new Date(ts);
-  lastUpdated.textContent = `Updated ${date.toLocaleString()}`;
-}
-
-function normalizeEvent(e) {
-  const start = parseET(e.start_et);
-  const end = parseET(e.end_et);
-
-  const status = (e.status || "").toLowerCase();
-  if (status === "live" && start) {
-    const now = Date.now();
-    const startTs = start.getTime();
-    const maxFuture = now + MAX_LIVE_FUTURE_MINS * 60 * 1000;
-    if (startTs > maxFuture) e.status = "upcoming";
-  }
-
-  if (status === "upcoming" || status === "scheduled") {
-    if (start && start.getTime() <= Date.now()) {
-      e.status = "live";
-    }
-  }
-
-  if (status === "ended") {
-    if (end && end.getTime() > Date.now()) {
-      e.status = "live";
-    }
-  }
-
-  if (!e.thumbnail_url && isYouTubeUrl(e.watch_url)) {
-    e.thumbnail_url = `https://i.ytimg.com/vi/${e.source_id}/hqdefault.jpg`;
-  }
-
-  return e;
-}
-
-async function fetchJsonSchedule() {
-  const res = await fetch(SCHEDULE_URL, { cache: "no-store" });
-  if (!res.ok) throw new Error("Failed to load schedule.json");
-  return res.json();
-}
-
-async function fetchCsvSchedule() {
-  const res = await fetch(CSV_URL, { cache: "no-store" });
-  if (!res.ok) throw new Error("Failed to load CSV");
-  return res.text();
-}
-
+// -------------------- Fetch schedule.json --------------------
 async function loadSchedule() {
+  if (isLoadingSchedule) return;
+  isLoadingSchedule = true;
+  if (nowOn) nowOn.textContent = "Loading…";
+  if (upNext) upNext.textContent = "Loading…";
+  if (recentStreams) recentStreams.textContent = "Loading…";
+  if (rowsEl) rowsEl.innerHTML = "";
+  if (emptyState) emptyState.style.display = "none";
+
   try {
-    if (recentStreams) recentStreams.textContent = "Loading…";
-    if (nowOn) nowOn.textContent = "Loading…";
-    if (upNext) upNext.textContent = "Loading…";
+    const url = (CSV_URL || "").trim() ? CSV_URL : SCHEDULE_URL;
+    const bust = `${url}${url.includes("?") ? "&" : "?"}v=${Date.now()}`;
+    const res = await fetch(bust, { cache: "no-store" });
+    if (!res.ok) throw new Error(`Failed to fetch schedule (${res.status})`);
 
-    let events = [];
-    if (CSV_URL) {
-      const csvText = await fetchCsvSchedule();
-      events = csvRowsToEvents(csvText);
-    } else {
-      const jsonText = await fetchJsonSchedule();
-      events = parseScheduleData(JSON.stringify(jsonText), false);
-    }
+    const rawText = await res.text();
+    const data = parseScheduleData(rawText, Boolean((CSV_URL || "").trim()));
+    if (!Array.isArray(data) || !data.length)
+      throw new Error("Schedule data is missing or empty");
 
-    events = events.map(normalizeEvent);
-    allEvents = events;
-    renderAll();
-    updateLastUpdated(Date.now());
-  } catch (err) {
-    if (recentStreams)
-      recentStreams.innerHTML = `<div class="muted">Failed to load schedule.</div>`;
-    if (nowOn) nowOn.innerHTML = `<div class="muted">Failed to load schedule.</div>`;
-    if (upNext) upNext.innerHTML = `<div class="muted">Failed to load schedule.</div>`;
-    if (rowsEl) rowsEl.innerHTML = "";
-    if (emptyState) emptyState.classList.remove("hidden");
-    console.error(err);
+    const now = Date.now();
+    const maxLiveAgeMs = MAX_LIVE_AGE_HOURS * 60 * 60 * 1000;
+    const maxLiveFutureMs = MAX_LIVE_FUTURE_MINS * 60 * 1000;
+
+    allEvents = sortEvents(
+      data
+        .filter((e) => e && e.watch_url && (e.start_et || e.status === "live"))
+        .map((e) => {
+          const rawStatus = String(e.status || "").trim().toLowerCase();
+          let status = rawStatus || "upcoming";
+          const start = parseET(e.start_et);
+          const explicitEnd = parseET(e.end_et);
+          let startOverride = null;
+
+          const inferredEnd = start ? explicitEnd || new Date(start.getTime() + 120 * 60000) : null;
+          const isLiveWindow =
+            start && inferredEnd ? start.getTime() <= now && inferredEnd.getTime() >= now : false;
+          const liveEligible =
+            !isYouTubeUrl(e.watch_url) || hasLiveThumbnail(e.thumbnail_url);
+
+          const liveFutureTooFar = start
+            ? start.getTime() - now > maxLiveFutureMs
+            : false;
+
+          if (rawStatus === "live" && liveFutureTooFar) {
+            status = "upcoming";
+          } else if (rawStatus === "live" && !liveEligible) {
+            if (start) {
+              if (start.getTime() > now) {
+                status = "upcoming";
+              } else if (inferredEnd && inferredEnd.getTime() < now) {
+                status = "ended";
+              } else {
+                status = "upcoming";
+              }
+            } else {
+              status = "upcoming";
+            }
+          } else if (isLiveWindow) {
+            status = liveEligible ? "live" : "upcoming";
+          } else if (!rawStatus && start) {
+            const inferredEnd = explicitEnd || new Date(start.getTime() + 120 * 60000);
+            if (start.getTime() <= now && inferredEnd.getTime() >= now) {
+              status = liveEligible ? "live" : "upcoming";
+            } else if (start.getTime() > now) {
+              status = "upcoming";
+            } else {
+              status = "ended";
+            }
+          }
+
+          if (status === "live") {
+            if (start) {
+              const startTs = start.getTime();
+              if (startTs - now > maxLiveFutureMs) {
+                status = "upcoming";
+                startOverride = null;
+              } else if (now - startTs > maxLiveAgeMs) {
+                status = "ended";
+              }
+            } else {
+              startOverride = new Date(now);
+            }
+          }
+
+          return {
+            ...e,
+            status,
+            platform: e.platform || "",
+            channel: e.channel || "",
+            thumbnail_url: e.thumbnail_url || "",
+            subscribers: Number(e.subscribers || 0),
+            start_override: startOverride,
+          };
+        })
+    );
+
+    rebuildFilters(allEvents);
+
+    // IMPORTANT: default schedule window to NOW every refresh
+    windowStart = null;
+
+    const nowDate = new Date();
+    if (lastUpdated)
+      lastUpdated.textContent = `Last updated: ${fmtDay(nowDate)} ${fmtTime(nowDate)}`;
+
+    applyFilters();
+    renderRecentStreams();
+  } finally {
+    isLoadingSchedule = false;
   }
 }
 
-// -------------------- Event listeners --------------------
-on(platformFilter, "change", () => {
-  renderAll();
-});
+// -------------------- Wire up --------------------
+on(platformFilter, "change", applyFilters);
+on(searchInput, "input", applyFilters);
 
-on(searchInput, "input", () => {
-  renderAll();
-});
+on(refreshBtn, "click", () =>
+  loadSchedule().catch((err) => {
+    console.error(err);
+    if (nowOn) nowOn.innerHTML = `<div class="muted">Error loading schedule.</div>`;
+    if (upNext) upNext.innerHTML = `<div class="muted">${escapeHtml(err.message)}</div>`;
+  })
+);
 
-on(refreshBtn, "click", () => {
-  loadSchedule();
-});
-
+on(prevWindow, "click", () => shiftWindow(-1));
+on(nextWindow, "click", () => shiftWindow(1));
+on(jumpNowBtn, "click", jumpToNow);
 on(livePrev, "click", () => {
-  const liveEvents = filterLiveEvents();
-  if (!liveEvents.length) return;
-  liveIndex = (liveIndex - 1 + liveEvents.length) % liveEvents.length;
-  renderLive();
+  const liveCount = filteredEvents.filter((e) => e.status === "live").length;
+  if (!liveCount) return;
+  liveIndex = (liveIndex - 1 + liveCount) % liveCount;
+  renderNowNext();
 });
-
 on(liveNext, "click", () => {
-  const liveEvents = filterLiveEvents();
-  if (!liveEvents.length) return;
-  liveIndex = (liveIndex + 1) % liveEvents.length;
-  renderLive();
+  const liveCount = filteredEvents.filter((e) => e.status === "live").length;
+  if (!liveCount) return;
+  liveIndex = (liveIndex + 1) % liveCount;
+  renderNowNext();
 });
-
 on(recentPrev, "click", () => {
   if (!recentEvents.length) return;
   recentIndex = (recentIndex - 1 + recentEvents.length) % recentEvents.length;
   renderRecentStreams({ reshuffle: false });
 });
-
 on(recentNext, "click", () => {
   if (!recentEvents.length) return;
   recentIndex = (recentIndex + 1) % recentEvents.length;
   renderRecentStreams({ reshuffle: false });
 });
 
-loadSchedule();
+// initial load
+loadSchedule().catch((err) => {
+  console.error(err);
+  if (nowOn) nowOn.innerHTML = `<div class="muted">Error loading schedule.</div>`;
+  if (upNext) upNext.innerHTML = `<div class="muted">${escapeHtml(err.message)}</div>`;
+});
+
+setInterval(() => {
+  loadSchedule().catch((err) => console.error(err));
+}, 120000);

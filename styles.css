@@ -415,6 +415,76 @@ button{
   flex: 1;
 }
 
+.guideList{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.guideRow{
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.28);
+  color: rgba(255,255,255,0.94);
+  text-decoration: none;
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.guideRow:hover{
+  transform: translateY(-1px);
+  border-color: rgba(139,108,255,0.45);
+  box-shadow: 0 12px 26px rgba(0,0,0,0.28);
+}
+
+.guideTime{
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: rgba(255,255,255,0.85);
+  min-width: 68px;
+}
+
+.guideTitle{
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.guideTitleRow{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.guideTitleText{
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.guideMeta{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 11px;
+  color: rgba(255,255,255,0.7);
+}
+
+.guideBadge{
+  padding: 2px 8px;
+  font-size: 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(70,240,170,0.6);
+  color: rgba(70,240,170,0.95);
+  background: rgba(70,240,170,0.14);
+}
+
 /* Card in tiles */
 .card{
   display:flex;
@@ -531,7 +601,7 @@ button{
   overflow:hidden;
 }
 
-.scheduleHeader{
+scheduleHeader{
   display:flex;
   align-items:center;
   justify-content:space-between;

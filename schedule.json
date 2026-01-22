@@ -240,7 +240,22 @@
     "subscribers": 17100
   },
   {
-    "start_et": "2026-01-22 18:00",
+    "start_et": "2026-01-22 17:38",
+    "end_et": "2026-01-22 17:43",
+    "title": "Fix the Glitch",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "GlitchEgolf",
+    "watch_url": "https://www.youtube.com/watch?v=N36_ljcCKEU",
+    "source_id": "N36_ljcCKEU",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/N36_ljcCKEU/maxresdefault_live.jpg",
+    "subscribers": 15
+  },
+  {
+    "start_et": "2026-01-22 18:15",
     "end_et": "",
     "title": "3-Man Course Record Attempt | Thursday Night Thunder (LIVE)",
     "league": "",

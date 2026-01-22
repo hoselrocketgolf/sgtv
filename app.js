@@ -748,20 +748,28 @@ function renderSchedule() {
             e.thumbnail_url ||
             (e.source_id ? `https://i.ytimg.com/vi/${e.source_id}/hqdefault.jpg` : "");
           const liveBadge = e.status === "live" ? `<span class="badgeLive">LIVE</span>` : "";
+          const timeRange = `${fmtTime(s)}–${fmtTime(ee)}`;
 
           return `
             <a class="block ${e.status || ""}" href="${escapeHtml(
               e.watch_url || "#"
             )}" target="_blank" rel="noreferrer"
               style="left:${clippedLeft}px; width:${width}px;">
-              <div class="blockTitle">
-                ${liveBadge}
-                <span>${escapeHtml(e.title || "")}</span>
+              <div class="blockMedia" style="background-image:url('${encodeURI(thumb)}')"></div>
+              <div class="blockOverlay"></div>
+              <div class="blockContent">
+                <div class="blockTop">
+                  <div class="blockTitle">${escapeHtml(e.title || "")}</div>
+                  ${liveBadge}
+                </div>
+                <div class="blockBottom">
+                  <span class="blockTime">${timeRange}</span>
+                  <span>•</span>
+                  <span class="blockMeta">${escapeHtml(e.platform || "")} • ${escapeHtml(
+                    e.channel || ""
+                  )}</span>
+                </div>
               </div>
-              <div class="blockMeta">${escapeHtml(e.platform || "")} • ${escapeHtml(
-                e.channel || ""
-              )}</div>
-              <div class="blockThumb" style="background-image:url('${encodeURI(thumb)}')"></div>
             </a>
           `;
         })
@@ -770,7 +778,7 @@ function renderSchedule() {
       return `
         <div class="row">
           <div class="rowLabel">
-            <div class="channel">${escapeHtml(r.channel)}</div>
+            <div class="name">${escapeHtml(r.channel)}</div>
             <div class="subs">${escapeHtml(subs)}</div>
           </div>
           <div class="lane" style="width:${surfaceW}px;">

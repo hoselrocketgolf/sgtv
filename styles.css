@@ -24,8 +24,8 @@
   --radius: 24px;
   --radius2: 18px;
 
-  --rowH: 76px;
-  --cellH: 68px;
+  --rowH: 92px;
+  --cellH: 82px;
   --gutter: 18px;
 
   /* schedule geometry (MUST match app.js; app.js reads these) */
@@ -170,7 +170,7 @@ h1{
 }
 
 .control.grow{ min-width: 280px; }
-.control.refresh{ min-width: 140px; align-items:flex-end; }
+control.refresh{ min-width: 140px; align-items:flex-end; }
 
 label{
   font-size: 11px;
@@ -546,7 +546,6 @@ button{
   text-decoration: underline;
 }
 
-
 .cardMeta{
   display:flex;
   flex-wrap: wrap;
@@ -601,7 +600,7 @@ button{
   overflow:hidden;
 }
 
-scheduleHeader{
+.scheduleHeader{
   display:flex;
   align-items:center;
   justify-content:space-between;
@@ -647,7 +646,7 @@ scheduleHeader{
 }
 
 .nowBtn:hover{ border-color: rgba(255,184,119,0.6); }
-.nowBtn:active{ transform: translateY(1px); }
+nowBtn:active{ transform: translateY(1px); }
 
 .windowLabel{
   font-size: 12px;
@@ -748,13 +747,17 @@ scheduleHeader{
 /* Show blocks */
 .block{
   position: absolute;
-  top: 8px;
+  top: 6px;
   height: var(--cellH);
-  border-radius: 18px;
+  border-radius: 20px;
   border: 1px solid rgba(255,255,255,0.16);
   overflow:hidden;
   cursor:pointer;
-  display:block;
+  display:flex;
+  flex-direction:column;
+  justify-content: flex-end;
+  gap: 6px;
+  padding: 10px 12px;
   background: rgba(0,0,0,0.3);
   transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
 }
@@ -806,11 +809,37 @@ scheduleHeader{
 
 .blockTitle{
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
   color: rgba(255,255,255,0.95);
-  white-space:nowrap;
-  overflow:hidden;
+  line-height: 1.2;
+  max-height: 2.4em;
+  overflow: hidden;
   text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  position: relative;
+  z-index: 1;
+}
+
+.blockMeta{
+  font-size: 11px;
+  color: rgba(255,255,255,0.72);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: relative;
+  z-index: 1;
+}
+
+.blockThumb{
+  position:absolute;
+  inset:0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0.25;
+  filter: saturate(1.1);
 }
 
 .badgeLive{

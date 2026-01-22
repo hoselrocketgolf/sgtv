@@ -1,18 +1,33 @@
 [
   {
-    "start_et": "2026-01-22 13:58",
+    "start_et": "2026-01-22 15:09",
     "end_et": "",
-    "title": "Mixed Club Break 50 Challenge with Joshomatic & Simplyme80",
+    "title": "Joe Lagowski Golf is live",
     "league": "",
     "platform": "YouTube",
-    "channel": "Strong Design Studio",
-    "watch_url": "https://www.youtube.com/watch?v=fDECEGpGHkU",
-    "source_id": "fDECEGpGHkU",
+    "channel": "Joe Lagowski Golf",
+    "watch_url": "https://www.youtube.com/watch?v=GnzvL1co2AU",
+    "source_id": "GnzvL1co2AU",
     "type": "",
     "is_premiere": false,
     "status": "live",
-    "thumbnail_url": "https://i.ytimg.com/vi/fDECEGpGHkU/maxresdefault_live.jpg",
-    "subscribers": 60
+    "thumbnail_url": "https://i.ytimg.com/vi/GnzvL1co2AU/maxresdefault_live.jpg",
+    "subscribers": 17100
+  },
+  {
+    "start_et": "2026-01-22 15:16",
+    "end_et": "",
+    "title": "Hosel Rocket Golf is live on TikTok",
+    "league": "",
+    "platform": "TikTok",
+    "channel": "Hosel Rocket Golf",
+    "watch_url": "https://www.tiktok.com/@hoselrocketgolf/live",
+    "source_id": "7596437629344697143",
+    "type": "",
+    "is_premiere": false,
+    "status": "live",
+    "thumbnail_url": "",
+    "subscribers": 0
   },
   {
     "start_et": "2026-01-20 20:11",
@@ -227,7 +242,7 @@
   {
     "start_et": "2026-01-22 13:00",
     "end_et": "2026-01-22 13:05",
-    "title": "Joe Lagowski Golf is live",
+    "title": "Live from the GolfJoy Booth at the 2026 PGA Show",
     "league": "",
     "platform": "YouTube",
     "channel": "Joe Lagowski Golf",
@@ -238,5 +253,20 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/jqvL7Zz3KFQ/maxresdefault.jpg",
     "subscribers": 17100
+  },
+  {
+    "start_et": "2026-01-22 13:58",
+    "end_et": "2026-01-22 15:03",
+    "title": "Mixed Club Break 50 Challenge with Joshomatic & Simplyme80",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Strong Design Studio",
+    "watch_url": "https://www.youtube.com/watch?v=fDECEGpGHkU",
+    "source_id": "fDECEGpGHkU",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/fDECEGpGHkU/maxresdefault_live.jpg",
+    "subscribers": 60
   }
 ]

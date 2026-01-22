@@ -15,36 +15,6 @@
     "subscribers": 17100
   },
   {
-    "start_et": "2026-01-22 15:16",
-    "end_et": "",
-    "title": "Hosel Rocket Golf is live on TikTok",
-    "league": "",
-    "platform": "TikTok",
-    "channel": "Hosel Rocket Golf",
-    "watch_url": "https://www.tiktok.com/@hoselrocketgolf/live",
-    "source_id": "7596437629344697143",
-    "type": "",
-    "is_premiere": false,
-    "status": "live",
-    "thumbnail_url": "",
-    "subscribers": 0
-  },
-  {
-    "start_et": "2026-01-20 20:11",
-    "end_et": "2026-01-21 03:17",
-    "title": "\ud83d\udd34LIVE | ARC NUTTERS | TESTICULAR TORSION TUESDAY | #ShartOnMyForehead&DripItIntoMyMouth #BUNGULATE",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "TheBurntPeanut",
-    "watch_url": "https://www.youtube.com/watch?v=UHVWz4YlLIM",
-    "source_id": "UHVWz4YlLIM",
-    "type": "",
-    "is_premiere": false,
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/UHVWz4YlLIM/maxresdefault.jpg",
-    "subscribers": 1350000
-  },
-  {
     "start_et": "2026-01-21 09:16",
     "end_et": "2026-01-21 09:22",
     "title": "Live from the Square booth at the 2026 PGA Show",
@@ -268,5 +238,20 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/fDECEGpGHkU/maxresdefault_live.jpg",
     "subscribers": 60
+  },
+  {
+    "start_et": "2026-01-22 22:00",
+    "end_et": "",
+    "title": "Take It Low TNT with DLUD and Ryan",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Take It Low Golf 29",
+    "watch_url": "https://www.youtube.com/watch?v=fjiAxFJ8hSc",
+    "source_id": "fjiAxFJ8hSc",
+    "type": "premiere",
+    "is_premiere": true,
+    "status": "upcoming",
+    "thumbnail_url": "https://i.ytimg.com/vi/fjiAxFJ8hSc/maxresdefault_live.jpg",
+    "subscribers": 12
   }
 ]

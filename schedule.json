@@ -191,7 +191,7 @@
     "type": "",
     "is_premiere": false,
     "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/l4LDzKU28mY/maxresdefault_live.jpg",
+    "thumbnail_url": "https://i.ytimg.com/vi/l4LDzKU28mY/maxresdefault.jpg",
     "subscribers": 17100
   },
   {
@@ -267,7 +267,7 @@
     "is_premiere": true,
     "status": "upcoming",
     "thumbnail_url": "https://i.ytimg.com/vi/I39AsP1-o_M/maxresdefault_live.jpg",
-    "subscribers": 1070
+    "subscribers": 1080
   },
   {
     "start_et": "2026-01-22 14:00",

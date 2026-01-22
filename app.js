@@ -224,8 +224,15 @@ function csvRowsToEvents(csvText) {
     const channel = findCsvValue(row, headers, ["channel", "channel_name", "host"]);
     const watchUrl = findCsvValue(row, headers, ["watch_url", "url", "link", "watch", "watch url"]);
     const status = findCsvValue(row, headers, ["status", "live_status"]);
+    const eventType = findCsvValue(row, headers, ["type", "event_type"]);
+    const premiereFlag = findCsvValue(row, headers, [
+      "is_premiere",
+      "isPremiere",
+      "premiere",
+    ]);
     const thumbnailUrl = findCsvValue(row, headers, ["thumbnail_url", "thumb", "thumbnail"]);
     const subscribers = findCsvValue(row, headers, ["subscribers", "subs"]);
+    const premiereFlagNormalized = premiereFlag.trim().toLowerCase();
 
     return {
       start_et: start,
@@ -235,42 +242,43 @@ function csvRowsToEvents(csvText) {
       platform,
       channel,
       watch_url: watchUrl,
-      source_id: "",
-      status: status || "",
+      type: eventType,
+      is_premiere: premiereFlagNormalized === "true" || premiereFlagNormalized === "yes",
+      status,
       thumbnail_url: thumbnailUrl,
-      subscribers: subscribers ? Number(subscribers) : undefined,
+      subscribers,
     };
   });
 }
 
-function formatTime(date) {
-  if (!date) return "";
-  return new Intl.DateTimeFormat(undefined, {
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(date);
+function parseScheduleData(rawText, preferCsv) {
+  const trimmed = rawText.trim();
+  if (preferCsv) return csvRowsToEvents(rawText);
+  if (trimmed.startsWith("[") || trimmed.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(rawText);
+      if (Array.isArray(parsed)) return parsed;
+    } catch (err) {
+      // fall through to CSV parsing
+    }
+  }
+  return csvRowsToEvents(rawText);
 }
 
-function formatDay(date) {
-  if (!date) return "";
-  return new Intl.DateTimeFormat(undefined, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  }).format(date);
+function fmtTime(dt) {
+  if (!dt) return "";
+  // viewer local time
+  return dt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
-function formatDayLong(date) {
-  if (!date) return "";
-  return new Intl.DateTimeFormat(undefined, {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  }).format(date);
+function fmtDay(dt) {
+  if (!dt) return "";
+  return dt.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
 }
 
-function addMinutes(date, minutes) {
-  return new Date(date.getTime() + minutes * 60 * 1000);
+function fmtDayLong(dt) {
+  if (!dt) return "";
+  return dt.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
 }
 
 function startOfDayZoned(date, timeZone) {
@@ -295,87 +303,56 @@ function startOfDayZoned(date, timeZone) {
 
 function endOfDayZoned(date, timeZone) {
   const start = startOfDayZoned(date, timeZone);
-  return addMinutes(start, 24 * 60 - 1);
+  return new Date(start.getTime() + (24 * 60 * 60 * 1000 - 1));
 }
 
 function eventEnd(e) {
-  const end = parseET(e?.end_et);
+  if (!e) return null;
+  const end = parseET(e.end_et);
   if (end) return end;
+
   const start = getEventStart(e);
   if (!start) return null;
-  if (e?.status === "live") return addMinutes(start, 60);
-  return addMinutes(start, 60);
+
+  // fallback: 2 hrs for live/ended; 1 hr for upcoming
+  if (e.status === "live" || e.status === "ended") return new Date(start.getTime() + 2 * 60 * 60 * 1000);
+  return new Date(start.getTime() + 60 * 60 * 1000);
 }
 
-function eventLengthMins(e) {
-  const start = getEventStart(e);
-  const end = eventEnd(e);
-  if (!start || !end) return 0;
-  return Math.max(1, Math.round((end.getTime() - start.getTime()) / 60000));
-}
-
-function parseToLocalDate(str) {
-  return parseET(str);
-}
-
-function fmtTime(date) {
-  return date ? formatTime(date) : "";
-}
-
-function fmtDay(date) {
-  return date ? formatDay(date) : "";
-}
-
-function fmtDayLong(date) {
-  return date ? formatDayLong(date) : "";
-}
-
-function fmtClockTimeRange(start, end) {
-  const st = fmtTime(start);
-  const en = fmtTime(end);
-  return st && en ? `${st} – ${en}` : "";
-}
-
-function statusToText(e) {
-  if (!e?.status) return "";
-  const s = e.status.toLowerCase();
-  if (s === "live") return "LIVE";
-  if (s === "upcoming" || s === "scheduled") return "UPCOMING";
-  if (s === "ended") return "ENDED";
-  return s.toUpperCase();
-}
-
-function statusToPillClass(e) {
+function statusClass(e) {
   if (!e?.status) return "";
   const s = e.status.toLowerCase();
   if (s === "live") return "live";
-  if (s === "upcoming" || s === "scheduled") return "upcoming";
   if (s === "ended") return "ended";
-  return "";
+  return "upcoming";
+}
+
+function statusText(e) {
+  if (!e?.status) return "";
+  const s = e.status.toLowerCase();
+  if (s === "live") return "Live";
+  if (s === "ended") return "Ended";
+  return "Upcoming";
 }
 
 function fmtSubs(n) {
-  if (!n || !Number.isFinite(n)) return "";
-  if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M subs`;
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}K subs`;
-  return `${n} subs`;
+  if (!n || !Number.isFinite(Number(n))) return "";
+  const num = Number(n);
+  if (num >= 1000000) return `${(num / 1000000).toFixed(2)}M subs`;
+  if (num >= 1000) return `${(num / 1000).toFixed(1)}K subs`;
+  return `${num} subs`;
 }
 
-function renderCard(e, live = false) {
+function renderCard(e, live) {
   if (!e) return "";
   const start = getEventStart(e);
   const end = eventEnd(e);
-  const timeRange = fmtClockTimeRange(start, end);
-  const timeText = timeRange || fmtTime(start);
-  const subText = e.status ? statusToText(e) : "";
+  const time = start && end ? `${fmtTime(start)}–${fmtTime(end)}` : fmtTime(start);
   const subs = fmtSubs(e.subscribers);
-  const thumb = e.thumbnail_url ? e.thumbnail_url : "";
-  const hasThumb = thumb && !thumb.includes("undefined");
-  const media = hasThumb
-    ? `style="background-image:url('${thumb}');"`
-    : "";
-  const watchUrl = e.watch_url || "#";
   const badge = live ? `<span class="pill live">LIVE</span>` : "";
+  const thumbnail = e.thumbnail_url || "";
+  const media = thumbnail ? `style="background-image:url('${thumbnail}');"` : "";
+  const watchUrl = e.watch_url || "#";
 
   return `
   <div class="card ${live ? "cardLive" : ""}">
@@ -835,7 +812,8 @@ async function loadSchedule() {
       const csvText = await fetchCsvSchedule();
       events = csvRowsToEvents(csvText);
     } else {
-      events = await fetchJsonSchedule();
+      const jsonText = await fetchJsonSchedule();
+      events = parseScheduleData(JSON.stringify(jsonText), false);
     }
 
     events = events.map(normalizeEvent);

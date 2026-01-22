@@ -1,5 +1,20 @@
 [
   {
+    "start_et": "2026-01-22 13:58",
+    "end_et": "",
+    "title": "Mixed Club Break 50 Challenge with Joshomatic & Simplyme80",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Strong Design Studio",
+    "watch_url": "https://www.youtube.com/watch?v=fDECEGpGHkU",
+    "source_id": "fDECEGpGHkU",
+    "type": "",
+    "is_premiere": false,
+    "status": "live",
+    "thumbnail_url": "https://i.ytimg.com/vi/fDECEGpGHkU/maxresdefault_live.jpg",
+    "subscribers": 60
+  },
+  {
     "start_et": "2026-01-20 20:11",
     "end_et": "2026-01-21 03:17",
     "title": "\ud83d\udd34LIVE | ARC NUTTERS | TESTICULAR TORSION TUESDAY | #ShartOnMyForehead&DripItIntoMyMouth #BUNGULATE",
@@ -13,21 +28,6 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/UHVWz4YlLIM/maxresdefault.jpg",
     "subscribers": 1350000
-  },
-  {
-    "start_et": "2026-01-20 23:02",
-    "end_et": "2026-01-21 00:52",
-    "title": "Twisted Sticks Events on SGT and GSPRO",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "DLud Golf",
-    "watch_url": "https://www.youtube.com/watch?v=1VFipd-kkhg",
-    "source_id": "1VFipd-kkhg",
-    "type": "",
-    "is_premiere": false,
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/1VFipd-kkhg/maxresdefault.jpg",
-    "subscribers": 1870
   },
   {
     "start_et": "2026-01-21 09:16",
@@ -206,13 +206,13 @@
     "type": "",
     "is_premiere": false,
     "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/aypw3fcnkB0/maxresdefault_live.jpg",
+    "thumbnail_url": "https://i.ytimg.com/vi/aypw3fcnkB0/maxresdefault.jpg",
     "subscribers": 1870
   },
   {
     "start_et": "2026-01-22 10:28",
     "end_et": "2026-01-22 10:36",
-    "title": "Joe Lagowski Golf is live",
+    "title": "Live from the Protee Booth at the 2026 PGA show",
     "league": "",
     "platform": "YouTube",
     "channel": "Joe Lagowski Golf",
@@ -225,18 +225,18 @@
     "subscribers": 17100
   },
   {
-    "start_et": "2026-01-22 14:00",
-    "end_et": "",
-    "title": "Mixed Club Break 50 Challenge with Joshomatic & Simplyme80",
+    "start_et": "2026-01-22 13:00",
+    "end_et": "2026-01-22 13:05",
+    "title": "Joe Lagowski Golf is live",
     "league": "",
     "platform": "YouTube",
-    "channel": "Strong Design Studio",
-    "watch_url": "https://www.youtube.com/watch?v=fDECEGpGHkU",
-    "source_id": "fDECEGpGHkU",
-    "type": "premiere",
-    "is_premiere": true,
-    "status": "upcoming",
-    "thumbnail_url": "https://i.ytimg.com/vi/fDECEGpGHkU/maxresdefault_live.jpg",
-    "subscribers": 60
+    "channel": "Joe Lagowski Golf",
+    "watch_url": "https://www.youtube.com/watch?v=jqvL7Zz3KFQ",
+    "source_id": "jqvL7Zz3KFQ",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/jqvL7Zz3KFQ/maxresdefault.jpg",
+    "subscribers": 17100
   }
 ]

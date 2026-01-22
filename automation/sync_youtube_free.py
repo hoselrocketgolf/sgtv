@@ -232,10 +232,33 @@ def extract_tiktok_cover(payload: dict | None) -> str:
             return val
     return ""
 
+def extract_tiktok_live_state(payload: dict | None) -> bool | None:
+    if not payload or not isinstance(payload, dict):
+        return None
+    data = payload.get("data") or {}
+    candidates = [data, data.get("room") or {}, data.get("liveRoom") or {}]
+    for obj in candidates:
+        is_live = obj.get("isLive")
+        if isinstance(is_live, bool):
+            return is_live
+        for key in ["liveStatus", "live_status", "status", "roomStatus"]:
+            val = obj.get(key)
+            if isinstance(val, str) and val.isdigit():
+                val = int(val)
+            if isinstance(val, (int, float)):
+                if val == 2:
+                    return True
+                if val == 0:
+                    return False
+    return None
+
 def fetch_tiktok_live_status(handle: str, tiktok_url: str) -> tuple[bool, str, str]:
     payload = fetch_tiktok_live_data(handle)
     room_id = extract_tiktok_room_id(payload)
-    if room_id:
+    live_state = extract_tiktok_live_state(payload)
+    if live_state is False:
+        return False, "", ""
+    if room_id and live_state is not False:
         return True, room_id, extract_tiktok_cover(payload)
 
     if not tiktok_url:
@@ -246,9 +269,21 @@ def fetch_tiktok_live_status(handle: str, tiktok_url: str) -> tuple[bool, str, s
     except Exception:
         return False, "", ""
 
-    match = re.search(r'"roomId":"(\d+)"', html)
+    html_lower = html.lower()
+    if "live has ended" in html_lower:
+        return False, "", ""
+
+    live_token = re.search(r'"isLive"\s*:\s*true', html)
+    if not live_token:
+        live_token = re.search(r'"liveStatus"\s*:\s*2', html)
+    if not live_token:
+        live_token = re.search(r'"status"\s*:\s*2', html)
+    if not live_token:
+        return False, "", ""
+
+    match = re.search(r'"roomId"\s*:\s*"(\d+)"', html)
     if not match:
-        match = re.search(r'"liveRoomId":"(\d+)"', html)
+        match = re.search(r'"liveRoomId"\s*:\s*"(\d+)"', html)
     return (match is not None), (match.group(1) if match else ""), ""
 
 # --------- Time helpers ---------

@@ -139,9 +139,7 @@ function isPremiereEvent(e) {
   const status = (e?.status || "").toLowerCase();
   if (status.includes("premiere")) return true;
   const title = (e?.title || "").toLowerCase();
-  if (title.includes("premiere")) return true;
-  const watchUrl = (e?.watch_url || "").toLowerCase();
-  return watchUrl.includes("premiere");
+  return title.includes("premiere");
 }
 
 function getEventStart(e) {

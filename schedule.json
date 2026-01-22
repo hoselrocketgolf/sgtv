@@ -8,9 +8,26 @@
     "channel": "TheBurntPeanut",
     "watch_url": "https://www.youtube.com/watch?v=kgSo1FO_hhw",
     "source_id": "kgSo1FO_hhw",
+    "type": "",
+    "is_premiere": false,
     "status": "live",
     "thumbnail_url": "https://i.ytimg.com/vi/kgSo1FO_hhw/maxresdefault_live.jpg",
     "subscribers": 1350000
+  },
+  {
+    "start_et": "2026-01-21 22:00",
+    "end_et": "",
+    "title": "@pakgolfstudios GGG & Zona attempt to break 50! Twisted Sticks Designer Challenge at Whistler!",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Garbage Garage Golf",
+    "watch_url": "https://www.youtube.com/watch?v=cHHuqEn4MiU",
+    "source_id": "cHHuqEn4MiU",
+    "type": "",
+    "is_premiere": false,
+    "status": "live",
+    "thumbnail_url": "https://i.ytimg.com/vi/cHHuqEn4MiU/maxresdefault_live.jpg",
+    "subscribers": 94
   },
   {
     "start_et": "2026-01-20 11:18",
@@ -21,6 +38,8 @@
     "channel": "Triple Bogey Golf",
     "watch_url": "https://www.youtube.com/watch?v=Eh4R_jI-td0",
     "source_id": "Eh4R_jI-td0",
+    "type": "",
+    "is_premiere": false,
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/Eh4R_jI-td0/maxresdefault.jpg",
     "subscribers": 8810
@@ -34,6 +53,8 @@
     "channel": "McGolfinTV",
     "watch_url": "https://www.youtube.com/watch?v=jj_ILK-l97I",
     "source_id": "jj_ILK-l97I",
+    "type": "",
+    "is_premiere": false,
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/jj_ILK-l97I/maxresdefault.jpg",
     "subscribers": 823
@@ -47,6 +68,8 @@
     "channel": "Swing Yard",
     "watch_url": "https://www.youtube.com/watch?v=m5RGVRfGqSs",
     "source_id": "m5RGVRfGqSs",
+    "type": "",
+    "is_premiere": false,
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/m5RGVRfGqSs/maxresdefault.jpg",
     "subscribers": 996
@@ -60,6 +83,8 @@
     "channel": "Swing Yard",
     "watch_url": "https://www.youtube.com/watch?v=XE73cI7xMPU",
     "source_id": "XE73cI7xMPU",
+    "type": "",
+    "is_premiere": false,
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/XE73cI7xMPU/maxresdefault.jpg",
     "subscribers": 996
@@ -73,6 +98,8 @@
     "channel": "DLud Golf",
     "watch_url": "https://www.youtube.com/watch?v=SirOEQdfEmU",
     "source_id": "SirOEQdfEmU",
+    "type": "",
+    "is_premiere": false,
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/SirOEQdfEmU/maxresdefault.jpg",
     "subscribers": 1870
@@ -86,6 +113,8 @@
     "channel": "TurbodTalon Golf",
     "watch_url": "https://www.youtube.com/watch?v=HGSXoqgRE7A",
     "source_id": "HGSXoqgRE7A",
+    "type": "",
+    "is_premiere": false,
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/HGSXoqgRE7A/maxresdefault.jpg",
     "subscribers": 179
@@ -99,6 +128,8 @@
     "channel": "TheBurntPeanut",
     "watch_url": "https://www.youtube.com/watch?v=UHVWz4YlLIM",
     "source_id": "UHVWz4YlLIM",
+    "type": "",
+    "is_premiere": false,
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/UHVWz4YlLIM/maxresdefault.jpg",
     "subscribers": 1350000
@@ -112,6 +143,8 @@
     "channel": "SticeGolf",
     "watch_url": "https://www.youtube.com/watch?v=H1fOIVSl1Bw",
     "source_id": "H1fOIVSl1Bw",
+    "type": "",
+    "is_premiere": false,
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/H1fOIVSl1Bw/maxresdefault.jpg",
     "subscribers": 219
@@ -125,6 +158,8 @@
     "channel": "Band Sagger",
     "watch_url": "https://www.youtube.com/watch?v=qICgsI8UHQ0",
     "source_id": "qICgsI8UHQ0",
+    "type": "",
+    "is_premiere": false,
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/qICgsI8UHQ0/maxresdefault.jpg",
     "subscribers": 538
@@ -138,6 +173,8 @@
     "channel": "DLud Golf",
     "watch_url": "https://www.youtube.com/watch?v=1VFipd-kkhg",
     "source_id": "1VFipd-kkhg",
+    "type": "",
+    "is_premiere": false,
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/1VFipd-kkhg/maxresdefault.jpg",
     "subscribers": 1870
@@ -151,6 +188,8 @@
     "channel": "Joe Lagowski Golf",
     "watch_url": "https://www.youtube.com/watch?v=PNgbrCa2xJs",
     "source_id": "PNgbrCa2xJs",
+    "type": "",
+    "is_premiere": false,
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/PNgbrCa2xJs/maxresdefault.jpg",
     "subscribers": 17100
@@ -164,6 +203,8 @@
     "channel": "Joe Lagowski Golf",
     "watch_url": "https://www.youtube.com/watch?v=xZqGcaPClbk",
     "source_id": "xZqGcaPClbk",
+    "type": "",
+    "is_premiere": false,
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/xZqGcaPClbk/maxresdefault.jpg",
     "subscribers": 17100
@@ -177,6 +218,8 @@
     "channel": "Joe Lagowski Golf",
     "watch_url": "https://www.youtube.com/watch?v=_239ljSr7AQ",
     "source_id": "_239ljSr7AQ",
+    "type": "",
+    "is_premiere": false,
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/_239ljSr7AQ/maxresdefault.jpg",
     "subscribers": 17100
@@ -190,6 +233,8 @@
     "channel": "Joe Lagowski Golf",
     "watch_url": "https://www.youtube.com/watch?v=4zj1dEIJ2Wc",
     "source_id": "4zj1dEIJ2Wc",
+    "type": "",
+    "is_premiere": false,
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/4zj1dEIJ2Wc/maxresdefault.jpg",
     "subscribers": 17100
@@ -203,6 +248,8 @@
     "channel": "Swing Yard",
     "watch_url": "https://www.youtube.com/watch?v=2a1qLzQigqA",
     "source_id": "2a1qLzQigqA",
+    "type": "",
+    "is_premiere": false,
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/2a1qLzQigqA/maxresdefault_live.jpg",
     "subscribers": 996
@@ -216,6 +263,8 @@
     "channel": "Joe Lagowski Golf",
     "watch_url": "https://www.youtube.com/watch?v=QLhHOISJo10",
     "source_id": "QLhHOISJo10",
+    "type": "",
+    "is_premiere": false,
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/QLhHOISJo10/maxresdefault.jpg",
     "subscribers": 17100
@@ -229,6 +278,8 @@
     "channel": "Hosel Rocket Golf",
     "watch_url": "https://www.youtube.com/watch?v=eshQefaiq_E",
     "source_id": "eshQefaiq_E",
+    "type": "",
+    "is_premiere": false,
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/eshQefaiq_E/maxresdefault.jpg",
     "subscribers": 2490
@@ -242,6 +293,8 @@
     "channel": "Joe Lagowski Golf",
     "watch_url": "https://www.youtube.com/watch?v=l4LDzKU28mY",
     "source_id": "l4LDzKU28mY",
+    "type": "",
+    "is_premiere": false,
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/l4LDzKU28mY/maxresdefault_live.jpg",
     "subscribers": 17100
@@ -255,22 +308,26 @@
     "channel": "Strong Design Studio",
     "watch_url": "https://www.youtube.com/watch?v=obifd-sYIQ8",
     "source_id": "obifd-sYIQ8",
+    "type": "",
+    "is_premiere": false,
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/obifd-sYIQ8/maxresdefault_live.jpg",
     "subscribers": 60
   },
   {
-    "start_et": "2026-01-21 22:00",
+    "start_et": "2026-01-22 09:30",
     "end_et": "",
-    "title": "@pakgolfstudios GGG & Zona attempt to break 50! Twisted Sticks Designer Challenge at Whistler!",
+    "title": "2FG is live",
     "league": "",
     "platform": "YouTube",
-    "channel": "Garbage Garage Golf",
-    "watch_url": "https://www.youtube.com/watch?v=cHHuqEn4MiU",
-    "source_id": "cHHuqEn4MiU",
+    "channel": "2nd Flight Golf",
+    "watch_url": "https://www.youtube.com/watch?v=I39AsP1-o_M",
+    "source_id": "I39AsP1-o_M",
+    "type": "premiere",
+    "is_premiere": true,
     "status": "upcoming",
-    "thumbnail_url": "https://i.ytimg.com/vi/cHHuqEn4MiU/maxresdefault_live.jpg",
-    "subscribers": 94
+    "thumbnail_url": "https://i.ytimg.com/vi/I39AsP1-o_M/maxresdefault_live.jpg",
+    "subscribers": 1070
   },
   {
     "start_et": "2026-01-22 14:00",
@@ -281,6 +338,8 @@
     "channel": "Strong Design Studio",
     "watch_url": "https://www.youtube.com/watch?v=fDECEGpGHkU",
     "source_id": "fDECEGpGHkU",
+    "type": "premiere",
+    "is_premiere": true,
     "status": "upcoming",
     "thumbnail_url": "https://i.ytimg.com/vi/fDECEGpGHkU/maxresdefault_live.jpg",
     "subscribers": 60

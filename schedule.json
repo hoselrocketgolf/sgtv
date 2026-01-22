@@ -1,5 +1,18 @@
 [
   {
+    "start_et": "2026-01-21 20:11",
+    "end_et": "",
+    "title": "\ud83d\udd34LIVE | CERTIFIED GOOP GETTER | WACK MY JUNK WITH A KNOTTED ROPE LIKE IM 007 WEDNESDAY | #BUNGULATE",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "TheBurntPeanut",
+    "watch_url": "https://www.youtube.com/watch?v=kgSo1FO_hhw",
+    "source_id": "kgSo1FO_hhw",
+    "status": "live",
+    "thumbnail_url": "https://i.ytimg.com/vi/kgSo1FO_hhw/maxresdefault_live.jpg",
+    "subscribers": 1350000
+  },
+  {
     "start_et": "2026-01-20 11:18",
     "end_et": "2026-01-20 16:08",
     "title": "Live at the PGA Show Demo Day!",
@@ -88,7 +101,7 @@
     "source_id": "UHVWz4YlLIM",
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/UHVWz4YlLIM/maxresdefault.jpg",
-    "subscribers": 1340000
+    "subscribers": 1350000
   },
   {
     "start_et": "2026-01-20 20:44",
@@ -197,7 +210,7 @@
   {
     "start_et": "2026-01-21 15:16",
     "end_et": "2026-01-21 15:22",
-    "title": "Joe Lagowski Golf is live",
+    "title": "Live from the Protee booth at the 2026 PGA Show",
     "league": "",
     "platform": "YouTube",
     "channel": "Joe Lagowski Golf",
@@ -223,7 +236,7 @@
   {
     "start_et": "2026-01-21 16:33",
     "end_et": "2026-01-21 16:54",
-    "title": "Joe Lagowski Golf is live",
+    "title": "Joe Lagowski Golf PGA Show 2026 UPDATE!",
     "league": "",
     "platform": "YouTube",
     "channel": "Joe Lagowski Golf",
@@ -234,15 +247,15 @@
     "subscribers": 17100
   },
   {
-    "start_et": "2026-01-21 19:15",
-    "end_et": "",
+    "start_et": "2026-01-21 19:14",
+    "end_et": "2026-01-21 20:19",
     "title": "Designer Club Scramble with KHthe8TH at Hanover Golf Club",
     "league": "",
     "platform": "YouTube",
     "channel": "Strong Design Studio",
     "watch_url": "https://www.youtube.com/watch?v=obifd-sYIQ8",
     "source_id": "obifd-sYIQ8",
-    "status": "upcoming",
+    "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/obifd-sYIQ8/maxresdefault_live.jpg",
     "subscribers": 60
   },

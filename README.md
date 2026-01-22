@@ -18,6 +18,20 @@ Recommended column headers (case-insensitive):
 
 The parser also recognizes common alternatives like `start`, `time`, `url`, `link`, etc.
 
+## Automating YouTube + TikTok schedules
+The automation script reads a published **channel sheet CSV** and writes `schedule.json`.
+
+Expected headers (case-insensitive):
+- platform (YouTube or TikTok)
+- handle
+- display_name
+- channel_id (YouTube only)
+- tiktok_url (TikTok only; can be profile URL)
+- subscribers (optional)
+
+For TikTok rows, provide either `handle` or `tiktok_url`. The script will attempt to
+detect live status and, when live, emit a `watch_url` pointing at `/live`.
+
 ## Run locally (optional)
 Just open `index.html` in your browser.
 

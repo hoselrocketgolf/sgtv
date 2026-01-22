@@ -95,6 +95,8 @@ def load_schedule_from_sheet(csv_url: str) -> list[dict]:
         channel = get_val(normalized_row, ["channel", "channel_name", "host"])
         watch_url = get_val(normalized_row, ["watch_url", "url", "link", "watch", "watch url"])
         status = get_val(normalized_row, ["status", "live_status"])
+        event_type = get_val(normalized_row, ["type", "event_type"])
+        is_premiere = get_val(normalized_row, ["is_premiere", "ispremiere", "premiere"])
         thumbnail_url = get_val(normalized_row, ["thumbnail_url", "thumb", "thumbnail"])
         subscribers = get_val(normalized_row, ["subscribers", "subs"])
 
@@ -121,6 +123,8 @@ def load_schedule_from_sheet(csv_url: str) -> list[dict]:
             "platform": platform,
             "channel": channel,
             "watch_url": watch_url,
+            "type": event_type,
+            "is_premiere": is_premiere.lower() in {"true", "yes", "1"},
             "status": status_normalized or "upcoming",
             "thumbnail_url": thumbnail_url,
             "subscribers": subs,
@@ -244,17 +248,20 @@ def fetch_uploads_video_ids(
             params["pageToken"] = page_token
 
         resp = yt_api("playlistItems", params)
-
         items = resp.get("items", [])
-        for it in items:
-            content = it.get("contentDetails") or {}
+
+        for item in items:
+            content = item.get("contentDetails") or {}
             vid = (content.get("videoId") or "").strip()
             published_at = content.get("videoPublishedAt") or ""
-            published_dt = parse_iso(published_at)
-            if published_dt and published_dt < cutoff:
+            dt = parse_iso(published_at)
+            if not vid:
+                continue
+            if dt and dt < cutoff:
                 return vids
-            if vid:
-                vids.append(vid)
+            vids.append(vid)
+            if len(vids) >= max_results:
+                break
 
         page_token = resp.get("nextPageToken")
         if not page_token:
@@ -518,9 +525,6 @@ def main():
             print("YouTube API request returned 403 (invalid key or quota). Skipping sync.")
             return
         print(f"YouTube API request failed with HTTP {exc.code}. Skipping sync.")
-        return
-    except Exception as exc:
-        print(f"Unexpected error during sync: {exc}. Skipping sync.")
         return
 
 if __name__ == "__main__":

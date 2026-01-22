@@ -276,7 +276,7 @@ def fetch_videos_details(video_ids: list[str]) -> dict:
     out = {}
     for batch in chunked(video_ids, 50):
         resp = yt_api("videos", {
-            "part": "snippet,liveStreamingDetails",
+            "part": "snippet,liveStreamingDetails,contentDetails",
             "id": ",".join(batch),
             "maxResults": 50
         })
@@ -285,6 +285,17 @@ def fetch_videos_details(video_ids: list[str]) -> dict:
             if vid:
                 out[vid] = item
     return out
+
+def looks_like_premiere(item: dict) -> bool:
+    snippet = item.get("snippet") or {}
+    title = (snippet.get("title") or "").lower()
+    description = (snippet.get("description") or "").lower()
+    if "premiere" in title or "premiere" in description:
+        return True
+    live_content = (snippet.get("liveBroadcastContent") or "").lower()
+    duration = ((item.get("contentDetails") or {}).get("duration") or "").strip()
+    # Scheduled videos with a known duration are often premieres (pre-recorded).
+    return live_content == "upcoming" and duration not in {"", "PT0S"}
 
 def fetch_search_live_video_ids(channel_id: str, max_results: int) -> list[str]:
     """
@@ -459,6 +470,8 @@ def main():
                 if not status or not start_iso:
                     continue
 
+                is_premiere = looks_like_premiere(item)
+
                 # Kill stale "upcoming" that are already in the past (canceled/never-live)
                 if status == "upcoming" and is_stale_upcoming(start_iso, now):
                     continue
@@ -498,6 +511,8 @@ def main():
                     "channel": channel_name,
                     "watch_url": f"https://www.youtube.com/watch?v={vid}",
                     "source_id": vid,
+                    "type": "premiere" if is_premiere else "",
+                    "is_premiere": is_premiere,
                     "status": status,
                     "thumbnail_url": thumb,
                     "subscribers": subs

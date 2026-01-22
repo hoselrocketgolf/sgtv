@@ -1,5 +1,35 @@
 [
   {
+    "start_et": "2026-01-22 18:20",
+    "end_et": "",
+    "title": "3-Man Course Record Attempt | Thursday Night Thunder (LIVE)",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Hosel Rocket Golf",
+    "watch_url": "https://www.youtube.com/watch?v=4zADm6zNpWs",
+    "source_id": "4zADm6zNpWs",
+    "type": "",
+    "is_premiere": false,
+    "status": "live",
+    "thumbnail_url": "https://i.ytimg.com/vi/4zADm6zNpWs/maxresdefault_live.jpg",
+    "subscribers": 2490
+  },
+  {
+    "start_et": "2026-01-22 18:20",
+    "end_et": "",
+    "title": "3 Man Scramble Course Record at Premonition for Thursday Night Thunder",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Hosel Rocket Golf",
+    "watch_url": "https://www.youtube.com/watch?v=LnoROF5tW-E",
+    "source_id": "LnoROF5tW-E",
+    "type": "",
+    "is_premiere": false,
+    "status": "live",
+    "thumbnail_url": "https://i.ytimg.com/vi/LnoROF5tW-E/maxresdefault_live.jpg",
+    "subscribers": 2490
+  },
+  {
     "start_et": "2026-01-21 09:16",
     "end_et": "2026-01-21 09:22",
     "title": "Live from the Square booth at the 2026 PGA Show",
@@ -147,7 +177,7 @@
     "is_premiere": false,
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/kgSo1FO_hhw/maxresdefault.jpg",
-    "subscribers": 1350000
+    "subscribers": 1360000
   },
   {
     "start_et": "2026-01-21 22:00",
@@ -253,21 +283,6 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/N36_ljcCKEU/maxresdefault_live.jpg",
     "subscribers": 15
-  },
-  {
-    "start_et": "2026-01-22 18:15",
-    "end_et": "",
-    "title": "3-Man Course Record Attempt | Thursday Night Thunder (LIVE)",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Hosel Rocket Golf",
-    "watch_url": "https://www.youtube.com/watch?v=4zADm6zNpWs",
-    "source_id": "4zADm6zNpWs",
-    "type": "premiere",
-    "is_premiere": true,
-    "status": "upcoming",
-    "thumbnail_url": "https://i.ytimg.com/vi/4zADm6zNpWs/maxresdefault_live.jpg",
-    "subscribers": 2490
   },
   {
     "start_et": "2026-01-22 20:45",

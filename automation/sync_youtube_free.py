@@ -472,6 +472,9 @@ def main():
 
                 is_premiere = looks_like_premiere(item)
 
+                if is_premiere and status == "ended":
+                    continue
+
                 # Kill stale "upcoming" that are already in the past (canceled/never-live)
                 if status == "upcoming" and is_stale_upcoming(start_iso, now):
                     continue

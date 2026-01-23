@@ -373,5 +373,20 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/ostq-TPEkZE/maxresdefault_live.jpg",
     "subscribers": 11
+  },
+  {
+    "start_et": "2026-01-22 21:24",
+    "end_et": "2026-01-22 22:03",
+    "title": "Sim Golf Tour Blitz Quest $ League R4 Medalist\u2014 Tough Course",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Band Sagger",
+    "watch_url": "https://www.youtube.com/watch?v=q8pMG-Qjn7s",
+    "source_id": "q8pMG-Qjn7s",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/q8pMG-Qjn7s/maxresdefault_live.jpg",
+    "subscribers": 539
   }
 ]

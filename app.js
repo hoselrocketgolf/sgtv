@@ -144,6 +144,15 @@ function isYouTubeUrl(url) {
   return /(?:youtube\.com|youtu\.be)/i.test(url);
 }
 
+function inferPlatformFromUrl(url) {
+  if (!url) return "";
+  if (/tiktok\.com/i.test(url)) return "TikTok";
+  if (/twitch\.tv/i.test(url)) return "Twitch";
+  if (/kick\.com/i.test(url)) return "Kick";
+  if (isYouTubeUrl(url)) return "YouTube";
+  return "";
+}
+
 function hasLiveThumbnail(url) {
   if (!url) return false;
   return /_live\.jpg(?:\?|$)/i.test(url);
@@ -163,6 +172,51 @@ function isPremiereEvent(e) {
 function getEventStart(e) {
   if (e?.start_override instanceof Date) return e.start_override;
   return parseET(e?.start_et);
+}
+
+function pickFirst(obj, keys) {
+  for (const key of keys) {
+    if (obj && obj[key] !== undefined && obj[key] !== null && String(obj[key]).trim() !== "") {
+      return obj[key];
+    }
+  }
+  return "";
+}
+
+function normalizeEventData(e) {
+  if (!e || typeof e !== "object") return null;
+  const start_et = pickFirst(e, [
+    "start_et",
+    "start",
+    "start_time",
+    "start time",
+    "time",
+  ]);
+  const end_et = pickFirst(e, ["end_et", "end", "end_time", "end time"]);
+  const title = pickFirst(e, ["title", "event", "name"]);
+  const league = pickFirst(e, ["league", "tour"]);
+  const platform = pickFirst(e, ["platform"]);
+  const channel = pickFirst(e, ["channel", "channel_name", "host"]);
+  const watch_url = pickFirst(e, ["watch_url", "url", "link", "watch", "watchUrl"]);
+  const type = pickFirst(e, ["type", "event_type"]);
+  const status = pickFirst(e, ["status", "live_status"]);
+  const thumbnail_url = pickFirst(e, ["thumbnail_url", "thumb", "thumbnail"]);
+  const subscribers = pickFirst(e, ["subscribers", "subs"]);
+
+  return {
+    ...e,
+    start_et: start_et || e.start_et,
+    end_et: end_et || e.end_et,
+    title: title || e.title,
+    league: league || e.league,
+    platform: platform || e.platform,
+    channel: channel || e.channel,
+    watch_url: watch_url || e.watch_url,
+    type: type || e.type,
+    status: status || e.status,
+    thumbnail_url: thumbnail_url || e.thumbnail_url,
+    subscribers: subscribers || e.subscribers,
+  };
 }
 
 function parseCsv(text) {
@@ -833,21 +887,22 @@ async function loadSchedule() {
       data
         .filter((e) => e && e.watch_url && (e.start_et || e.status === "live"))
         .map((e) => {
-          const rawStatus = String(e.status || "").trim().toLowerCase();
+          const normalizedEvent = normalizeEventData(e);
+          if (!normalizedEvent) return null;
+
+          const rawStatus = String(normalizedEvent.status || "").trim().toLowerCase();
           let status = rawStatus || "upcoming";
-          const start = parseET(e.start_et);
-          const explicitEnd = parseET(e.end_et);
+          const start = parseET(normalizedEvent.start_et);
+          const explicitEnd = parseET(normalizedEvent.end_et);
           let startOverride = null;
 
           const inferredEnd = start ? explicitEnd || new Date(start.getTime() + 120 * 60000) : null;
           const isLiveWindow =
             start && inferredEnd ? start.getTime() <= now && inferredEnd.getTime() >= now : false;
           const liveEligible =
-            !isYouTubeUrl(e.watch_url) || hasLiveThumbnail(e.thumbnail_url);
+            !isYouTubeUrl(normalizedEvent.watch_url) || hasLiveThumbnail(normalizedEvent.thumbnail_url);
 
-          const liveFutureTooFar = start
-            ? start.getTime() - now > maxLiveFutureMs
-            : false;
+          const liveFutureTooFar = start ? start.getTime() - now > maxLiveFutureMs : false;
 
           if (rawStatus === "live" && liveFutureTooFar) {
             status = "upcoming";
@@ -890,16 +945,20 @@ async function loadSchedule() {
             }
           }
 
+          const inferredPlatform =
+            normalizedEvent.platform || inferPlatformFromUrl(normalizedEvent.watch_url);
+
           return {
-            ...e,
+            ...normalizedEvent,
             status,
-            platform: e.platform || "",
-            channel: e.channel || "",
-            thumbnail_url: e.thumbnail_url || "",
-            subscribers: Number(e.subscribers || 0),
+            platform: inferredPlatform,
+            channel: normalizedEvent.channel || "",
+            thumbnail_url: normalizedEvent.thumbnail_url || "",
+            subscribers: Number(normalizedEvent.subscribers || 0),
             start_override: startOverride,
           };
         })
+        .filter(Boolean)
     );
 
     rebuildFilters(allEvents);

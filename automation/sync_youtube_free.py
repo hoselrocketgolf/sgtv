@@ -232,17 +232,25 @@ def fetch_tiktok_live_data(handle: str) -> dict | None:
     if not handle:
         return None
     warm_tiktok_cookies()
-    url = f"https://www.tiktok.com/api-live/user/room/?aid=1988&uniqueId={urllib.parse.quote(handle)}"
-    try:
-        return http_get_json(url)
-    except Exception:
-        return None
+    endpoints = [
+        "https://www.tiktok.com/api-live/user/room/?aid=1988&uniqueId=",
+        "https://www.tiktok.com/api/live/user/room/?aid=1988&uniqueId=",
+    ]
+    for base in endpoints:
+        url = f"{base}{urllib.parse.quote(handle)}"
+        try:
+            payload = http_get_json(url)
+        except Exception:
+            continue
+        if isinstance(payload, dict):
+            return payload
+    return None
 
 def extract_tiktok_room_id(payload: dict | None) -> str:
     if not payload or not isinstance(payload, dict):
         return ""
     data = payload.get("data") or {}
-    candidates = [data, data.get("room") or {}, data.get("liveRoom") or {}]
+    candidates = [data, data.get("room") or {}, data.get("liveRoom") or {}, data.get("roomInfo") or {}]
     for obj in candidates:
         for key in ["roomId", "room_id", "liveRoomId", "live_room_id"]:
             val = obj.get(key)
@@ -301,7 +309,20 @@ def fetch_tiktok_live_status(handle: str, tiktok_url: str) -> tuple[bool, str, s
     except Exception:
         return False, "", ""
 
-    return extract_tiktok_status_from_html(html)
+    status = extract_tiktok_status_from_html(html)
+    if status[0] or status[1]:
+        return status
+
+    profile_url = normalize_tiktok_profile_url(tiktok_url)
+    if "/live" in tiktok_url and profile_url and profile_url != tiktok_url:
+        try:
+            warm_tiktok_cookies()
+            profile_html = http_get(profile_url)
+        except Exception:
+            return status
+        return extract_tiktok_status_from_html(profile_html)
+
+    return status
 
 def find_first_key_value(data: object, keys: set[str]) -> object | None:
     if isinstance(data, dict):

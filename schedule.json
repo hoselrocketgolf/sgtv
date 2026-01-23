@@ -1,33 +1,18 @@
 [
   {
-    "start_et": "2026-01-22 18:20",
+    "start_et": "2026-01-22 20:14",
     "end_et": "",
-    "title": "3-Man Course Record Attempt | Thursday Night Thunder (LIVE)",
+    "title": "\ud83d\udd34LIVE | SHE ARC TILL I RAIDER w/ A Furry (Cloakzy) & Cheater (Nick) | #Shart3x&MakeAWish #BUNGULATE",
     "league": "",
     "platform": "YouTube",
-    "channel": "Hosel Rocket Golf",
-    "watch_url": "https://www.youtube.com/watch?v=4zADm6zNpWs",
-    "source_id": "4zADm6zNpWs",
+    "channel": "TheBurntPeanut",
+    "watch_url": "https://www.youtube.com/watch?v=8t588Nt63e8",
+    "source_id": "8t588Nt63e8",
     "type": "",
     "is_premiere": false,
     "status": "live",
-    "thumbnail_url": "https://i.ytimg.com/vi/4zADm6zNpWs/maxresdefault_live.jpg",
-    "subscribers": 2500
-  },
-  {
-    "start_et": "2026-01-22 18:20",
-    "end_et": "",
-    "title": "3 Man Scramble Course Record at Premonition for Thursday Night Thunder",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Hosel Rocket Golf",
-    "watch_url": "https://www.youtube.com/watch?v=LnoROF5tW-E",
-    "source_id": "LnoROF5tW-E",
-    "type": "",
-    "is_premiere": false,
-    "status": "live",
-    "thumbnail_url": "https://i.ytimg.com/vi/LnoROF5tW-E/maxresdefault_live.jpg",
-    "subscribers": 2500
+    "thumbnail_url": "https://i.ytimg.com/vi/8t588Nt63e8/maxresdefault_live.jpg",
+    "subscribers": 1360000
   },
   {
     "start_et": "2026-01-21 09:16",
@@ -257,7 +242,7 @@
   {
     "start_et": "2026-01-22 15:09",
     "end_et": "2026-01-22 15:41",
-    "title": "Joe Lagowski Golf is live",
+    "title": "Live from the PGA Show 2026 day 3 RECAP!",
     "league": "",
     "platform": "YouTube",
     "channel": "Joe Lagowski Golf",
@@ -283,6 +268,36 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/N36_ljcCKEU/maxresdefault_live.jpg",
     "subscribers": 15
+  },
+  {
+    "start_et": "2026-01-22 18:20",
+    "end_et": "2026-01-22 19:50",
+    "title": "3 Man Scramble Course Record at Premonition for Thursday Night Thunder",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Hosel Rocket Golf",
+    "watch_url": "https://www.youtube.com/watch?v=LnoROF5tW-E",
+    "source_id": "LnoROF5tW-E",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/LnoROF5tW-E/maxresdefault_live.jpg",
+    "subscribers": 2500
+  },
+  {
+    "start_et": "2026-01-22 18:20",
+    "end_et": "2026-01-22 19:50",
+    "title": "3-Man Course Record Attempt | Thursday Night Thunder (LIVE)",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Hosel Rocket Golf",
+    "watch_url": "https://www.youtube.com/watch?v=4zADm6zNpWs",
+    "source_id": "4zADm6zNpWs",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/4zADm6zNpWs/maxresdefault_live.jpg",
+    "subscribers": 2500
   },
   {
     "start_et": "2026-01-22 20:45",
@@ -328,5 +343,20 @@
     "status": "upcoming",
     "thumbnail_url": "https://i.ytimg.com/vi/N1bH4HdGUGA/maxresdefault_live.jpg",
     "subscribers": 1870
+  },
+  {
+    "start_et": "2026-01-22 22:00",
+    "end_et": "",
+    "title": "Grip N Sip Golf Presents Thursday Night Thunder",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Grip n Sip Golf",
+    "watch_url": "https://www.youtube.com/watch?v=Uw7oy05OwiQ",
+    "source_id": "Uw7oy05OwiQ",
+    "type": "premiere",
+    "is_premiere": true,
+    "status": "upcoming",
+    "thumbnail_url": "https://i.ytimg.com/vi/Uw7oy05OwiQ/maxresdefault_live.jpg",
+    "subscribers": 38
   }
 ]

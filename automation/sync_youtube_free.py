@@ -604,25 +604,28 @@ def is_stale_upcoming(start_iso: str, now: datetime) -> bool:
 
 # --------- Main ---------
 def main():
+    schedule_events = []
+    used_schedule_sheet = False
+
     if SCHEDULE_SHEET_CSV:
         try:
-            events = load_schedule_from_sheet(SCHEDULE_SHEET_CSV)
-            if events:
-                events.sort(key=lambda e: (e.get("start_et", "9999-99-99 99:99")))
-                write_schedule(events, OUT_PATH)
-                print(f"Wrote {len(events)} events to {OUT_PATH} from schedule sheet.")
-                return
-            print("Schedule sheet returned no rows. Falling back to YouTube API.")
+            schedule_events = load_schedule_from_sheet(SCHEDULE_SHEET_CSV)
+            if schedule_events:
+                used_schedule_sheet = True
+                print(f"Loaded {len(schedule_events)} events from schedule sheet.")
+            else:
+                print("Schedule sheet returned no rows. Falling back to YouTube API.")
         except Exception as exc:
             print(f"Failed to load schedule sheet: {exc}. Falling back to YouTube API.")
 
     try:
         channels = load_channels_from_sheet()
-        if not channels:
+        if not channels and not schedule_events:
             print("No channels found in channel sheet CSV (check publish link + headers). Skipping sync.")
             return
 
-        print("Loaded channels from sheet:", len(channels))
+        if channels:
+            print("Loaded channels from sheet:", len(channels))
 
         youtube_channels = [
             c for c in channels if (c.get("platform") or "").strip().lower() == "youtube"
@@ -631,7 +634,7 @@ def main():
             c for c in channels if (c.get("platform") or "").strip().lower() == "tiktok"
         ]
 
-        events = []
+        events = list(schedule_events)
         now = now_utc()
 
         if tiktok_channels:
@@ -669,7 +672,10 @@ def main():
                     "subscribers": subs
                 })
 
-        if youtube_channels and not YT_API_KEY:
+        if used_schedule_sheet:
+            if youtube_channels:
+                print("Schedule sheet provided. Skipping YouTube sync.")
+        elif youtube_channels and not YT_API_KEY:
             print("Missing YT_API_KEY env var. Skipping YouTube sync.")
         elif youtube_channels:
             print("Scanning uploads per channel:", MAX_UPLOAD_SCAN)

@@ -15,6 +15,21 @@
     "subscribers": 1360000
   },
   {
+    "start_et": "2026-01-22 20:43",
+    "end_et": "",
+    "title": "Record Breakers: 3 guy scramble at Premonition!",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Garbage Garage Golf",
+    "watch_url": "https://www.youtube.com/watch?v=7p2ubtQx2mI",
+    "source_id": "7p2ubtQx2mI",
+    "type": "",
+    "is_premiere": false,
+    "status": "live",
+    "thumbnail_url": "https://i.ytimg.com/vi/7p2ubtQx2mI/maxresdefault_live.jpg",
+    "subscribers": 94
+  },
+  {
     "start_et": "2026-01-21 09:16",
     "end_et": "2026-01-21 09:22",
     "title": "Live from the Square booth at the 2026 PGA Show",
@@ -298,21 +313,6 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/4zADm6zNpWs/maxresdefault_live.jpg",
     "subscribers": 2500
-  },
-  {
-    "start_et": "2026-01-22 20:45",
-    "end_et": "",
-    "title": "Record Breakers: 3 guy scramble at Premonition!",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Garbage Garage Golf",
-    "watch_url": "https://www.youtube.com/watch?v=7p2ubtQx2mI",
-    "source_id": "7p2ubtQx2mI",
-    "type": "premiere",
-    "is_premiere": true,
-    "status": "upcoming",
-    "thumbnail_url": "https://i.ytimg.com/vi/7p2ubtQx2mI/maxresdefault_live.jpg",
-    "subscribers": 94
   },
   {
     "start_et": "2026-01-22 20:45",

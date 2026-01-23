@@ -251,7 +251,7 @@
     "type": "",
     "is_premiere": false,
     "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/N1bH4HdGUGA/maxresdefault_live.jpg",
+    "thumbnail_url": "https://i.ytimg.com/vi/N1bH4HdGUGA/maxresdefault.jpg",
     "subscribers": 1870
   },
   {
@@ -272,7 +272,7 @@
   {
     "start_et": "2026-01-23 11:22",
     "end_et": "2026-01-23 11:24",
-    "title": "Joe Lagowski Golf is live",
+    "title": "Live from the Foresight Booth at the PGA Show 2026",
     "league": "",
     "platform": "YouTube",
     "channel": "Joe Lagowski Golf",

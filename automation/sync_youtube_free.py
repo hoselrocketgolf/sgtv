@@ -200,12 +200,26 @@ def warm_tiktok_cookies() -> None:
     except Exception:
         return
 
+def resolve_tiktok_url(tiktok_url: str) -> str:
+    if not tiktok_url:
+        return ""
+    try:
+        warm_tiktok_cookies()
+        req = urllib.request.Request(tiktok_url, headers=REQ_HEADERS)
+        with OPENER.open(req, timeout=45) as resp:
+            return resp.geturl() or tiktok_url
+    except Exception:
+        return tiktok_url
+
 def normalize_tiktok_handle(handle: str, tiktok_url: str) -> str:
     if handle:
         return handle.lstrip("@").strip().lower()
     if not tiktok_url:
         return ""
     match = re.search(r"/@([^/?#]+)", tiktok_url)
+    if not match:
+        resolved_url = resolve_tiktok_url(tiktok_url)
+        match = re.search(r"/@([^/?#]+)", resolved_url)
     return match.group(1).lower() if match else ""
 
 def normalize_tiktok_profile_url(tiktok_url: str) -> str:
@@ -216,6 +230,11 @@ def normalize_tiktok_profile_url(tiktok_url: str) -> str:
         parsed = urllib.parse.urlparse(f"https://{tiktok_url.lstrip('/')}")
     if not parsed.netloc:
         return ""
+    if "/@" not in parsed.path:
+        resolved_url = resolve_tiktok_url(tiktok_url)
+        parsed = urllib.parse.urlparse(resolved_url)
+        if not parsed.netloc:
+            return ""
     clean_path = parsed.path.rstrip("/")
     return f"{parsed.scheme}://{parsed.netloc}{clean_path}"
 

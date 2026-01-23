@@ -621,14 +621,15 @@ def main():
                 subs = int(channel.get("sheet_subscribers") or 0)
                 live_url = ensure_tiktok_live_url(handle, channel.get("tiktok_url", ""))
 
-                if not handle or not live_url:
+                if not live_url:
                     continue
 
                 is_live, room_id, cover = fetch_tiktok_live_status(handle, live_url)
                 if not is_live:
                     continue
 
-                channel_name = display_name or f"@{handle}"
+                fallback_name = f"@{handle}" if handle else "TikTok creator"
+                channel_name = display_name or fallback_name
                 title = f"{channel_name} is live on TikTok"
 
                 events.append({

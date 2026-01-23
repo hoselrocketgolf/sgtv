@@ -15,21 +15,6 @@
     "subscribers": 8840
   },
   {
-    "start_et": "2026-01-23 13:47",
-    "end_et": "",
-    "title": "PGA West - Stadium Course - The American Express - TIPS Tour on GSPro - Round 2",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "SHED SIM GOLF",
-    "watch_url": "https://www.youtube.com/watch?v=fL9f_kk2j48",
-    "source_id": "fL9f_kk2j48",
-    "type": "",
-    "is_premiere": false,
-    "status": "live",
-    "thumbnail_url": "https://i.ytimg.com/vi/fL9f_kk2j48/maxresdefault_live.jpg",
-    "subscribers": 483
-  },
-  {
     "start_et": "2026-01-21 20:11",
     "end_et": "2026-01-22 03:11",
     "title": "\ud83d\udd34LIVE | CERTIFIED GOOP GETTER | WACK MY JUNK WITH A KNOTTED ROPE LIKE IM 007 WEDNESDAY | #BUNGULATE",
@@ -283,5 +268,20 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/fHpQ2UNGCSQ/maxresdefault.jpg",
     "subscribers": 17100
+  },
+  {
+    "start_et": "2026-01-23 13:47",
+    "end_et": "2026-01-23 14:32",
+    "title": "PGA West - Stadium Course - The American Express - TIPS Tour on GSPro - Round 2",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "SHED SIM GOLF",
+    "watch_url": "https://www.youtube.com/watch?v=fL9f_kk2j48",
+    "source_id": "fL9f_kk2j48",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/fL9f_kk2j48/maxresdefault_live.jpg",
+    "subscribers": 483
   }
 ]

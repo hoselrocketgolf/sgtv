@@ -30,21 +30,6 @@
     "subscribers": 95
   },
   {
-    "start_et": "2026-01-21 09:16",
-    "end_et": "2026-01-21 09:22",
-    "title": "Live from the Square booth at the 2026 PGA Show",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Joe Lagowski Golf",
-    "watch_url": "https://www.youtube.com/watch?v=PNgbrCa2xJs",
-    "source_id": "PNgbrCa2xJs",
-    "type": "",
-    "is_premiere": false,
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/PNgbrCa2xJs/maxresdefault.jpg",
-    "subscribers": 17100
-  },
-  {
     "start_et": "2026-01-21 11:17",
     "end_et": "2026-01-21 11:23",
     "title": "Live from the Laon Swingcraft VTrack booth at the 2026 PGA Show",
@@ -178,6 +163,21 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/kgSo1FO_hhw/maxresdefault.jpg",
     "subscribers": 1360000
+  },
+  {
+    "start_et": "2026-01-21 20:41",
+    "end_et": "2026-01-21 22:30",
+    "title": "NEW Skytrak+ Courses (La Jolla Pines (Torrey) and Bonnie Doon Golf Club | LIVE",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Yak Golf",
+    "watch_url": "https://www.youtube.com/watch?v=UoRruakjacA",
+    "source_id": "UoRruakjacA",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/UoRruakjacA/maxresdefault.jpg",
+    "subscribers": 68
   },
   {
     "start_et": "2026-01-21 22:00",
@@ -315,19 +315,19 @@
     "subscribers": 2500
   },
   {
-    "start_et": "2026-01-22 20:45",
-    "end_et": "",
-    "title": "TNT 3 Man Course Record Attempt at Premonition with BogeymanBill & Bravos99",
+    "start_et": "2026-01-22 18:54",
+    "end_et": "2026-01-22 20:10",
+    "title": "GSPro Course - Premonition - Thursday Night Thunder - 3 Man Scamble - Current Handicap 12.0",
     "league": "",
     "platform": "YouTube",
-    "channel": "Strong Design Studio",
-    "watch_url": "https://www.youtube.com/watch?v=qJf3iw22hB4",
-    "source_id": "qJf3iw22hB4",
-    "type": "premiere",
-    "is_premiere": true,
-    "status": "upcoming",
-    "thumbnail_url": "https://i.ytimg.com/vi/qJf3iw22hB4/maxresdefault_live.jpg",
-    "subscribers": 60
+    "channel": "Accidental Birdie",
+    "watch_url": "https://www.youtube.com/watch?v=ostq-TPEkZE",
+    "source_id": "ostq-TPEkZE",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/ostq-TPEkZE/maxresdefault_live.jpg",
+    "subscribers": 11
   },
   {
     "start_et": "2026-01-22 22:00",

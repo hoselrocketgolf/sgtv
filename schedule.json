@@ -15,21 +15,6 @@
     "subscribers": 1360000
   },
   {
-    "start_et": "2026-01-21 22:00",
-    "end_et": "2026-01-21 23:02",
-    "title": "@pakgolfstudios GGG & Zona attempt to break 50! Twisted Sticks Designer Challenge at Whistler!",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Garbage Garage Golf",
-    "watch_url": "https://www.youtube.com/watch?v=cHHuqEn4MiU",
-    "source_id": "cHHuqEn4MiU",
-    "type": "",
-    "is_premiere": false,
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/cHHuqEn4MiU/maxresdefault.jpg",
-    "subscribers": 95
-  },
-  {
     "start_et": "2026-01-21 23:06",
     "end_et": "2026-01-22 01:10",
     "title": "TIPS Tour Event on SGT and GSPRO",
@@ -221,7 +206,7 @@
     "type": "",
     "is_premiere": false,
     "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/qJf3iw22hB4/maxresdefault_live.jpg",
+    "thumbnail_url": "https://i.ytimg.com/vi/qJf3iw22hB4/maxresdefault.jpg",
     "subscribers": 60
   },
   {
@@ -253,5 +238,35 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/N1bH4HdGUGA/maxresdefault_live.jpg",
     "subscribers": 1870
+  },
+  {
+    "start_et": "2026-01-23 11:13",
+    "end_et": "2026-01-23 11:20",
+    "title": "Joe Lagowski Golf is live",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Joe Lagowski Golf",
+    "watch_url": "https://www.youtube.com/watch?v=mKK3oeAcR1g",
+    "source_id": "mKK3oeAcR1g",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/mKK3oeAcR1g/maxresdefault_live.jpg",
+    "subscribers": 17100
+  },
+  {
+    "start_et": "2026-01-23 11:21",
+    "end_et": "",
+    "title": "Joe Lagowski Golf is live",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Joe Lagowski Golf",
+    "watch_url": "https://www.youtube.com/watch?v=fHpQ2UNGCSQ",
+    "source_id": "fHpQ2UNGCSQ",
+    "type": "premiere",
+    "is_premiere": true,
+    "status": "upcoming",
+    "thumbnail_url": "https://i.ytimg.com/vi/fHpQ2UNGCSQ/maxresdefault_live.jpg",
+    "subscribers": 17100
   }
 ]

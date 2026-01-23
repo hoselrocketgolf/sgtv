@@ -15,36 +15,6 @@
     "subscribers": 1360000
   },
   {
-    "start_et": "2026-01-22 20:43",
-    "end_et": "",
-    "title": "Record Breakers: 3 guy scramble at Premonition!",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Garbage Garage Golf",
-    "watch_url": "https://www.youtube.com/watch?v=7p2ubtQx2mI",
-    "source_id": "7p2ubtQx2mI",
-    "type": "",
-    "is_premiere": false,
-    "status": "live",
-    "thumbnail_url": "https://i.ytimg.com/vi/7p2ubtQx2mI/maxresdefault_live.jpg",
-    "subscribers": 95
-  },
-  {
-    "start_et": "2026-01-22 21:57",
-    "end_et": "",
-    "title": "Grip N Sip Golf Presents Thursday Night Thunder",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Grip n Sip Golf",
-    "watch_url": "https://www.youtube.com/watch?v=Uw7oy05OwiQ",
-    "source_id": "Uw7oy05OwiQ",
-    "type": "",
-    "is_premiere": false,
-    "status": "live",
-    "thumbnail_url": "https://i.ytimg.com/vi/Uw7oy05OwiQ/maxresdefault_live.jpg",
-    "subscribers": 38
-  },
-  {
     "start_et": "2026-01-22 22:11",
     "end_et": "",
     "title": "TNT - 7 Team Scramble Marathon for an SGT Course Record ft. RyanASUGolf & TakeItLowGolf",
@@ -58,21 +28,6 @@
     "status": "live",
     "thumbnail_url": "https://i.ytimg.com/vi/N1bH4HdGUGA/maxresdefault_live.jpg",
     "subscribers": 1870
-  },
-  {
-    "start_et": "2026-01-21 11:17",
-    "end_et": "2026-01-21 11:23",
-    "title": "Live from the Laon Swingcraft VTrack booth at the 2026 PGA Show",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Joe Lagowski Golf",
-    "watch_url": "https://www.youtube.com/watch?v=xZqGcaPClbk",
-    "source_id": "xZqGcaPClbk",
-    "type": "",
-    "is_premiere": false,
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/xZqGcaPClbk/maxresdefault.jpg",
-    "subscribers": 17100
   },
   {
     "start_et": "2026-01-21 12:30",
@@ -372,7 +327,7 @@
     "is_premiere": false,
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/q8pMG-Qjn7s/maxresdefault_live.jpg",
-    "subscribers": 539
+    "subscribers": 540
   },
   {
     "start_et": "2026-01-22 21:38",
@@ -388,5 +343,20 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/qJf3iw22hB4/maxresdefault_live.jpg",
     "subscribers": 60
+  },
+  {
+    "start_et": "2026-01-22 21:57",
+    "end_et": "2026-01-22 23:24",
+    "title": "Grip N Sip Golf Presents Thursday Night Thunder",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Grip n Sip Golf",
+    "watch_url": "https://www.youtube.com/watch?v=Uw7oy05OwiQ",
+    "source_id": "Uw7oy05OwiQ",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/Uw7oy05OwiQ/maxresdefault_live.jpg",
+    "subscribers": 38
   }
 ]

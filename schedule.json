@@ -1,50 +1,5 @@
 [
   {
-    "start_et": "2026-01-22 20:14",
-    "end_et": "",
-    "title": "\ud83d\udd34LIVE | SHE ARC TILL I RAIDER w/ A Furry (Cloakzy) & Cheater (Nick) | #Shart3x&MakeAWish #BUNGULATE",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "TheBurntPeanut",
-    "watch_url": "https://www.youtube.com/watch?v=8t588Nt63e8",
-    "source_id": "8t588Nt63e8",
-    "type": "",
-    "is_premiere": false,
-    "status": "live",
-    "thumbnail_url": "https://i.ytimg.com/vi/8t588Nt63e8/maxresdefault_live.jpg",
-    "subscribers": 1360000
-  },
-  {
-    "start_et": "2026-01-22 22:11",
-    "end_et": "",
-    "title": "TNT - 7 Team Scramble Marathon for an SGT Course Record ft. RyanASUGolf & TakeItLowGolf",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "DLud Golf",
-    "watch_url": "https://www.youtube.com/watch?v=N1bH4HdGUGA",
-    "source_id": "N1bH4HdGUGA",
-    "type": "",
-    "is_premiere": false,
-    "status": "live",
-    "thumbnail_url": "https://i.ytimg.com/vi/N1bH4HdGUGA/maxresdefault_live.jpg",
-    "subscribers": 1870
-  },
-  {
-    "start_et": "2026-01-21 12:30",
-    "end_et": "2026-01-21 12:33",
-    "title": "Live from the Garmin Booth at the 2026 PGA show",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Joe Lagowski Golf",
-    "watch_url": "https://www.youtube.com/watch?v=_239ljSr7AQ",
-    "source_id": "_239ljSr7AQ",
-    "type": "",
-    "is_premiere": false,
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/_239ljSr7AQ/maxresdefault.jpg",
-    "subscribers": 17100
-  },
-  {
     "start_et": "2026-01-21 13:23",
     "end_et": "2026-01-21 13:26",
     "title": "Live from the Rapsodo Booth at the PGA show",
@@ -315,6 +270,21 @@
     "subscribers": 11
   },
   {
+    "start_et": "2026-01-22 20:43",
+    "end_et": "2026-01-22 23:33",
+    "title": "Record Breakers: 3 guy scramble at Premonition!",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Garbage Garage Golf",
+    "watch_url": "https://www.youtube.com/watch?v=7p2ubtQx2mI",
+    "source_id": "7p2ubtQx2mI",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/7p2ubtQx2mI/maxresdefault.jpg",
+    "subscribers": 95
+  },
+  {
     "start_et": "2026-01-22 21:24",
     "end_et": "2026-01-22 22:03",
     "title": "Sim Golf Tour Blitz Quest $ League R4 Medalist\u2014 Tough Course",
@@ -358,5 +328,20 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/Uw7oy05OwiQ/maxresdefault_live.jpg",
     "subscribers": 38
+  },
+  {
+    "start_et": "2026-01-22 22:11",
+    "end_et": "2026-01-23 00:09",
+    "title": "TNT - 7 Team Scramble Marathon for an SGT Course Record ft. RyanASUGolf & TakeItLowGolf",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "DLud Golf",
+    "watch_url": "https://www.youtube.com/watch?v=N1bH4HdGUGA",
+    "source_id": "N1bH4HdGUGA",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/N1bH4HdGUGA/maxresdefault_live.jpg",
+    "subscribers": 1870
   }
 ]

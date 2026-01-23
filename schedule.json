@@ -60,6 +60,21 @@
     "subscribers": 38
   },
   {
+    "start_et": "2026-01-22 22:11",
+    "end_et": "",
+    "title": "TNT - 7 Team Scramble Marathon for an SGT Course Record ft. RyanASUGolf & TakeItLowGolf",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "DLud Golf",
+    "watch_url": "https://www.youtube.com/watch?v=N1bH4HdGUGA",
+    "source_id": "N1bH4HdGUGA",
+    "type": "",
+    "is_premiere": false,
+    "status": "live",
+    "thumbnail_url": "https://i.ytimg.com/vi/N1bH4HdGUGA/maxresdefault_live.jpg",
+    "subscribers": 1870
+  },
+  {
     "start_et": "2026-01-21 11:17",
     "end_et": "2026-01-21 11:23",
     "title": "Live from the Laon Swingcraft VTrack booth at the 2026 PGA Show",
@@ -358,20 +373,5 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/ostq-TPEkZE/maxresdefault_live.jpg",
     "subscribers": 11
-  },
-  {
-    "start_et": "2026-01-22 22:00",
-    "end_et": "",
-    "title": "TNT - 7 Team Scramble Marathon for an SGT Course Record ft. RyanASUGolf & TakeItLowGolf",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "DLud Golf",
-    "watch_url": "https://www.youtube.com/watch?v=N1bH4HdGUGA",
-    "source_id": "N1bH4HdGUGA",
-    "type": "premiere",
-    "is_premiere": true,
-    "status": "upcoming",
-    "thumbnail_url": "https://i.ytimg.com/vi/N1bH4HdGUGA/maxresdefault_live.jpg",
-    "subscribers": 1870
   }
 ]

@@ -1,5 +1,20 @@
 [
   {
+    "start_et": "2026-01-23 11:43",
+    "end_et": "",
+    "title": "TBG vs. RRAW & Golfers Unite!",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Triple Bogey Golf",
+    "watch_url": "https://www.youtube.com/watch?v=Su9FUzvHez8",
+    "source_id": "Su9FUzvHez8",
+    "type": "",
+    "is_premiere": false,
+    "status": "live",
+    "thumbnail_url": "https://i.ytimg.com/vi/Su9FUzvHez8/maxresdefault_live.jpg",
+    "subscribers": 8840
+  },
+  {
     "start_et": "2026-01-21 20:11",
     "end_et": "2026-01-22 03:11",
     "title": "\ud83d\udd34LIVE | CERTIFIED GOOP GETTER | WACK MY JUNK WITH A KNOTTED ROPE LIKE IM 007 WEDNESDAY | #BUNGULATE",
@@ -221,7 +236,7 @@
     "type": "",
     "is_premiere": false,
     "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/Uw7oy05OwiQ/maxresdefault_live.jpg",
+    "thumbnail_url": "https://i.ytimg.com/vi/Uw7oy05OwiQ/maxresdefault.jpg",
     "subscribers": 38
   },
   {
@@ -242,7 +257,7 @@
   {
     "start_et": "2026-01-23 11:13",
     "end_et": "2026-01-23 11:20",
-    "title": "Joe Lagowski Golf is live",
+    "title": "Live from the Uneekor booth at the PGA Show 2026",
     "league": "",
     "platform": "YouTube",
     "channel": "Joe Lagowski Golf",
@@ -251,22 +266,22 @@
     "type": "",
     "is_premiere": false,
     "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/mKK3oeAcR1g/maxresdefault_live.jpg",
+    "thumbnail_url": "https://i.ytimg.com/vi/mKK3oeAcR1g/maxresdefault.jpg",
     "subscribers": 17100
   },
   {
-    "start_et": "2026-01-23 11:21",
-    "end_et": "",
+    "start_et": "2026-01-23 11:22",
+    "end_et": "2026-01-23 11:24",
     "title": "Joe Lagowski Golf is live",
     "league": "",
     "platform": "YouTube",
     "channel": "Joe Lagowski Golf",
     "watch_url": "https://www.youtube.com/watch?v=fHpQ2UNGCSQ",
     "source_id": "fHpQ2UNGCSQ",
-    "type": "premiere",
-    "is_premiere": true,
-    "status": "upcoming",
-    "thumbnail_url": "https://i.ytimg.com/vi/fHpQ2UNGCSQ/maxresdefault_live.jpg",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/fHpQ2UNGCSQ/maxresdefault.jpg",
     "subscribers": 17100
   }
 ]

@@ -1,35 +1,5 @@
 [
   {
-    "start_et": "2026-01-21 14:04",
-    "end_et": "2026-01-21 14:49",
-    "title": "PRO Tour | SGT West - Stadium Course | Round 1 of 2 | TBooms & Swing Yard",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Swing Yard",
-    "watch_url": "https://www.youtube.com/watch?v=2a1qLzQigqA",
-    "source_id": "2a1qLzQigqA",
-    "type": "",
-    "is_premiere": false,
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/2a1qLzQigqA/maxresdefault.jpg",
-    "subscribers": 995
-  },
-  {
-    "start_et": "2026-01-21 15:16",
-    "end_et": "2026-01-21 15:22",
-    "title": "Live from the Protee booth at the 2026 PGA Show",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Joe Lagowski Golf",
-    "watch_url": "https://www.youtube.com/watch?v=QLhHOISJo10",
-    "source_id": "QLhHOISJo10",
-    "type": "",
-    "is_premiere": false,
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/QLhHOISJo10/maxresdefault.jpg",
-    "subscribers": 17100
-  },
-  {
     "start_et": "2026-01-21 16:23",
     "end_et": "2026-01-21 16:38",
     "title": "BREAKING: Square Golf Omni Edition Unveiled at the PGA Show",
@@ -176,7 +146,7 @@
     "type": "",
     "is_premiere": false,
     "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/fDECEGpGHkU/maxresdefault_live.jpg",
+    "thumbnail_url": "https://i.ytimg.com/vi/fDECEGpGHkU/maxresdefault.jpg",
     "subscribers": 60
   },
   {
@@ -191,7 +161,7 @@
     "type": "",
     "is_premiere": false,
     "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/GnzvL1co2AU/maxresdefault_live.jpg",
+    "thumbnail_url": "https://i.ytimg.com/vi/GnzvL1co2AU/maxresdefault.jpg",
     "subscribers": 17100
   },
   {
@@ -255,6 +225,21 @@
     "subscribers": 11
   },
   {
+    "start_et": "2026-01-22 20:14",
+    "end_et": "2026-01-23 03:31",
+    "title": "\ud83d\udd34LIVE | SHE ARC TILL I RAIDER w/ A Furry (Cloakzy) & Cheater (Nick) | #Shart3x&MakeAWish #BUNGULATE",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "TheBurntPeanut",
+    "watch_url": "https://www.youtube.com/watch?v=8t588Nt63e8",
+    "source_id": "8t588Nt63e8",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/8t588Nt63e8/maxresdefault.jpg",
+    "subscribers": 1360000
+  },
+  {
     "start_et": "2026-01-22 20:43",
     "end_et": "2026-01-22 23:33",
     "title": "Record Breakers: 3 guy scramble at Premonition!",
@@ -282,7 +267,7 @@
     "is_premiere": false,
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/q8pMG-Qjn7s/maxresdefault_live.jpg",
-    "subscribers": 540
+    "subscribers": 539
   },
   {
     "start_et": "2026-01-22 21:38",

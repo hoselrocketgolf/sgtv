@@ -169,8 +169,8 @@ h1{
   min-width: 150px;
 }
 
-control.grow{ min-width: 280px; }
-control.refresh{ min-width: 140px; align-items:flex-end; }
+.control.grow{ min-width: 280px; }
+.control.refresh{ min-width: 140px; align-items:flex-end; }
 
 label{
   font-size: 11px;
@@ -371,19 +371,19 @@ button{
   box-shadow: 0 24px 50px rgba(0,0,0,0.4);
 }
 
-tileHeader{
+.tileHeader{
   display:flex;
   align-items:center;
   justify-content:space-between;
 }
 
-liveNav{
+.liveNav{
   display:flex;
   align-items:center;
   gap:8px;
 }
 
-liveNav.hidden{
+.liveNav.hidden{
   display:none;
 }
 
@@ -394,34 +394,34 @@ liveCounter{
   text-align:center;
 }
 
-iconBtn.small{
+.iconBtn.small{
   height: 28px;
   width: 30px;
   border-radius: 10px;
   font-size: 12px;
 }
 
-tileHeader h2{
+.tileHeader h2{
   margin:0;
   font-size: 14px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
 
-tileBody{
+.tileBody{
   margin-top: 12px;
   color: rgba(255,255,255,0.92);
   font-size: 13px;
   flex: 1;
 }
 
-guideList{
+.guideList{
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-guideRow{
+.guideRow{
   display: flex;
   gap: 12px;
   padding: 12px;
@@ -433,13 +433,13 @@ guideRow{
   transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
 }
 
-guideRow:hover{
+.guideRow:hover{
   transform: translateY(-1px);
   border-color: rgba(139,108,255,0.45);
   box-shadow: 0 12px 26px rgba(0,0,0,0.28);
 }
 
-guideTime{
+.guideTime{
   font-weight: 700;
   font-size: 12px;
   letter-spacing: 0.04em;
@@ -447,28 +447,28 @@ guideTime{
   min-width: 68px;
 }
 
-guideTitle{
+.guideTitle{
   display: flex;
   flex-direction: column;
   gap: 6px;
   min-width: 0;
 }
 
-guideTitleRow{
+.guideTitleRow{
   display: flex;
   align-items: center;
   gap: 8px;
   min-width: 0;
 }
 
-guideTitleText{
+.guideTitleText{
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-guideMeta{
+.guideMeta{
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
@@ -476,7 +476,7 @@ guideMeta{
   color: rgba(255,255,255,0.7);
 }
 
-guideBadge{
+.guideBadge{
   padding: 2px 8px;
   font-size: 10px;
   border-radius: 999px;
@@ -486,7 +486,7 @@ guideBadge{
 }
 
 /* Card in tiles */
-card{
+.card{
   display:flex;
   gap: 14px;
   padding: 12px;
@@ -496,18 +496,18 @@ card{
   transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
 }
 
-card:hover{
+.card:hover{
   transform: translateY(-1px);
   border-color: rgba(255,255,255,0.2);
   box-shadow: 0 14px 30px rgba(0,0,0,0.25);
 }
 
-card.isLive{
+.card.isLive{
   border-color: rgba(70,240,170,0.45);
   box-shadow: 0 0 0 1px rgba(70,240,170,0.14), 0 0 28px rgba(70,240,170,0.16);
 }
 
-cardMediaLink{
+.cardMediaLink{
   display:block;
   flex: 0 0 auto;
   border-radius: 12px;
@@ -515,7 +515,7 @@ cardMediaLink{
   box-shadow: 0 0 0 1px rgba(255,255,255,0.08);
 }
 
-cardMedia{
+.cardMedia{
   width: 150px;
   height: 90px;
   border-radius: 10px;
@@ -523,7 +523,7 @@ cardMedia{
   background-size: cover;
 }
 
-cardBody{
+.cardBody{
   flex: 1;
   display:flex;
   flex-direction:column;
@@ -531,7 +531,7 @@ cardBody{
   min-width:0;
 }
 
-cardTitleLink{
+.cardTitleLink{
   font-weight: 800;
   font-size: 13px;
   white-space:nowrap;
@@ -542,11 +542,11 @@ cardTitleLink{
   display:inline-block;
 }
 
-cardTitleLink:hover{
+.cardTitleLink:hover{
   text-decoration: underline;
 }
 
-cardMeta{
+.cardMeta{
   display:flex;
   flex-wrap: wrap;
   gap:6px;
@@ -554,7 +554,7 @@ cardMeta{
   color: rgba(255,255,255,0.7);
 }
 
-cardActions{
+.cardActions{
   display:flex;
   align-items:center;
   margin-top: 6px;
@@ -592,7 +592,7 @@ watchBtn{
 watchBtn:hover{ filter: brightness(1.07); text-decoration:none; }
 
 /* ========= Schedule Section ========= */
-scheduleSection{
+.scheduleSection{
   border-radius: var(--radius);
   background: linear-gradient(160deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02));
   border: 1px solid rgba(255,255,255,0.16);
@@ -777,12 +777,14 @@ blockMedia{
   opacity: 0.45;
   filter: saturate(1.12);
   transform: scale(1.02);
+  pointer-events: none;
 }
 
 blockOverlay{
   position:absolute;
   inset:0;
   background: linear-gradient(120deg, rgba(4,6,14,0.88), rgba(4,6,14,0.2));
+  pointer-events: none;
 }
 
 blockContent{
@@ -801,6 +803,7 @@ blockTop{
   align-items:center;
   justify-content:space-between;
   gap: 8px;
+  min-width: 0;
 }
 
 blockTitle{

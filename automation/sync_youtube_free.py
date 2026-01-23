@@ -33,7 +33,10 @@ MAX_LIVE_HOURS = int(env_or_default("MAX_LIVE_HOURS", "4"))
 # How many live results to pull from Search API per channel (0 disables Search API usage).
 SEARCH_LIVE_MAX_RESULTS = int(env_or_default("SEARCH_LIVE_MAX_RESULTS", "0"))
 
-USER_AGENT = "Mozilla/5.0 (compatible; sgtv-bot/2.2)"
+USER_AGENT = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+)
 REQ_HEADERS = {
     "User-Agent": USER_AGENT,
     "Accept-Language": "en-US,en;q=0.9",
@@ -205,12 +208,25 @@ def normalize_tiktok_handle(handle: str, tiktok_url: str) -> str:
     match = re.search(r"/@([^/?#]+)", tiktok_url)
     return match.group(1).lower() if match else ""
 
+def normalize_tiktok_profile_url(tiktok_url: str) -> str:
+    if not tiktok_url:
+        return ""
+    parsed = urllib.parse.urlparse(tiktok_url)
+    if not parsed.scheme:
+        parsed = urllib.parse.urlparse(f"https://{tiktok_url.lstrip('/')}")
+    if not parsed.netloc:
+        return ""
+    clean_path = parsed.path.rstrip("/")
+    return f"{parsed.scheme}://{parsed.netloc}{clean_path}"
+
 def ensure_tiktok_live_url(handle: str, tiktok_url: str) -> str:
-    if tiktok_url:
-        return tiktok_url if "/live" in tiktok_url else f"{tiktok_url.rstrip('/')}/live"
-    if handle:
-        return f"https://www.tiktok.com/@{handle}/live"
-    return ""
+    normalized_handle = normalize_tiktok_handle(handle, tiktok_url)
+    if normalized_handle:
+        return f"https://www.tiktok.com/@{normalized_handle}/live"
+    normalized_url = normalize_tiktok_profile_url(tiktok_url)
+    if not normalized_url:
+        return ""
+    return normalized_url if "/live" in normalized_url else f"{normalized_url}/live"
 
 def fetch_tiktok_live_data(handle: str) -> dict | None:
     if not handle:
@@ -261,7 +277,7 @@ def extract_tiktok_live_state(payload: dict | None) -> bool | None:
             if isinstance(val, str) and val.isdigit():
                 val = int(val)
             if isinstance(val, (int, float)):
-                if val == 2:
+                if val in {1, 2}:
                     return True
                 if val == 0:
                     return False

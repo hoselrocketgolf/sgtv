@@ -8,7 +8,7 @@ import http.cookiejar
 
 ET_TZ = ZoneInfo("America/New_York")
 
-DEFAULT_CHANNEL_SHEET_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR5DMZYPLgP64WZYcE1H0PMOQyjD2Rf67NUM1kRkC3dCPVwZJ0kNcj6dUbugO-LOaSNSx798fPA27tK/pub?gid=0&single=true&output=csv"
+DEFAULT_CHANNEL_SHEET_CSV = "https://docs.google.com/spreadsheets/d/1UW39_s_KFxaGjQ75Lq2YH6Z29JHJhIP1rD_uagD144k/export?format=csv&gid=0"
 
 def env_or_default(name: str, default: str) -> str:
     v = (os.environ.get(name) or "").strip()

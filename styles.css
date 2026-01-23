@@ -387,7 +387,7 @@ button{
   display:none;
 }
 
-liveCounter{
+.liveCounter{
   font-size: 11px;
   color: rgba(255,255,255,0.7);
   min-width: 44px;
@@ -560,7 +560,7 @@ liveCounter{
   margin-top: 6px;
 }
 
-pill{
+.pill{
   padding: 2px 8px;
   font-size: 10px;
   border-radius: 999px;
@@ -568,13 +568,13 @@ pill{
   color: rgba(255,255,255,0.92);
 }
 
-pill.live{
+.pill.live{
   color: rgba(70,240,170,0.95);
   border-color: rgba(70,240,170,0.6);
   background: rgba(70,240,170,0.12);
 }
 
-watchBtn{
+.watchBtn{
   display:flex;
   align-items:center;
   justify-content:center;
@@ -594,33 +594,40 @@ watchBtn:hover{ filter: brightness(1.07); text-decoration:none; }
 /* ========= Schedule Section ========= */
 .scheduleSection{
   border-radius: var(--radius);
-  background: linear-gradient(160deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02));
+  background: linear-gradient(160deg, rgba(255,255,255,0.08), rgba(255,255,255,0.015));
   border: 1px solid rgba(255,255,255,0.16);
   box-shadow: var(--shadow);
   overflow:hidden;
 }
 
-scheduleHeader{
-  display:flex;
+.scheduleHeader{
+  display:grid;
+  grid-template-columns: auto 1fr auto;
   align-items:center;
-  justify-content:space-between;
   padding: 20px 22px;
-  gap: 18px;
-  flex-wrap: wrap;
+  gap: 16px;
 }
 
-scheduleHeader h2{
+.scheduleHeader h2{
   margin:0;
   font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
-scheduleTools{
+.scheduleTools{
   display:flex;
   align-items:center;
+  justify-content:center;
   gap:10px;
+  padding: 6px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.2);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03);
 }
 
-iconBtn{
+.iconBtn{
   height: 38px;
   width: 42px;
   border-radius: 14px;
@@ -631,10 +638,10 @@ iconBtn{
   transition: border-color 160ms ease, transform 120ms ease;
 }
 
-iconBtn:hover{ border-color: rgba(92,243,255,0.5); }
-iconBtn:active{ transform: translateY(1px); }
+.iconBtn:hover{ border-color: rgba(92,243,255,0.5); }
+.iconBtn:active{ transform: translateY(1px); }
 
-nowBtn{
+.nowBtn{
   height: 38px;
   padding: 0 14px;
   border-radius: 14px;
@@ -645,63 +652,68 @@ nowBtn{
   transition: border-color 160ms ease, transform 120ms ease;
 }
 
-nowBtn:hover{ border-color: rgba(255,184,119,0.6); }
-nowBtn:active{ transform: translateY(1px); }
+.nowBtn:hover{ border-color: rgba(255,184,119,0.6); }
+.nowBtn:active{ transform: translateY(1px); }
 
-windowLabel{
+.windowLabel{
   font-size: 12px;
-  color: rgba(255,255,255,0.68);
-  padding: 0 6px;
+  color: rgba(255,255,255,0.78);
+  padding: 6px 10px;
   min-width: 260px;
   text-align:center;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(0,0,0,0.25);
 }
 
-updated{
+.updated{
   font-size: 12px;
-  color: rgba(255,255,255,0.55);
+  color: rgba(255,255,255,0.6);
+  text-align: right;
 }
 
 /* Guide grid shell */
-guide{
-  border-top: 1px solid rgba(255,255,255,0.1);
+.guide{
+  border-top: 1px solid rgba(255,255,255,0.12);
 }
 
 /* Time header row */
-timeRow{
+.timeRow{
   display:flex;
   overflow: hidden; /* no scrollbar */
   white-space: nowrap;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
   padding-left: var(--labelW);
+  background: rgba(0,0,0,0.2);
 }
 
 /* JS sets exact tick width so it matches blocks */
-timeTick{
+.timeTick{
   padding: 12px 14px;
-  font-weight: 800;
+  font-weight: 700;
   font-size: 12px;
-  color: rgba(255,255,255,0.78);
+  color: rgba(255,255,255,0.82);
   border-right: 1px solid rgba(255,255,255,0.06);
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
 }
 
 /* Rows container */
-rows{
+.rows{
   display:flex;
   flex-direction:column;
   overflow: hidden;
 }
 
 /* One channel row */
-row{
+.row{
   display:flex;
   align-items:stretch;
   min-height: var(--rowH);
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 
 /* Sticky channel label */
-rowLabel{
+.rowLabel{
   position: sticky;
   left: 0;
   z-index: 2;
@@ -709,15 +721,15 @@ rowLabel{
   flex-direction:column;
   justify-content:center;
   gap:4px;
-  padding: 10px 14px;
+  padding: 12px 14px;
   min-width: var(--labelW);
   max-width: var(--labelW);
-  background: linear-gradient(90deg, rgba(6,7,15,0.92), rgba(6,7,15,0.5));
-  border-right: 1px solid rgba(255,255,255,0.08);
-  backdrop-filter: blur(10px);
+  background: linear-gradient(90deg, rgba(6,7,15,0.95), rgba(6,7,15,0.65));
+  border-right: 1px solid rgba(255,255,255,0.1);
+  backdrop-filter: blur(12px);
 }
 
-rowLabel .name{
+.rowLabel .name{
   font-weight: 900;
   font-size: 12px;
   color: rgba(255,255,255,0.92);
@@ -726,7 +738,7 @@ rowLabel .name{
   text-overflow: ellipsis;
 }
 
-rowLabel .subs{
+.rowLabel .subs{
   color: rgba(255,255,255,0.55);
   font-size: 11px;
   white-space:nowrap;
@@ -735,33 +747,34 @@ rowLabel .subs{
 }
 
 /* Lane where blocks are positioned absolutely */
-lane{
+.lane{
   position: relative;
   flex: 1;
   min-height: var(--rowH);
-  background-image: linear-gradient(to right, rgba(255,255,255,0.06) 1px, rgba(0,0,0,0) 1px);
+  background-image: linear-gradient(to right, rgba(255,255,255,0.05) 1px, rgba(0,0,0,0) 1px);
   background-size: var(--pxPerTick) 1px;
   overflow: hidden;
 }
 
 /* Show blocks */
-block{
+.block{
   position: absolute;
-  top: 6px;
+  top: 8px;
   height: var(--cellH);
-  border-radius: 20px;
+  border-radius: 18px;
   border: 1px solid rgba(255,255,255,0.16);
   overflow:hidden;
   cursor:pointer;
-  background: rgba(8,10,20,0.45);
+  background: rgba(8,10,20,0.55);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.25);
   transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
 }
-block:hover{
+.block:hover{
   border-color: rgba(255,255,255,0.24);
   transform: translateY(-1px);
   box-shadow: 0 14px 30px rgba(0,0,0,0.35);
 }
-block.isLive{
+.block.isLive{
   border-color: rgba(70,240,170,0.4);
   box-shadow:
     0 0 0 1px rgba(70,240,170,0.16),
@@ -769,25 +782,25 @@ block.isLive{
 }
 
 /* Big thumbnail background */
-blockMedia{
+.blockMedia{
   position:absolute;
   inset:0;
   background-size: cover;
   background-position: center;
-  opacity: 0.45;
-  filter: saturate(1.12);
+  opacity: 0.55;
+  filter: saturate(1.05);
   transform: scale(1.02);
   pointer-events: none;
 }
 
-blockOverlay{
+.blockOverlay{
   position:absolute;
   inset:0;
-  background: linear-gradient(120deg, rgba(4,6,14,0.88), rgba(4,6,14,0.2));
+  background: linear-gradient(120deg, rgba(6,10,22,0.9), rgba(6,10,22,0.25));
   pointer-events: none;
 }
 
-blockContent{
+.blockContent{
   position:absolute;
   inset:0;
   padding: 12px 14px;
@@ -795,10 +808,10 @@ blockContent{
   flex-direction:column;
   justify-content:space-between;
   z-index: 1;
-  gap: 8px;
+  gap: 6px;
 }
 
-blockTop{
+.blockTop{
   display:flex;
   align-items:center;
   justify-content:space-between;
@@ -806,10 +819,10 @@ blockTop{
   min-width: 0;
 }
 
-blockTitle{
+.blockTitle{
   font-size: 13px;
   font-weight: 700;
-  color: rgba(255,255,255,0.95);
+  color: rgba(255,255,255,0.96);
   line-height: 1.2;
   max-height: 2.6em;
   overflow: hidden;
@@ -819,12 +832,14 @@ blockTitle{
   -webkit-box-orient: vertical;
   position: relative;
   z-index: 1;
-  text-shadow: 0 6px 16px rgba(0,0,0,0.45);
+  text-shadow: 0 6px 16px rgba(0,0,0,0.5);
+  min-width: 0;
+  flex: 1;
 }
 
-blockMeta{
+.blockMeta{
   font-size: 11px;
-  color: rgba(255,255,255,0.72);
+  color: rgba(255,255,255,0.75);
   line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
@@ -835,7 +850,7 @@ blockMeta{
   flex: 1;
 }
 
-badgeLive{
+.badgeLive{
   font-size: 10px;
   padding: 3px 7px;
   border-radius: 999px;
@@ -844,30 +859,30 @@ badgeLive{
   background: rgba(70,240,170,0.12);
 }
 
-blockBottom{
+.blockBottom{
   display:flex;
   align-items:center;
   gap:8px;
   font-size: 11px;
-  color: rgba(255,255,255,0.75);
-  white-space:nowrap;
+  color: rgba(255,255,255,0.78);
+  flex-wrap: wrap;
   overflow:hidden;
   min-width: 0;
 }
-blockTime{
+.blockTime{
   font-weight: 800;
   color: rgba(255,255,255,0.86);
   letter-spacing: 0.02em;
 }
 
 /* empty */
-empty{
+.empty{
   padding: 20px 18px;
   color: rgba(255,255,255,0.65);
 }
 
 /* footer removed */
-footer{ display:none; }
+.footer{ display:none; }
 
 /* ========= Responsive ========= */
 @media (max-width: 1200px){
@@ -1014,6 +1029,7 @@ footer{ display:none; }
   .scheduleHeader{
     padding: 14px 16px;
     gap: 12px;
+    grid-template-columns: 1fr;
   }
 
   .scheduleTools{
@@ -1033,6 +1049,10 @@ footer{ display:none; }
     width: 100%;
     text-align: left;
     grid-column: 1 / -1;
+  }
+
+  .updated{
+    text-align: left;
   }
 
   .guide{

@@ -45,6 +45,21 @@
     "subscribers": 60
   },
   {
+    "start_et": "2026-01-22 21:57",
+    "end_et": "",
+    "title": "Grip N Sip Golf Presents Thursday Night Thunder",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Grip n Sip Golf",
+    "watch_url": "https://www.youtube.com/watch?v=Uw7oy05OwiQ",
+    "source_id": "Uw7oy05OwiQ",
+    "type": "",
+    "is_premiere": false,
+    "status": "live",
+    "thumbnail_url": "https://i.ytimg.com/vi/Uw7oy05OwiQ/maxresdefault_live.jpg",
+    "subscribers": 38
+  },
+  {
     "start_et": "2026-01-21 11:17",
     "end_et": "2026-01-21 11:23",
     "title": "Live from the Laon Swingcraft VTrack booth at the 2026 PGA Show",
@@ -358,20 +373,5 @@
     "status": "upcoming",
     "thumbnail_url": "https://i.ytimg.com/vi/N1bH4HdGUGA/maxresdefault_live.jpg",
     "subscribers": 1870
-  },
-  {
-    "start_et": "2026-01-22 22:00",
-    "end_et": "",
-    "title": "Grip N Sip Golf Presents Thursday Night Thunder",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Grip n Sip Golf",
-    "watch_url": "https://www.youtube.com/watch?v=Uw7oy05OwiQ",
-    "source_id": "Uw7oy05OwiQ",
-    "type": "premiere",
-    "is_premiere": true,
-    "status": "upcoming",
-    "thumbnail_url": "https://i.ytimg.com/vi/Uw7oy05OwiQ/maxresdefault_live.jpg",
-    "subscribers": 38
   }
 ]

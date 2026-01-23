@@ -1,9 +1,10 @@
-import os, csv, io, json, time, re
+import os, csv, io, json, time, re, html
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 import urllib.request
 import urllib.parse
 import urllib.error
+import http.cookiejar
 
 ET_TZ = ZoneInfo("America/New_York")
 
@@ -37,12 +38,16 @@ REQ_HEADERS = {
     "User-Agent": USER_AGENT,
     "Accept-Language": "en-US,en;q=0.9",
     "Referer": "https://www.tiktok.com/",
+    "Origin": "https://www.tiktok.com",
 }
+
+COOKIE_JAR = http.cookiejar.CookieJar()
+OPENER = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(COOKIE_JAR))
 
 # --------- HTTP helpers ---------
 def http_get(url: str) -> str:
     req = urllib.request.Request(url, headers=REQ_HEADERS)
-    with urllib.request.urlopen(req, timeout=45) as resp:
+    with OPENER.open(req, timeout=45) as resp:
         return resp.read().decode("utf-8", errors="ignore")
 
 def http_get_json(url: str) -> dict:
@@ -184,6 +189,14 @@ def load_channels_from_sheet():
     return channels
 
 # --------- TikTok helpers ---------
+def warm_tiktok_cookies() -> None:
+    try:
+        req = urllib.request.Request("https://www.tiktok.com/", headers=REQ_HEADERS)
+        with OPENER.open(req, timeout=45):
+            return
+    except Exception:
+        return
+
 def normalize_tiktok_handle(handle: str, tiktok_url: str) -> str:
     if handle:
         return handle.lstrip("@").strip().lower()
@@ -202,6 +215,7 @@ def ensure_tiktok_live_url(handle: str, tiktok_url: str) -> str:
 def fetch_tiktok_live_data(handle: str) -> dict | None:
     if not handle:
         return None
+    warm_tiktok_cookies()
     url = f"https://www.tiktok.com/api-live/user/room/?aid=1988&uniqueId={urllib.parse.quote(handle)}"
     try:
         return http_get_json(url)
@@ -266,16 +280,67 @@ def fetch_tiktok_live_status(handle: str, tiktok_url: str) -> tuple[bool, str, s
         return False, "", ""
 
     try:
+        warm_tiktok_cookies()
         html = http_get(tiktok_url)
     except Exception:
         return False, "", ""
 
     return extract_tiktok_status_from_html(html)
 
+def find_first_key_value(data: object, keys: set[str]) -> object | None:
+    if isinstance(data, dict):
+        for key, value in data.items():
+            if key in keys:
+                return value
+            found = find_first_key_value(value, keys)
+            if found is not None:
+                return found
+    elif isinstance(data, list):
+        for item in data:
+            found = find_first_key_value(item, keys)
+            if found is not None:
+                return found
+    return None
+
+def extract_tiktok_from_embedded_json(html_text: str) -> tuple[str, int | None, str]:
+    scripts = [
+        re.search(r'id="SIGI_STATE"[^>]*>(.*?)</script>', html_text, re.DOTALL),
+        re.search(r'__UNIVERSAL_DATA_FOR_REHYDRATION__\s*=\s*(\{.*?\})\s*;', html_text, re.DOTALL),
+    ]
+    for match in scripts:
+        if not match:
+            continue
+        payload_raw = match.group(1).strip()
+        if not payload_raw:
+            continue
+        try:
+            payload = json.loads(html.unescape(payload_raw))
+        except Exception:
+            continue
+
+        room_value = find_first_key_value(payload, {"liveRoomId", "roomId", "room_id", "live_room_id"})
+        room_id = str(room_value) if room_value else ""
+        status_value = find_first_key_value(payload, {"liveStatus", "status", "roomStatus"})
+        try:
+            status_code = int(status_value) if status_value is not None else None
+        except Exception:
+            status_code = None
+        cover_value = find_first_key_value(payload, {"coverUrl", "cover", "coverImage"})
+        cover = str(cover_value) if cover_value else ""
+        return room_id, status_code, cover
+    return "", None, ""
+
 def extract_tiktok_status_from_html(html: str) -> tuple[bool, str, str]:
     html_lower = html.lower()
     if "live has ended" in html_lower or "this live has ended" in html_lower:
         return False, "", ""
+
+    embedded_room_id, embedded_status, embedded_cover = extract_tiktok_from_embedded_json(html)
+    if embedded_status is not None:
+        if embedded_status in {1, 2}:
+            return True, embedded_room_id, embedded_cover
+        if embedded_status == 0:
+            return False, "", ""
 
     room_match = re.search(r'"liveRoomId"\s*:\s*"(\d+)"', html)
     if not room_match:
@@ -299,8 +364,8 @@ def extract_tiktok_status_from_html(html: str) -> tuple[bool, str, str]:
     if live_token:
         return True, room_id, ""
 
-    if room_id:
-        return True, room_id, ""
+    if room_id or embedded_room_id:
+        return True, room_id or embedded_room_id, embedded_cover
 
     return False, "", ""
 

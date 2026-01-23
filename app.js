@@ -153,6 +153,30 @@ function inferPlatformFromUrl(url) {
   return "";
 }
 
+function extractTikTokHandle(urlOrHandle) {
+  if (!urlOrHandle) return "";
+  const raw = String(urlOrHandle).trim();
+  if (!raw) return "";
+  const urlMatch = raw.match(/tiktok\.com\/@([^/?#]+)/i);
+  if (urlMatch && urlMatch[1]) return urlMatch[1];
+  const handleMatch = raw.match(/@?([A-Za-z0-9._]+)/);
+  return handleMatch ? handleMatch[1] : "";
+}
+
+function normalizeWatchUrl(e) {
+  const url = String(e?.watch_url || "").trim();
+  if (!url) return "";
+  const platform = e?.platform || inferPlatformFromUrl(url);
+  if (platform !== "TikTok") return url;
+
+  const handleFromUrl = extractTikTokHandle(url);
+  const handleFromChannel = extractTikTokHandle(e?.channel || "");
+  const handle = handleFromUrl || handleFromChannel;
+  if (!handle) return url;
+
+  return `https://www.tiktok.com/@${handle}/live`;
+}
+
 function hasLiveThumbnail(url) {
   if (!url) return false;
   return /_live\.jpg(?:\?|$)/i.test(url);
@@ -498,7 +522,7 @@ function renderCard(e, forceLiveBadge = false) {
   const badge = live ? `<span class="pill live">LIVE</span>` : "";
   const subs = e.subscribers ? `${Number(e.subscribers).toLocaleString()} subs` : "";
 
-  const watchUrl = escapeHtml(e.watch_url || "#");
+  const watchUrl = escapeHtml(normalizeWatchUrl(e) || "#");
 
   return `
   <div class="card${live ? " isLive" : ""}">
@@ -646,7 +670,7 @@ function renderTodaysGuide() {
     const start = getEventStart(e);
     const isLive = e.status === "live";
     const badge = isLive ? `<span class="guideBadge">LIVE</span>` : "";
-    const watchUrl = escapeHtml(e.watch_url || "#");
+    const watchUrl = escapeHtml(normalizeWatchUrl(e) || "#");
     return `
       <a class="guideRow" href="${watchUrl}" target="_blank" rel="noreferrer">
         <div class="guideTime">${fmtTime(start)}</div>
@@ -806,7 +830,7 @@ function renderSchedule() {
 
           return `
             <a class="block ${e.status || ""}" href="${escapeHtml(
-              e.watch_url || "#"
+              normalizeWatchUrl(e) || "#"
             )}" target="_blank" rel="noreferrer"
               style="left:${clippedLeft}px; width:${width}px;">
               <div class="blockMedia" style="background-image:url('${encodeURI(thumb)}')"></div>

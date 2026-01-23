@@ -1,35 +1,5 @@
 [
   {
-    "start_et": "2026-01-23 11:43",
-    "end_et": "",
-    "title": "TBG vs. RRAW & Golfers Unite!",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Triple Bogey Golf",
-    "watch_url": "https://www.youtube.com/watch?v=Su9FUzvHez8",
-    "source_id": "Su9FUzvHez8",
-    "type": "",
-    "is_premiere": false,
-    "status": "live",
-    "thumbnail_url": "https://i.ytimg.com/vi/Su9FUzvHez8/maxresdefault_live.jpg",
-    "subscribers": 8840
-  },
-  {
-    "start_et": "2026-01-21 20:11",
-    "end_et": "2026-01-22 03:11",
-    "title": "\ud83d\udd34LIVE | CERTIFIED GOOP GETTER | WACK MY JUNK WITH A KNOTTED ROPE LIKE IM 007 WEDNESDAY | #BUNGULATE",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "TheBurntPeanut",
-    "watch_url": "https://www.youtube.com/watch?v=kgSo1FO_hhw",
-    "source_id": "kgSo1FO_hhw",
-    "type": "",
-    "is_premiere": false,
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/kgSo1FO_hhw/maxresdefault.jpg",
-    "subscribers": 1360000
-  },
-  {
     "start_et": "2026-01-22 10:28",
     "end_et": "2026-01-22 10:36",
     "title": "Live from the Protee Booth at the 2026 PGA show",
@@ -268,6 +238,21 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/fHpQ2UNGCSQ/maxresdefault.jpg",
     "subscribers": 17100
+  },
+  {
+    "start_et": "2026-01-23 11:43",
+    "end_et": "2026-01-23 15:05",
+    "title": "TBG vs. RRAW & Golfers Unite!",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Triple Bogey Golf",
+    "watch_url": "https://www.youtube.com/watch?v=Su9FUzvHez8",
+    "source_id": "Su9FUzvHez8",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/Su9FUzvHez8/maxresdefault_live.jpg",
+    "subscribers": 8850
   },
   {
     "start_et": "2026-01-23 13:47",

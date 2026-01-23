@@ -36,6 +36,7 @@ USER_AGENT = "Mozilla/5.0 (compatible; sgtv-bot/2.2)"
 REQ_HEADERS = {
     "User-Agent": USER_AGENT,
     "Accept-Language": "en-US,en;q=0.9",
+    "Referer": "https://www.tiktok.com/",
 }
 
 # --------- HTTP helpers ---------
@@ -185,11 +186,11 @@ def load_channels_from_sheet():
 # --------- TikTok helpers ---------
 def normalize_tiktok_handle(handle: str, tiktok_url: str) -> str:
     if handle:
-        return handle.lstrip("@")
+        return handle.lstrip("@").strip().lower()
     if not tiktok_url:
         return ""
     match = re.search(r"/@([^/?#]+)", tiktok_url)
-    return match.group(1) if match else ""
+    return match.group(1).lower() if match else ""
 
 def ensure_tiktok_live_url(handle: str, tiktok_url: str) -> str:
     if tiktok_url:
@@ -269,22 +270,39 @@ def fetch_tiktok_live_status(handle: str, tiktok_url: str) -> tuple[bool, str, s
     except Exception:
         return False, "", ""
 
+    return extract_tiktok_status_from_html(html)
+
+def extract_tiktok_status_from_html(html: str) -> tuple[bool, str, str]:
     html_lower = html.lower()
-    if "live has ended" in html_lower:
+    if "live has ended" in html_lower or "this live has ended" in html_lower:
         return False, "", ""
 
-    live_token = re.search(r'"isLive"\s*:\s*true', html)
-    if not live_token:
-        live_token = re.search(r'"liveStatus"\s*:\s*2', html)
-    if not live_token:
-        live_token = re.search(r'"status"\s*:\s*2', html)
-    if not live_token:
-        return False, "", ""
+    room_match = re.search(r'"liveRoomId"\s*:\s*"(\d+)"', html)
+    if not room_match:
+        room_match = re.search(r'"roomId"\s*:\s*"(\d+)"', html)
+    room_id = room_match.group(1) if room_match else ""
 
-    match = re.search(r'"roomId"\s*:\s*"(\d+)"', html)
-    if not match:
-        match = re.search(r'"liveRoomId"\s*:\s*"(\d+)"', html)
-    return (match is not None), (match.group(1) if match else ""), ""
+    status_match = re.search(r'"liveStatus"\s*:\s*(\d+)', html)
+    if not status_match:
+        status_match = re.search(r'"status"\s*:\s*(\d+)', html)
+    if not status_match:
+        status_match = re.search(r'"roomStatus"\s*:\s*(\d+)', html)
+
+    if status_match:
+        code = int(status_match.group(1))
+        if code in {1, 2}:
+            return True, room_id, ""
+        if code == 0:
+            return False, "", ""
+
+    live_token = re.search(r'"isLive"\s*:\s*true', html, re.IGNORECASE)
+    if live_token:
+        return True, room_id, ""
+
+    if room_id:
+        return True, room_id, ""
+
+    return False, "", ""
 
 # --------- Time helpers ---------
 def iso_to_et_fmt(iso: str) -> str:

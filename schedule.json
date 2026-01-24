@@ -1,20 +1,5 @@
 [
   {
-    "start_et": "2026-01-24 14:45",
-    "end_et": "",
-    "title": "Live Garage Simulator Golf Ping Eye 2 Clubs - Top 100 Courses League @ Bandon Dunes",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "TurbodTalon Golf",
-    "watch_url": "https://www.youtube.com/watch?v=CKdZRwaeenQ",
-    "source_id": "CKdZRwaeenQ",
-    "type": "",
-    "is_premiere": false,
-    "status": "live",
-    "thumbnail_url": "https://i.ytimg.com/vi/CKdZRwaeenQ/maxresdefault_live_live.jpg",
-    "subscribers": 184
-  },
-  {
     "start_et": "2026-01-23 11:13",
     "end_et": "2026-01-23 11:20",
     "title": "Live from the Uneekor booth at the PGA Show 2026",
@@ -73,6 +58,21 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/fL9f_kk2j48/maxresdefault.jpg",
     "subscribers": 483
+  },
+  {
+    "start_et": "2026-01-23 18:56",
+    "end_et": "2026-01-23 20:11",
+    "title": "Live Garage Simulator Golf - SGT DLud Golf's Best Courses League @ The Reserve South",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "TurbodTalon Golf",
+    "watch_url": "https://www.youtube.com/watch?v=6ePPQlmVEXk",
+    "source_id": "6ePPQlmVEXk",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/6ePPQlmVEXk/maxresdefault.jpg",
+    "subscribers": 184
   },
   {
     "start_et": "2026-01-23 20:11",
@@ -208,5 +208,20 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/J4ZB29AmqnU/maxresdefault_live.jpg",
     "subscribers": 15
+  },
+  {
+    "start_et": "2026-01-24 14:45",
+    "end_et": "2026-01-24 15:56",
+    "title": "Live Garage Simulator Golf Ping Eye 2 Clubs - Top 100 Courses League @ Bandon Dunes",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "TurbodTalon Golf",
+    "watch_url": "https://www.youtube.com/watch?v=CKdZRwaeenQ",
+    "source_id": "CKdZRwaeenQ",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/CKdZRwaeenQ/maxresdefault_live.jpg",
+    "subscribers": 184
   }
 ]

@@ -1,38 +1,56 @@
-name: Sync YouTube -> schedule.json
+name: Sync schedule
 
 on:
+  workflow_dispatch:
   schedule:
     - cron: "*/15 * * * *"
-  workflow_dispatch:
 
 permissions:
   contents: write
+
+concurrency:
+  group: sync-schedule
+  cancel-in-progress: true
 
 jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Run sync
+      - name: Verify required configuration
         env:
-          YT_API_KEY: ${{ secrets.YT_API_KEY }}
-          SCHEDULE_SHEET_CSV: ${{ secrets.SCHEDULE_SHEET_CSV }}
-          CHANNEL_SHEET_CSV: "https://docs.google.com/spreadsheets/d/e/2PACX-1vR5DMZYPLgP64WZYcE1H0PMOQyjD2Rf67NUM1kRkC3dCPVwZJ0kNcj6dUbugO-LOaSNSx798fPA27tK/pub?gid=0&single=true&output=csv"
-          OUT_PATH: schedule.json
-          MAX_LIVE_HOURS: "4"
-          SEARCH_LIVE_MAX_RESULTS: "0"
+          CHANNEL_SHEET_CSV: ${{ secrets.CHANNEL_SHEET_CSV }}
         run: |
-          python automation/sync_youtube_free.py
+          if [ -z "${CHANNEL_SHEET_CSV}" ]; then
+            echo "Missing required secret: CHANNEL_SHEET_CSV" >&2
+            exit 1
+          fi
 
-      - name: Commit schedule.json if changed
+      - name: Sync schedule data
+        env:
+          CHANNEL_SHEET_CSV: ${{ secrets.CHANNEL_SHEET_CSV }}
+          SCHEDULE_SHEET_CSV: ${{ secrets.SCHEDULE_SHEET_CSV }}
+          YT_API_KEY: ${{ secrets.YT_API_KEY }}
+        run: python automation/sync_youtube_free.py
+
+      - name: Commit schedule changes
         run: |
-          git config user.name "sgtv-bot"
-          git config user.email "sgtv-bot@users.noreply.github.com"
+          if git diff --quiet schedule.json; then
+            echo "No schedule changes to commit."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add schedule.json
-          git diff --cached --quiet || (git commit -m "Update schedule.json" && git push)
+          git commit -m "chore: sync schedule"
+          git push

@@ -1,5 +1,20 @@
 [
   {
+    "start_et": "2026-01-24 18:19",
+    "end_et": "",
+    "title": "Break 50 Challenge with Frank & Boog",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Strong Design Studio",
+    "watch_url": "https://www.youtube.com/watch?v=Dq5QJSq_vLc",
+    "source_id": "Dq5QJSq_vLc",
+    "type": "",
+    "is_premiere": false,
+    "status": "live",
+    "thumbnail_url": "https://i.ytimg.com/vi/Dq5QJSq_vLc/maxresdefault_live_live.jpg",
+    "subscribers": 60
+  },
+  {
     "start_et": "2026-01-23 11:13",
     "end_et": "2026-01-23 11:20",
     "title": "Live from the Uneekor booth at the PGA Show 2026",
@@ -132,7 +147,7 @@
     "is_premiere": false,
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/QFKyoa7MN6o/sddefault.jpg",
-    "subscribers": 35
+    "subscribers": 36
   },
   {
     "start_et": "2026-01-23 22:54",
@@ -163,21 +178,6 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/Cf4_cKJDQKU/maxresdefault.jpg",
     "subscribers": 15
-  },
-  {
-    "start_et": "2026-01-24 13:34",
-    "end_et": "2026-01-24 13:35",
-    "title": "DGUTS - Live Stream - FlyinFatKids League | GSPRO | ProteeVX",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Don't Give Up the Ship!",
-    "watch_url": "https://www.youtube.com/watch?v=Amy-ZUhSPB4",
-    "source_id": "Amy-ZUhSPB4",
-    "type": "",
-    "is_premiere": false,
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/Amy-ZUhSPB4/maxresdefault_live.jpg",
-    "subscribers": 83
   },
   {
     "start_et": "2026-01-24 13:44",

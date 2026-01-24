@@ -32,6 +32,19 @@ Expected headers (case-insensitive):
 For TikTok rows, provide either `handle` or `tiktok_url`. The script will attempt to
 detect live status and, when live, emit a `watch_url` pointing at `/live`.
 
+
+## Run automation in GitHub Actions (recommended for the site)
+To keep TikTok LIVE detection server-side (and avoid browser CORS limits), use the
+included workflow at `.github/workflows/sync-schedule.yml`.
+
+Set these repo secrets (Settings → Secrets and variables → Actions):
+- `CHANNEL_SHEET_CSV` — required published channel sheet CSV URL
+- `SCHEDULE_SHEET_CSV` — optional published schedule sheet CSV URL
+- `YT_API_KEY` — optional YouTube Data API key
+
+The workflow runs every 15 minutes, fails fast if `CHANNEL_SHEET_CSV` is missing,
+and commits any `schedule.json` updates.
+
 ## Run locally (optional)
 Just open `index.html` in your browser.
 

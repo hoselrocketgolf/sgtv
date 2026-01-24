@@ -254,15 +254,21 @@ def fetch_tiktok_live_data(handle: str) -> dict | None:
     endpoints = [
         "https://www.tiktok.com/api-live/user/room/?aid=1988&uniqueId=",
         "https://www.tiktok.com/api/live/user/room/?aid=1988&uniqueId=",
+        "https://www.tiktok.com/api-live/user/room/?aid=1988&unique_id=",
+        "https://www.tiktok.com/api/live/user/room/?aid=1988&unique_id=",
     ]
+    last_error: Exception | None = None
     for base in endpoints:
         url = f"{base}{urllib.parse.quote(handle)}"
         try:
             payload = http_get_json(url)
-        except Exception:
+        except Exception as exc:
+            last_error = exc
             continue
-        if isinstance(payload, dict):
+        if isinstance(payload, dict) and payload:
             return payload
+    if last_error:
+        print(f"TikTok API lookup failed for @{handle}: {last_error}")
     return None
 
 def extract_tiktok_room_id(payload: dict | None) -> str:
@@ -314,34 +320,41 @@ def fetch_tiktok_live_status(handle: str, tiktok_url: str) -> tuple[bool, str, s
     payload = fetch_tiktok_live_data(handle)
     room_id = extract_tiktok_room_id(payload)
     live_state = extract_tiktok_live_state(payload)
+    cover = extract_tiktok_cover(payload)
+
     if live_state is False:
         return False, "", ""
     if room_id and live_state is not False:
-        return True, room_id, extract_tiktok_cover(payload)
+        return True, room_id, cover
 
-    if not tiktok_url:
-        return False, "", ""
-
-    try:
-        warm_tiktok_cookies()
-        html = http_get(tiktok_url)
-    except Exception:
-        return False, "", ""
-
-    status = extract_tiktok_status_from_html(html)
-    if status[0] or status[1]:
-        return status
-
+    live_url = ensure_tiktok_live_url(handle, tiktok_url)
     profile_url = normalize_tiktok_profile_url(tiktok_url)
-    if "/live" in tiktok_url and profile_url and profile_url != tiktok_url:
+
+    urls_to_try: list[str] = []
+    for candidate in [live_url, profile_url, tiktok_url]:
+        if candidate and candidate not in urls_to_try:
+            urls_to_try.append(candidate)
+
+    last_error: Exception | None = None
+    for url in urls_to_try:
         try:
             warm_tiktok_cookies()
-            profile_html = http_get(profile_url)
-        except Exception:
+            html = http_get(url)
+        except Exception as exc:
+            last_error = exc
+            continue
+        status = extract_tiktok_status_from_html(html)
+        if status[0] or status[1]:
             return status
-        return extract_tiktok_status_from_html(profile_html)
 
-    return status
+    if last_error and handle:
+        print(f"TikTok HTML lookup failed for @{handle}: {last_error}")
+
+    if room_id:
+        # Some responses omit explicit live flags but still include a room id.
+        return True, room_id, cover
+
+    return False, "", ""
 
 def find_first_key_value(data: object, keys: set[str]) -> object | None:
     if isinstance(data, dict):
@@ -519,104 +532,120 @@ def fetch_uploads_video_ids(
         if not page_token:
             break
 
-        # small throttle
-        time.sleep(0.05)
-
     return vids
 
+def fetch_search_live_for_channel(channel_id: str, max_results: int = 5) -> list[str]:
+    if max_results <= 0:
+        return []
+    try:
+        resp = yt_api("search", {
+            "part": "id",
+            "channelId": channel_id,
+            "eventType": "live",
+            "type": "video",
+            "maxResults": max_results,
+            "order": "date"
+        })
+    except urllib.error.HTTPError as e:
+        print(f"Search API error for {channel_id}: {e}")
+        return []
+    items = resp.get("items", [])
+    ids = []
+    for it in items:
+        vid = (((it.get("id") or {}).get("videoId")) or "").strip()
+        if vid:
+            ids.append(vid)
+    return ids
+
 def fetch_videos_details(video_ids: list[str]) -> dict:
-    out = {}
+    details = {}
     for batch in chunked(video_ids, 50):
         resp = yt_api("videos", {
-            "part": "snippet,liveStreamingDetails,contentDetails",
+            "part": "snippet,liveStreamingDetails,contentDetails,status",
             "id": ",".join(batch),
             "maxResults": 50
         })
         for item in resp.get("items", []):
             vid = item.get("id", "")
             if vid:
-                out[vid] = item
-    return out
+                details[vid] = item
+    return details
 
-def looks_like_premiere(item: dict) -> bool:
+def classify_video(item: dict, now: datetime):
+    """
+    Returns tuple(status, start_iso, end_iso, is_live_broadcast, is_premiere, title, thumb_url)
+    status in {"live","upcoming","ended","none"}
+    """
     snippet = item.get("snippet") or {}
-    title = (snippet.get("title") or "").lower()
-    description = (snippet.get("description") or "").lower()
-    if "premiere" in title or "premiere" in description:
-        return True
-    live_content = (snippet.get("liveBroadcastContent") or "").lower()
-    duration = ((item.get("contentDetails") or {}).get("duration") or "").strip()
-    # Scheduled videos with a known duration are often premieres (pre-recorded).
-    return live_content == "upcoming" and duration not in {"", "PT0S"}
+    live = item.get("liveStreamingDetails") or {}
+    status_obj = item.get("status") or {}
 
-def fetch_search_live_video_ids(channel_id: str, max_results: int) -> list[str]:
-    """
-    Pull live video IDs from the Search API to catch live streams
-    that may not be present in the uploads playlist (e.g., vertical live).
-    """
-    resp = yt_api("search", {
-        "part": "snippet",
-        "channelId": channel_id,
-        "eventType": "live",
-        "type": "video",
-        "order": "date",
-        "maxResults": max_results
-    })
-    vids = []
-    for item in resp.get("items", []):
-        vid = (((item.get("id") or {}).get("videoId")) or "").strip()
-        if vid:
-            vids.append(vid)
-    return vids
+    title = (snippet.get("title") or "").strip()
+    thumbs = snippet.get("thumbnails") or {}
+    thumb_url = ""
+    for key in ["maxres", "standard", "high", "medium", "default"]:
+        t = thumbs.get(key) or {}
+        url = (t.get("url") or "").strip()
+        if url:
+            thumb_url = url
+            break
 
-def pick_thumb(snippet: dict) -> str:
-    thumbs = (snippet or {}).get("thumbnails") or {}
-    for k in ["maxres", "standard", "high", "medium", "default"]:
-        u = ((thumbs.get(k) or {}).get("url")) or ""
-        if u:
-            return u
-    return ""
+    live_broadcast_content = (snippet.get("liveBroadcastContent") or "").lower()
+    is_live_broadcast = live_broadcast_content == "live"
+    is_upcoming_broadcast = live_broadcast_content == "upcoming"
 
-def classify_video(item: dict) -> tuple[str | None, str | None, str | None]:
-    """
-    Returns (status, start_iso, end_iso)
-      status: "live" | "upcoming" | "ended" | None
-    """
-    lsd = (item.get("liveStreamingDetails") or {})
-    snippet = (item.get("snippet") or {})
-    live_content = (snippet.get("liveBroadcastContent") or "").lower()
+    actual_start = live.get("actualStartTime") or ""
+    actual_end = live.get("actualEndTime") or ""
+    sched_start = live.get("scheduledStartTime") or ""
+    sched_end = live.get("scheduledEndTime") or ""
 
-    actual_start = lsd.get("actualStartTime")
-    actual_end = lsd.get("actualEndTime")
-    scheduled_start = lsd.get("scheduledStartTime")
+    # Premiere detection
+    is_premiere = False
+    if (status_obj.get("uploadStatus") or "").lower() == "uploaded":
+        if (status_obj.get("privacyStatus") or "").lower() in {"public", "unlisted"}:
+            if (item.get("contentDetails") or {}).get("duration"):
+                # Use presence of premiere flag in snippet if available
+                is_premiere = bool(snippet.get("premiere") or snippet.get("isPremiere"))
 
-    # Ended if started and ended
-    if actual_start and actual_end:
-        return "ended", actual_start, actual_end
-
-    # Live if started and not ended
+    # Determine status
     if actual_start and not actual_end:
-        return "live", actual_start, None
+        return "live", actual_start, "", True, is_premiere, title, thumb_url
+    if sched_start:
+        sched_dt = parse_iso(sched_start)
+        if sched_dt and sched_dt > now:
+            return "upcoming", sched_start, sched_end, False, is_premiere, title, thumb_url
 
-    # Upcoming if scheduled but not started
-    if scheduled_start and not actual_start:
-        return "upcoming", scheduled_start, None
+    if actual_end:
+        return "ended", actual_start or sched_start, actual_end, False, is_premiere, title, thumb_url
 
-    # Fallbacks (rare)
-    if live_content == "live" and actual_start and not actual_end:
-        return "live", actual_start, None
-    if live_content == "upcoming" and scheduled_start:
-        return "upcoming", scheduled_start, None
+    # Fallback to broadcast hints
+    if is_live_broadcast:
+        return "live", actual_start or sched_start, actual_end, True, is_premiere, title, thumb_url
+    if is_upcoming_broadcast:
+        return "upcoming", sched_start, sched_end, False, is_premiere, title, thumb_url
 
-    return None, None, None
+    return "none", sched_start or actual_start, actual_end, False, is_premiere, title, thumb_url
 
-def is_stale_upcoming(start_iso: str, now: datetime) -> bool:
-    """
-    If YouTube says 'upcoming' but the scheduled time is in the past,
-    it’s almost always a canceled/never-went-live placeholder.
-    Drop it if it's older than 30 minutes ago.
-    """
+def within_upcoming_horizon(iso: str, now: datetime, horizon_days: int) -> bool:
+    dt = parse_iso(iso)
+    if not dt:
+        return False
+    return dt <= (now + timedelta(days=horizon_days))
+
+def within_recent_window(iso: str, now: datetime, hours: int) -> bool:
+    dt = parse_iso(iso)
+    if not dt:
+        return False
+    return dt >= (now - timedelta(hours=hours))
+
+def is_stale_live(start_iso: str, now: datetime, max_hours: int) -> bool:
     dt = parse_iso(start_iso)
+    if not dt:
+        return False
+    return dt < (now - timedelta(hours=max_hours))
+
+def is_stale_upcoming(sched_iso: str, now: datetime) -> bool:
+    dt = parse_iso(sched_iso)
     if not dt:
         return False
     return dt < (now - timedelta(minutes=30))
@@ -658,6 +687,7 @@ def main():
 
         if tiktok_channels:
             print("Scanning TikTok handles:", len(tiktok_channels))
+            detected_live = 0
             for channel in tiktok_channels:
                 handle = normalize_tiktok_handle(channel.get("handle", ""), channel.get("tiktok_url", ""))
                 display_name = (channel.get("display_name") or "").strip()
@@ -665,12 +695,16 @@ def main():
                 live_url = ensure_tiktok_live_url(handle, channel.get("tiktok_url", ""))
 
                 if not live_url:
+                    print("TikTok row missing handle/url, skipping:", display_name or handle or "unknown")
                     continue
 
                 is_live, room_id, cover = fetch_tiktok_live_status(handle, live_url)
+                label = display_name or (f"@{handle}" if handle else live_url)
+                print(f"TikTok check: {label} -> {'LIVE' if is_live else 'offline'}")
                 if not is_live:
                     continue
 
+                detected_live += 1
                 fallback_name = f"@{handle}" if handle else "TikTok creator"
                 channel_name = display_name or fallback_name
                 title = f"{channel_name} is live on TikTok"
@@ -690,6 +724,7 @@ def main():
                     "thumbnail_url": cover,
                     "subscribers": subs
                 })
+            print("TikTok live detected:", detected_live)
 
         if used_schedule_sheet:
             if youtube_channels:
@@ -719,131 +754,176 @@ def main():
             for cid in channel_ids:
                 m = meta.get(cid)
                 if not m:
-                    print("WARN: channel meta missing (bad channel_id?):", cid)
                     continue
+                uploads_id = m["uploads_playlist_id"]
 
-                uploads = m["uploads_playlist_id"]
                 vids = fetch_uploads_video_ids(
-                    uploads,
+                    uploads_id,
                     max_results=MAX_UPLOAD_SCAN,
                     lookback_days=UPLOAD_LOOKBACK_DAYS
                 )
+
                 if SEARCH_LIVE_MAX_RESULTS > 0:
-                    live_vids = fetch_search_live_video_ids(cid, SEARCH_LIVE_MAX_RESULTS)
-                    if live_vids:
-                        vids = list(dict.fromkeys(live_vids + vids))
+                    live_search_vids = fetch_search_live_for_channel(cid, SEARCH_LIVE_MAX_RESULTS)
+                    # Prepend live search vids so they get priority
+                    vids = list(dict.fromkeys(live_search_vids + vids))
+
                 per_channel_candidate[cid] = vids
                 all_candidate_vids.extend(vids)
 
-                time.sleep(0.05)
+            # Deduplicate while preserving order
+            deduped_vids = []
+            for vid in all_candidate_vids:
+                if vid in seen_video_ids:
+                    continue
+                seen_video_ids.add(vid)
+                deduped_vids.append(vid)
 
-            # Fetch details for all unique candidates
-            video_details = fetch_videos_details(sorted(set(all_candidate_vids)))
+            details = fetch_videos_details(deduped_vids)
 
-            upcoming_horizon = now + timedelta(days=UPCOMING_HORIZON_DAYS)
-            ended_cutoff = now - timedelta(hours=RECENT_ENDED_HOURS)
+            # Classify per channel and build events
+            for cid in channel_ids:
+                vids = per_channel_candidate.get(cid, [])
+                if not vids:
+                    continue
 
-            for cid, vids in per_channel_candidate.items():
                 m = meta.get(cid) or {}
-                sheet = sheet_by_id.get(cid) or {}
+                sheet_row = sheet_by_id.get(cid) or {}
 
-                subs_api = int(m.get("subscribers") or 0)
-                subs_sheet = int(sheet.get("sheet_subscribers") or 0)
-                subs = subs_api if subs_api > 0 else subs_sheet
+                channel_title = (sheet_row.get("display_name") or "").strip() or m.get("channel_title") or ""
+                subs = int(m.get("subscribers") or 0)
 
-                handle = (sheet.get("handle") or "").strip().lstrip("@")
-                sheet_name = (sheet.get("display_name") or "").strip()
-                yt_title = (m.get("channel_title") or "").strip()
-                channel_name = sheet_name or (f"@{handle}" if handle else "") or yt_title or ""
-
-                print("-----")
-                print(f"Channel: {cid} name: {channel_name} subs(api): {subs_api} subs(sheet): {subs_sheet}")
-
-                found_live = False
+                # Best candidate selection
+                best_live = None
+                best_upcoming = None
+                recent_ended = []
 
                 for vid in vids:
-                    item = video_details.get(vid)
+                    item = details.get(vid)
                     if not item:
                         continue
 
-                    status, start_iso, end_iso = classify_video(item)
-                    if not status or not start_iso:
-                        continue
+                    status, start_iso, end_iso, is_live_broadcast, is_premiere, title, thumb_url = classify_video(item, now)
 
-                    is_premiere = looks_like_premiere(item)
-
-                    if is_premiere and status == "ended":
-                        continue
-
-                    # Kill stale "upcoming" that are already in the past (canceled/never-live)
-                    if status == "upcoming" and is_stale_upcoming(start_iso, now):
+                    # Skip premieres for live detection
+                    if is_premiere:
                         continue
 
                     if status == "live":
-                        start_dt = parse_iso(start_iso)
-                        if start_dt and start_dt < (now - timedelta(hours=MAX_LIVE_HOURS)):
+                        if start_iso and is_stale_live(start_iso, now, MAX_LIVE_HOURS):
                             continue
+                        best_live = (vid, start_iso, end_iso, title, thumb_url)
+                        # live beats all, break early
+                        break
 
-                    # Upcoming filter window (next 7 days only)
-                    if status == "upcoming":
-                        start_dt = parse_iso(start_iso)
-                        if start_dt and start_dt > upcoming_horizon:
+                    if status == "upcoming" and start_iso:
+                        if not within_upcoming_horizon(start_iso, now, UPCOMING_HORIZON_DAYS):
                             continue
-                    if status == "ended":
-                        end_dt = parse_iso(end_iso) if end_iso else None
-                        if not end_dt or end_dt < ended_cutoff:
+                        if is_stale_upcoming(start_iso, now):
                             continue
+                        if not best_upcoming:
+                            best_upcoming = (vid, start_iso, end_iso, title, thumb_url)
 
-                    if vid in seen_video_ids:
-                        continue
-                    seen_video_ids.add(vid)
+                    if status == "ended" and end_iso:
+                        if within_recent_window(end_iso, now, RECENT_ENDED_HOURS):
+                            recent_ended.append((vid, start_iso, end_iso, title, thumb_url))
 
-                    snippet = item.get("snippet") or {}
-                    title = (snippet.get("title") or "").strip()
-                    thumb = pick_thumb(snippet) or f"https://i.ytimg.com/vi/{vid}/hqdefault.jpg"
+                # Emit live if found
+                if best_live:
+                    vid, start_iso, end_iso, title, thumb_url = best_live
+                    events.append({
+                        "start_et": iso_to_et_fmt(start_iso or now.isoformat()),
+                        "end_et": "",
+                        "title": title,
+                        "league": "",
+                        "platform": "YouTube",
+                        "channel": channel_title,
+                        "watch_url": f"https://www.youtube.com/watch?v={vid}",
+                        "source_id": vid,
+                        "type": "",
+                        "is_premiere": False,
+                        "status": "live",
+                        # Use _live thumbnail hint when live
+                        "thumbnail_url": (thumb_url.replace(".jpg", "_live.jpg") if thumb_url else ""),
+                        "subscribers": subs
+                    })
+                    continue
 
-                    if status == "live":
-                        found_live = True
-
+                # Otherwise upcoming
+                if best_upcoming:
+                    vid, start_iso, end_iso, title, thumb_url = best_upcoming
                     events.append({
                         "start_et": iso_to_et_fmt(start_iso),
                         "end_et": iso_to_et_fmt(end_iso) if end_iso else "",
                         "title": title,
                         "league": "",
                         "platform": "YouTube",
-                        "channel": channel_name,
+                        "channel": channel_title,
                         "watch_url": f"https://www.youtube.com/watch?v={vid}",
                         "source_id": vid,
-                        "type": "premiere" if is_premiere else "",
-                        "is_premiere": is_premiere,
-                        "status": status,
-                        "thumbnail_url": thumb,
+                        "type": "",
+                        "is_premiere": False,
+                        "status": "upcoming",
+                        "thumbnail_url": thumb_url,
                         "subscribers": subs
                     })
 
-                if not found_live:
-                    print("No LIVE detected right now.")
+                # Emit recent ended streams (dedupe by vid)
+                for vid, start_iso, end_iso, title, thumb_url in recent_ended:
+                    events.append({
+                        "start_et": iso_to_et_fmt(start_iso or end_iso),
+                        "end_et": iso_to_et_fmt(end_iso) if end_iso else "",
+                        "title": title,
+                        "league": "",
+                        "platform": "YouTube",
+                        "channel": channel_title,
+                        "watch_url": f"https://www.youtube.com/watch?v={vid}",
+                        "source_id": vid,
+                        "type": "",
+                        "is_premiere": False,
+                        "status": "ended",
+                        "thumbnail_url": thumb_url,
+                        "subscribers": subs
+                    })
 
-        # Sort: live first, then by time, tie by subs desc
+        # Finalize
+        # Deduplicate by (platform, source_id) preferring live > upcoming > ended
+        priority = {"live": 3, "upcoming": 2, "ended": 1}
+        merged = {}
+        for e in events:
+            key = (e.get("platform"), e.get("source_id") or e.get("watch_url"))
+            prev = merged.get(key)
+            if not prev:
+                merged[key] = e
+                continue
+            prev_p = priority.get((prev.get("status") or "").lower(), 0)
+            new_p = priority.get((e.get("status") or "").lower(), 0)
+            if new_p >= prev_p:
+                merged[key] = e
+
+        final_events = list(merged.values())
+
+        # Sort by live first, then start time desc for ended, asc for upcoming
         def sort_key(e):
-            live_rank = 0 if e.get("status") == "live" else 1
-            return (
-                live_rank,
-                e.get("start_et", "9999-99-99 99:99"),
-                -(int(e.get("subscribers") or 0))
-            )
+            st = (e.get("status") or "").lower()
+            start = e.get("start_et") or ""
+            if st == "live":
+                return (0, start)
+            if st == "upcoming":
+                return (1, start)
+            return (2, start)
 
-        events.sort(key=sort_key)
+        final_events.sort(key=sort_key)
 
-        write_schedule(events, OUT_PATH)
+        write_schedule(final_events, OUT_PATH)
+        print(f"Wrote {len(final_events)} events to {OUT_PATH}")
 
-        print(f"-----\nWrote {len(events)} events to {OUT_PATH}")
-    except urllib.error.HTTPError as exc:
-        if exc.code == 403:
-            print("YouTube API request returned 403 (invalid key or quota). Skipping sync.")
-            return
-        print(f"YouTube API request failed with HTTP {exc.code}. Skipping sync.")
-        return
+    except urllib.error.HTTPError as e:
+        print("HTTPError:", e.read().decode("utf-8", errors="ignore"))
+        raise
+    except Exception as e:
+        print("Error:", e)
+        raise
 
 if __name__ == "__main__":
     main()

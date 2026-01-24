@@ -53,6 +53,22 @@ def http_get(url: str) -> str:
     with OPENER.open(req, timeout=45) as resp:
         return resp.read().decode("utf-8", errors="ignore")
 
+def ensure_public_csv(url: str, text: str) -> str:
+    sample = (text[:500] or "").lower()
+    looks_like_html = "<!doctype html" in sample or "<html" in sample
+    is_google_docs = "docs.google.com" in (url or "")
+    cookie_gate = "allow google sheets access to your necessary cookies" in sample
+    sign_in_gate = "sign in to your google account" in sample
+
+    if is_google_docs and looks_like_html and (cookie_gate or sign_in_gate):
+        raise SystemExit(
+            "Google Sheets blocked access (cookie/sign-in gate). "
+            "Set CHANNEL_SHEET_CSV to the published CSV export URL: "
+            "https://docs.google.com/spreadsheets/d/<SHEET_ID>/export?format=csv&gid=<GID> "
+            "and ensure the sheet is published to the web."
+        )
+    return text
+
 def http_get_json(url: str) -> dict:
     txt = http_get(url)
     return json.loads(txt)
@@ -152,7 +168,7 @@ def load_channels_from_sheet():
     For YouTube rows, channel_id is required.
     For TikTok rows, handle or tiktok_url is required.
     """
-    csv_text = http_get(CHANNEL_SHEET_CSV)
+    csv_text = ensure_public_csv(CHANNEL_SHEET_CSV, http_get(CHANNEL_SHEET_CSV))
     rows = parse_simple_csv(csv_text)
     if not rows:
         return []

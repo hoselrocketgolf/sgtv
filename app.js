@@ -163,6 +163,11 @@ function extractTikTokHandle(urlOrHandle) {
   return handleMatch ? handleMatch[1] : "";
 }
 
+function isTikTokLiveUrl(url) {
+  if (!url) return false;
+  return /tiktok\.com\/@[^/?#]+\/live(?:[/?#]|$)/i.test(url);
+}
+
 function normalizeWatchUrl(e) {
   const url = String(e?.watch_url || "").trim();
   if (!url) return "";
@@ -909,7 +914,12 @@ async function loadSchedule() {
 
     allEvents = sortEvents(
       data
-        .filter((e) => e && e.watch_url && (e.start_et || e.status === "live"))
+        .filter(
+          (e) =>
+            e &&
+            e.watch_url &&
+            (e.start_et || e.status === "live" || isTikTokLiveUrl(String(e.watch_url || "")))
+        )
         .map((e) => {
           const normalizedEvent = normalizeEventData(e);
           if (!normalizedEvent) return null;
@@ -919,6 +929,7 @@ async function loadSchedule() {
           const start = parseET(normalizedEvent.start_et);
           const explicitEnd = parseET(normalizedEvent.end_et);
           let startOverride = null;
+          const hasTikTokLiveUrl = isTikTokLiveUrl(normalizedEvent.watch_url);
 
           const inferredEnd = start ? explicitEnd || new Date(start.getTime() + 120 * 60000) : null;
           const isLiveWindow =
@@ -928,7 +939,9 @@ async function loadSchedule() {
 
           const liveFutureTooFar = start ? start.getTime() - now > maxLiveFutureMs : false;
 
-          if (rawStatus === "live" && liveFutureTooFar) {
+          if (!rawStatus && hasTikTokLiveUrl) {
+            status = "live";
+          } else if (rawStatus === "live" && liveFutureTooFar) {
             status = "upcoming";
           } else if (rawStatus === "live" && !liveEligible) {
             if (start) {
@@ -959,10 +972,18 @@ async function loadSchedule() {
             if (start) {
               const startTs = start.getTime();
               if (startTs - now > maxLiveFutureMs) {
-                status = "upcoming";
-                startOverride = null;
+                if (hasTikTokLiveUrl) {
+                  startOverride = new Date(now);
+                } else {
+                  status = "upcoming";
+                  startOverride = null;
+                }
               } else if (now - startTs > maxLiveAgeMs) {
-                status = "ended";
+                if (hasTikTokLiveUrl) {
+                  startOverride = new Date(now);
+                } else {
+                  status = "ended";
+                }
               }
             } else {
               startOverride = new Date(now);

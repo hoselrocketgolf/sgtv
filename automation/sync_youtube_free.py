@@ -30,8 +30,12 @@ UPCOMING_HORIZON_DAYS = int(env_or_default("UPCOMING_HORIZON_DAYS", "7"))
 RECENT_ENDED_HOURS = int(env_or_default("RECENT_ENDED_HOURS", "36"))
 # Treat "live" streams older than this many hours as stale and drop them.
 MAX_LIVE_HOURS = int(env_or_default("MAX_LIVE_HOURS", "4"))
+# If a live stream looks like it ended but lacks actualEndTime, wait this long before ending it.
+LIVE_END_GRACE_MINS = int(env_or_default("LIVE_END_GRACE_MINS", "10"))
 # How many live results to pull from Search API per channel (0 disables Search API usage).
 SEARCH_LIVE_MAX_RESULTS = int(env_or_default("SEARCH_LIVE_MAX_RESULTS", "0"))
+# Recheck this many prior YouTube video IDs from the last schedule to catch fast starts/ends.
+PRIOR_SCHEDULE_RECHECK_LIMIT = int(env_or_default("PRIOR_SCHEDULE_RECHECK_LIMIT", "25"))
 
 USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -160,6 +164,43 @@ def load_schedule_from_sheet(csv_url: str) -> list[dict]:
 def write_schedule(events: list[dict], out_path: str) -> None:
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(events, f, indent=2)
+
+def load_existing_schedule(out_path: str) -> list[dict]:
+    if not out_path or not os.path.exists(out_path):
+        return []
+    try:
+        with open(out_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data if isinstance(data, list) else []
+    except Exception:
+        return []
+
+def extract_youtube_video_id(url: str) -> str:
+    if not url:
+        return ""
+    match = re.search(r"(?:v=|\/)([0-9A-Za-z_-]{11})(?:\b|$)", url)
+    return match.group(1) if match else ""
+
+def load_prior_youtube_video_ids(out_path: str, limit: int) -> list[str]:
+    if limit <= 0:
+        return []
+    schedule = load_existing_schedule(out_path)
+    if not schedule:
+        return []
+    vids = []
+    for entry in schedule:
+        platform = (entry.get("platform") or "").strip().lower()
+        status = (entry.get("status") or "").strip().lower()
+        if platform != "youtube":
+            continue
+        if status not in {"live", "upcoming"}:
+            continue
+        vid = extract_youtube_video_id(entry.get("watch_url") or "")
+        if vid and vid not in vids:
+            vids.append(vid)
+        if len(vids) >= limit:
+            break
+    return vids
 
 def load_channels_from_sheet():
     """
@@ -625,6 +666,10 @@ def classify_video(item: dict, now: datetime):
 
     # Determine status
     if actual_start and not actual_end:
+        if live_broadcast_content != "live":
+            actual_start_dt = parse_iso(actual_start)
+            if actual_start_dt and now - actual_start_dt > timedelta(minutes=LIVE_END_GRACE_MINS):
+                return "ended", actual_start, now.isoformat(), False, is_premiere, title, thumb_url
         return "live", actual_start, "", True, is_premiere, title, thumb_url
     if sched_start:
         sched_dt = parse_iso(sched_start)
@@ -753,9 +798,12 @@ def main():
             print("Upcoming horizon days:", UPCOMING_HORIZON_DAYS)
             print("Recent ended hours:", RECENT_ENDED_HOURS)
             print("Max live hours:", MAX_LIVE_HOURS)
+            print("Live end grace mins:", LIVE_END_GRACE_MINS)
             print("Search live max results:", SEARCH_LIVE_MAX_RESULTS)
             if SEARCH_LIVE_MAX_RESULTS == 0:
                 print("Search API disabled to reduce quota usage.")
+            if PRIOR_SCHEDULE_RECHECK_LIMIT > 0:
+                print("Prior schedule recheck limit:", PRIOR_SCHEDULE_RECHECK_LIMIT)
 
             channel_ids = [c["channel_id"] for c in youtube_channels]
             meta = fetch_channels_meta(channel_ids)
@@ -765,6 +813,7 @@ def main():
             seen_video_ids = set()
             all_candidate_vids = []
             per_channel_candidate = {}
+            prior_video_ids = load_prior_youtube_video_ids(OUT_PATH, PRIOR_SCHEDULE_RECHECK_LIMIT)
 
             # Gather candidates
             for cid in channel_ids:
@@ -787,6 +836,9 @@ def main():
                 per_channel_candidate[cid] = vids
                 all_candidate_vids.extend(vids)
 
+            if prior_video_ids:
+                all_candidate_vids.extend(prior_video_ids)
+
             # Deduplicate while preserving order
             deduped_vids = []
             for vid in all_candidate_vids:
@@ -797,9 +849,21 @@ def main():
 
             details = fetch_videos_details(deduped_vids)
 
+            prior_vids_by_channel = {}
+            if prior_video_ids:
+                for vid in prior_video_ids:
+                    item = details.get(vid)
+                    if not item:
+                        continue
+                    channel_id = ((item.get("snippet") or {}).get("channelId") or "").strip()
+                    if channel_id and channel_id in channel_ids:
+                        prior_vids_by_channel.setdefault(channel_id, []).append(vid)
+
             # Classify per channel and build events
             for cid in channel_ids:
                 vids = per_channel_candidate.get(cid, [])
+                if prior_vids_by_channel.get(cid):
+                    vids = list(dict.fromkeys(prior_vids_by_channel[cid] + vids))
                 if not vids:
                     continue
 

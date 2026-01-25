@@ -203,13 +203,28 @@ function extractYouTubeId(url) {
   return "";
 }
 
-function getYouTubeThumbnail(e) {
-  const id = e?.source_id || extractYouTubeId(e?.watch_url || "");
-  return id ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : "";
-}
-
 function getEventThumbnail(e) {
-  return e?.thumbnail_url || getYouTubeThumbnail(e);
+  const raw = String(e?.thumbnail_url || "").trim();
+  const id = e?.source_id || extractYouTubeId(e?.watch_url || "");
+  const isYouTubeEvent = isYouTubeUrl(e?.watch_url || "") || Boolean(id);
+
+  if (isYouTubeEvent) {
+    if (raw) {
+      if (/_live_live\.jpg(?:\?|$)/i.test(raw) && id) {
+        return `https://i.ytimg.com/vi/${id}/hqdefault_live.jpg`;
+      }
+      return raw;
+    }
+
+    if (id) {
+      if (e?.status === "live") {
+        return `https://i.ytimg.com/vi/${id}/hqdefault_live.jpg`;
+      }
+      return `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
+    }
+  }
+
+  return raw;
 }
 
 function isPremiereEvent(e) {

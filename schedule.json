@@ -1,20 +1,5 @@
 [
   {
-    "start_et": "2026-01-24 23:56",
-    "end_et": "",
-    "title": "TheBigDog Live! -",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "TheBigDog",
-    "watch_url": "https://www.youtube.com/watch?v=69j_nDtyU84",
-    "source_id": "69j_nDtyU84",
-    "type": "",
-    "is_premiere": false,
-    "status": "live",
-    "thumbnail_url": "https://i.ytimg.com/vi/69j_nDtyU84/maxresdefault_live_live.jpg",
-    "subscribers": 105
-  },
-  {
     "start_et": "2026-01-23 11:43",
     "end_et": "2026-01-23 15:05",
     "title": "TBG vs. RRAW & Golfers Unite!",
@@ -28,21 +13,6 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/Su9FUzvHez8/maxresdefault.jpg",
     "subscribers": 8860
-  },
-  {
-    "start_et": "2026-01-23 13:47",
-    "end_et": "2026-01-23 14:32",
-    "title": "PGA West - Stadium Course - The American Express - TIPS Tour on GSPro - Round 2",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "SHED SIM GOLF",
-    "watch_url": "https://www.youtube.com/watch?v=fL9f_kk2j48",
-    "source_id": "fL9f_kk2j48",
-    "type": "",
-    "is_premiere": false,
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/fL9f_kk2j48/maxresdefault.jpg",
-    "subscribers": 483
   },
   {
     "start_et": "2026-01-23 18:56",
@@ -223,5 +193,20 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/yV6-ooYZi4M/sddefault_live.jpg",
     "subscribers": 36
+  },
+  {
+    "start_et": "2026-01-24 23:56",
+    "end_et": "2026-01-25 02:15",
+    "title": "TheBigDog Live! -",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "TheBigDog",
+    "watch_url": "https://www.youtube.com/watch?v=69j_nDtyU84",
+    "source_id": "69j_nDtyU84",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/69j_nDtyU84/maxresdefault_live.jpg",
+    "subscribers": 105
   }
 ]

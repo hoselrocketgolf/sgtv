@@ -30,34 +30,19 @@
     "subscribers": 16
   },
   {
-    "start_et": "2026-01-24 21:40",
+    "start_et": "2026-01-24 22:57",
     "end_et": "",
-    "title": "GSPro - SimGolf Two Man Best Ball 2026 Week 6",
+    "title": "Crushinit GSPro LIVE- NoPros 1.24 League Play",
     "league": "",
     "platform": "YouTube",
-    "channel": "Jayme Bristow Golf",
-    "watch_url": "https://www.youtube.com/watch?v=9TSrNroIdiY",
-    "source_id": "9TSrNroIdiY",
+    "channel": "crushinit",
+    "watch_url": "https://www.youtube.com/watch?v=yV6-ooYZi4M",
+    "source_id": "yV6-ooYZi4M",
     "type": "",
     "is_premiere": false,
     "status": "live",
-    "thumbnail_url": "https://i.ytimg.com/vi/9TSrNroIdiY/maxresdefault_live_live.jpg",
-    "subscribers": 120
-  },
-  {
-    "start_et": "2026-01-23 11:13",
-    "end_et": "2026-01-23 11:20",
-    "title": "Live from the Uneekor booth at the PGA Show 2026",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Joe Lagowski Golf",
-    "watch_url": "https://www.youtube.com/watch?v=mKK3oeAcR1g",
-    "source_id": "mKK3oeAcR1g",
-    "type": "",
-    "is_premiere": false,
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/mKK3oeAcR1g/maxresdefault.jpg",
-    "subscribers": 17100
+    "thumbnail_url": "https://i.ytimg.com/vi/yV6-ooYZi4M/sddefault_live_live.jpg",
+    "subscribers": 36
   },
   {
     "start_et": "2026-01-23 11:22",
@@ -135,19 +120,19 @@
     "subscribers": 72
   },
   {
-    "start_et": "2026-01-23 22:39",
-    "end_et": "2026-01-24 00:20",
-    "title": "Crushinit GSPro LIVE- Bogey's League Play 1.23",
+    "start_et": "2026-01-23 21:31",
+    "end_et": "2026-01-23 21:57",
+    "title": "GSPro - Virtual Tee Big Dog II Session 2 Round 1",
     "league": "",
     "platform": "YouTube",
-    "channel": "crushinit",
-    "watch_url": "https://www.youtube.com/watch?v=QFKyoa7MN6o",
-    "source_id": "QFKyoa7MN6o",
+    "channel": "Jayme Bristow Golf",
+    "watch_url": "https://www.youtube.com/watch?v=Rl10i4KGRr8",
+    "source_id": "Rl10i4KGRr8",
     "type": "",
     "is_premiere": false,
     "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/QFKyoa7MN6o/sddefault.jpg",
-    "subscribers": 36
+    "thumbnail_url": "https://i.ytimg.com/vi/Rl10i4KGRr8/maxresdefault.jpg",
+    "subscribers": 120
   },
   {
     "start_et": "2026-01-23 22:54",
@@ -208,5 +193,20 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/Dq5QJSq_vLc/maxresdefault_live.jpg",
     "subscribers": 60
+  },
+  {
+    "start_et": "2026-01-24 21:40",
+    "end_et": "2026-01-24 22:34",
+    "title": "GSPro - SimGolf Two Man Best Ball 2026 Week 6",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Jayme Bristow Golf",
+    "watch_url": "https://www.youtube.com/watch?v=9TSrNroIdiY",
+    "source_id": "9TSrNroIdiY",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/9TSrNroIdiY/maxresdefault_live.jpg",
+    "subscribers": 120
   }
 ]

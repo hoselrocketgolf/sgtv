@@ -30,6 +30,21 @@
     "subscribers": 16
   },
   {
+    "start_et": "2026-01-24 21:40",
+    "end_et": "",
+    "title": "GSPro - SimGolf Two Man Best Ball 2026 Week 6",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Jayme Bristow Golf",
+    "watch_url": "https://www.youtube.com/watch?v=9TSrNroIdiY",
+    "source_id": "9TSrNroIdiY",
+    "type": "",
+    "is_premiere": false,
+    "status": "live",
+    "thumbnail_url": "https://i.ytimg.com/vi/9TSrNroIdiY/maxresdefault_live_live.jpg",
+    "subscribers": 120
+  },
+  {
     "start_et": "2026-01-23 11:13",
     "end_et": "2026-01-23 11:20",
     "title": "Live from the Uneekor booth at the PGA Show 2026",
@@ -120,21 +135,6 @@
     "subscribers": 72
   },
   {
-    "start_et": "2026-01-23 21:31",
-    "end_et": "2026-01-23 21:57",
-    "title": "GSPro - Virtual Tee Big Dog II Session 2 Round 1",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Jayme Bristow Golf",
-    "watch_url": "https://www.youtube.com/watch?v=Rl10i4KGRr8",
-    "source_id": "Rl10i4KGRr8",
-    "type": "",
-    "is_premiere": false,
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/Rl10i4KGRr8/maxresdefault.jpg",
-    "subscribers": 120
-  },
-  {
     "start_et": "2026-01-23 22:39",
     "end_et": "2026-01-24 00:20",
     "title": "Crushinit GSPro LIVE- Bogey's League Play 1.23",
@@ -165,21 +165,6 @@
     "subscribers": 1880
   },
   {
-    "start_et": "2026-01-24 12:47",
-    "end_et": "2026-01-24 12:47",
-    "title": "Test",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "GlitchEgolf",
-    "watch_url": "https://www.youtube.com/watch?v=Cf4_cKJDQKU",
-    "source_id": "Cf4_cKJDQKU",
-    "type": "",
-    "is_premiere": false,
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/Cf4_cKJDQKU/maxresdefault.jpg",
-    "subscribers": 15
-  },
-  {
     "start_et": "2026-01-24 13:44",
     "end_et": "2026-01-24 14:28",
     "title": "DGUTS - Live Stream - FlyinFatKids League | GSPRO | ProteeVX.",
@@ -193,21 +178,6 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/Vn8v0S1lDLA/maxresdefault_live.jpg",
     "subscribers": 83
-  },
-  {
-    "start_et": "2026-01-24 13:47",
-    "end_et": "2026-01-24 13:53",
-    "title": "Test",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "GlitchEgolf",
-    "watch_url": "https://www.youtube.com/watch?v=J4ZB29AmqnU",
-    "source_id": "J4ZB29AmqnU",
-    "type": "",
-    "is_premiere": false,
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/J4ZB29AmqnU/maxresdefault_live.jpg",
-    "subscribers": 15
   },
   {
     "start_et": "2026-01-24 14:45",

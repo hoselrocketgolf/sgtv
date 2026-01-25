@@ -1,20 +1,5 @@
 [
   {
-    "start_et": "2026-01-25 14:08",
-    "end_et": "",
-    "title": "Fix the Glitch",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "GlitchEgolf",
-    "watch_url": "https://www.youtube.com/watch?v=SCRkZ_xrl18",
-    "source_id": "SCRkZ_xrl18",
-    "type": "",
-    "is_premiere": false,
-    "status": "live",
-    "thumbnail_url": "https://i.ytimg.com/vi/SCRkZ_xrl18/maxresdefault_live_live.jpg",
-    "subscribers": 15
-  },
-  {
     "start_et": "2026-01-25 15:22",
     "end_et": "",
     "title": "LEAGUE EVENTS & PLAYOFF FOOTBALL Best Part of a Sim",
@@ -28,21 +13,6 @@
     "status": "live",
     "thumbnail_url": "https://i.ytimg.com/vi/mp0KKpvpKQU/maxresdefault_live_live.jpg",
     "subscribers": 1880
-  },
-  {
-    "start_et": "2026-01-23 20:11",
-    "end_et": "2026-01-24 04:10",
-    "title": "\ud83d\udd34LIVE | She Raid My Arc Till I Dam Battleground | #FillUpMyShartTankImReadyToFart #BUNGULATE",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "TheBurntPeanut",
-    "watch_url": "https://www.youtube.com/watch?v=HVAPQZYym-Q",
-    "source_id": "HVAPQZYym-Q",
-    "type": "",
-    "is_premiere": false,
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/HVAPQZYym-Q/maxresdefault.jpg",
-    "subscribers": 1390000
   },
   {
     "start_et": "2026-01-24 13:44",
@@ -208,5 +178,20 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/RK69qWBVzkM/maxresdefault_live.jpg",
     "subscribers": 36
+  },
+  {
+    "start_et": "2026-01-25 14:08",
+    "end_et": "2026-01-25 16:20",
+    "title": "Fix the Glitch",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "GlitchEgolf",
+    "watch_url": "https://www.youtube.com/watch?v=SCRkZ_xrl18",
+    "source_id": "SCRkZ_xrl18",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/SCRkZ_xrl18/sddefault.jpg",
+    "subscribers": 15
   }
 ]

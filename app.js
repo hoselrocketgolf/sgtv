@@ -187,6 +187,31 @@ function hasLiveThumbnail(url) {
   return /_live\.jpg(?:\?|$)/i.test(url);
 }
 
+function extractYouTubeId(url) {
+  if (!url) return "";
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname.includes("youtu.be")) {
+      return parsed.pathname.replace("/", "");
+    }
+    if (parsed.hostname.includes("youtube.com")) {
+      return parsed.searchParams.get("v") || "";
+    }
+  } catch (err) {
+    return "";
+  }
+  return "";
+}
+
+function getYouTubeThumbnail(e) {
+  const id = e?.source_id || extractYouTubeId(e?.watch_url || "");
+  return id ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : "";
+}
+
+function getEventThumbnail(e) {
+  return e?.thumbnail_url || getYouTubeThumbnail(e);
+}
+
 function isPremiereEvent(e) {
   if (!e) return false;
   if (e.is_premiere === true || e.premiere === true || e.isPremiere === true) return true;
@@ -520,9 +545,8 @@ function applyFilters() {
 // -------------------- Hero cards --------------------
 function renderCard(e, forceLiveBadge = false) {
   const start = getEventStart(e);
-  const media = e.thumbnail_url
-    ? `style="background-image:url('${encodeURI(e.thumbnail_url)}')"`
-    : "";
+  const thumbnail = getEventThumbnail(e);
+  const media = thumbnail ? `style="background-image:url('${encodeURI(thumbnail)}')"` : "";
   const live = forceLiveBadge || e.status === "live";
   const badge = live ? `<span class="pill live">LIVE</span>` : "";
   const subs = e.subscribers ? `${Number(e.subscribers).toLocaleString()} subs` : "";
@@ -827,9 +851,7 @@ function renderSchedule() {
           width = Math.max(width, minW);
           if (clippedLeft + width > surfaceW) width = surfaceW - clippedLeft;
 
-          const thumb =
-            e.thumbnail_url ||
-            (e.source_id ? `https://i.ytimg.com/vi/${e.source_id}/hqdefault.jpg` : "");
+          const thumb = getEventThumbnail(e);
           const liveBadge = e.status === "live" ? `<span class="badgeLive">LIVE</span>` : "";
           const timeRange = `${fmtTime(s)}–${fmtTime(ee)}`;
 

@@ -1,20 +1,5 @@
 [
   {
-    "start_et": "2026-01-25 08:31",
-    "end_et": "",
-    "title": "\ud83d\udd34 LIVE GOLF | The Quest to Qualify Continues #usopen",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "McGolfinTV",
-    "watch_url": "https://www.youtube.com/watch?v=H8uHSrhlSUI",
-    "source_id": "H8uHSrhlSUI",
-    "type": "",
-    "is_premiere": false,
-    "status": "live",
-    "thumbnail_url": "https://i.ytimg.com/vi/H8uHSrhlSUI/maxresdefault_live_live.jpg",
-    "subscribers": 824
-  },
-  {
     "start_et": "2026-01-23 20:11",
     "end_et": "2026-01-24 04:10",
     "title": "\ud83d\udd34LIVE | She Raid My Arc Till I Dam Battleground | #FillUpMyShartTankImReadyToFart #BUNGULATE",
@@ -28,21 +13,6 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/HVAPQZYym-Q/maxresdefault.jpg",
     "subscribers": 1380000
-  },
-  {
-    "start_et": "2026-01-23 20:54",
-    "end_et": "2026-01-23 23:11",
-    "title": "Skytrak Virtual Tour Double Feature (Banff Springs and Oswego Lake) | LIVE",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Yak Golf",
-    "watch_url": "https://www.youtube.com/watch?v=Wogjsu2ZCA4",
-    "source_id": "Wogjsu2ZCA4",
-    "type": "",
-    "is_premiere": false,
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/Wogjsu2ZCA4/maxresdefault.jpg",
-    "subscribers": 72
   },
   {
     "start_et": "2026-01-23 22:39",
@@ -161,7 +131,7 @@
     "type": "",
     "is_premiere": false,
     "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/9TSrNroIdiY/maxresdefault_live.jpg",
+    "thumbnail_url": "https://i.ytimg.com/vi/9TSrNroIdiY/maxresdefault.jpg",
     "subscribers": 120
   },
   {
@@ -193,6 +163,21 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/69j_nDtyU84/maxresdefault_live.jpg",
     "subscribers": 105
+  },
+  {
+    "start_et": "2026-01-25 08:31",
+    "end_et": "2026-01-25 11:45",
+    "title": "\ud83d\udd34 LIVE GOLF | The Quest to Qualify Continues #usopen",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "McGolfinTV",
+    "watch_url": "https://www.youtube.com/watch?v=H8uHSrhlSUI",
+    "source_id": "H8uHSrhlSUI",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/H8uHSrhlSUI/maxresdefault_live.jpg",
+    "subscribers": 825
   },
   {
     "start_et": "2026-01-25 08:36",

@@ -1,18 +1,33 @@
 [
   {
-    "start_et": "2026-01-24 18:19",
+    "start_et": "2026-01-24 20:10",
     "end_et": "",
-    "title": "Break 50 Challenge with Frank & Boog",
+    "title": "\ud83d\udd34LIVE | ARC RAIDERS | She Spaceport My Bluegate Until I Stella Montis | #BUNGULATE",
     "league": "",
     "platform": "YouTube",
-    "channel": "Strong Design Studio",
-    "watch_url": "https://www.youtube.com/watch?v=Dq5QJSq_vLc",
-    "source_id": "Dq5QJSq_vLc",
+    "channel": "TheBurntPeanut",
+    "watch_url": "https://www.youtube.com/watch?v=xXAEVrLoaTs",
+    "source_id": "xXAEVrLoaTs",
     "type": "",
     "is_premiere": false,
     "status": "live",
-    "thumbnail_url": "https://i.ytimg.com/vi/Dq5QJSq_vLc/maxresdefault_live_live.jpg",
-    "subscribers": 60
+    "thumbnail_url": "https://i.ytimg.com/vi/xXAEVrLoaTs/maxresdefault_live_live.jpg",
+    "subscribers": 1380000
+  },
+  {
+    "start_et": "2026-01-24 20:32",
+    "end_et": "",
+    "title": "Rich & Strong Studio vs Tom70 & Ebone",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Rich Ellis",
+    "watch_url": "https://www.youtube.com/watch?v=AFvqEUWGebY",
+    "source_id": "AFvqEUWGebY",
+    "type": "",
+    "is_premiere": false,
+    "status": "live",
+    "thumbnail_url": "https://i.ytimg.com/vi/AFvqEUWGebY/maxresdefault_live_live.jpg",
+    "subscribers": 16
   },
   {
     "start_et": "2026-01-23 11:13",
@@ -88,21 +103,6 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/6ePPQlmVEXk/maxresdefault.jpg",
     "subscribers": 184
-  },
-  {
-    "start_et": "2026-01-23 20:11",
-    "end_et": "2026-01-24 04:10",
-    "title": "\ud83d\udd34LIVE | She Raid My Arc Till I Dam Battleground | #FillUpMyShartTankImReadyToFart #BUNGULATE",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "TheBurntPeanut",
-    "watch_url": "https://www.youtube.com/watch?v=HVAPQZYym-Q",
-    "source_id": "HVAPQZYym-Q",
-    "type": "",
-    "is_premiere": false,
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/HVAPQZYym-Q/maxresdefault.jpg",
-    "subscribers": 1380000
   },
   {
     "start_et": "2026-01-23 20:54",
@@ -223,5 +223,20 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/CKdZRwaeenQ/maxresdefault_live.jpg",
     "subscribers": 184
+  },
+  {
+    "start_et": "2026-01-24 18:19",
+    "end_et": "2026-01-24 19:09",
+    "title": "Break 50 Challenge with Frank & Boog",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Strong Design Studio",
+    "watch_url": "https://www.youtube.com/watch?v=Dq5QJSq_vLc",
+    "source_id": "Dq5QJSq_vLc",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/Dq5QJSq_vLc/maxresdefault_live.jpg",
+    "subscribers": 60
   }
 ]

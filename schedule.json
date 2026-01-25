@@ -1,63 +1,18 @@
 [
   {
-    "start_et": "2026-01-24 20:10",
+    "start_et": "2026-01-24 23:56",
     "end_et": "",
-    "title": "\ud83d\udd34LIVE | ARC RAIDERS | She Spaceport My Bluegate Until I Stella Montis | #BUNGULATE",
+    "title": "TheBigDog Live! -",
     "league": "",
     "platform": "YouTube",
-    "channel": "TheBurntPeanut",
-    "watch_url": "https://www.youtube.com/watch?v=xXAEVrLoaTs",
-    "source_id": "xXAEVrLoaTs",
+    "channel": "TheBigDog",
+    "watch_url": "https://www.youtube.com/watch?v=69j_nDtyU84",
+    "source_id": "69j_nDtyU84",
     "type": "",
     "is_premiere": false,
     "status": "live",
-    "thumbnail_url": "https://i.ytimg.com/vi/xXAEVrLoaTs/maxresdefault_live_live.jpg",
-    "subscribers": 1380000
-  },
-  {
-    "start_et": "2026-01-24 20:32",
-    "end_et": "",
-    "title": "Rich & Strong Studio vs Tom70 & Ebone",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Rich Ellis",
-    "watch_url": "https://www.youtube.com/watch?v=AFvqEUWGebY",
-    "source_id": "AFvqEUWGebY",
-    "type": "",
-    "is_premiere": false,
-    "status": "live",
-    "thumbnail_url": "https://i.ytimg.com/vi/AFvqEUWGebY/maxresdefault_live_live.jpg",
-    "subscribers": 16
-  },
-  {
-    "start_et": "2026-01-24 22:57",
-    "end_et": "",
-    "title": "Crushinit GSPro LIVE- NoPros 1.24 League Play",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "crushinit",
-    "watch_url": "https://www.youtube.com/watch?v=yV6-ooYZi4M",
-    "source_id": "yV6-ooYZi4M",
-    "type": "",
-    "is_premiere": false,
-    "status": "live",
-    "thumbnail_url": "https://i.ytimg.com/vi/yV6-ooYZi4M/sddefault_live_live.jpg",
-    "subscribers": 36
-  },
-  {
-    "start_et": "2026-01-23 11:22",
-    "end_et": "2026-01-23 11:24",
-    "title": "Live from the Foresight Booth at the PGA Show 2026",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Joe Lagowski Golf",
-    "watch_url": "https://www.youtube.com/watch?v=fHpQ2UNGCSQ",
-    "source_id": "fHpQ2UNGCSQ",
-    "type": "",
-    "is_premiere": false,
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/fHpQ2UNGCSQ/maxresdefault.jpg",
-    "subscribers": 17100
+    "thumbnail_url": "https://i.ytimg.com/vi/69j_nDtyU84/maxresdefault_live_live.jpg",
+    "subscribers": 105
   },
   {
     "start_et": "2026-01-23 11:43",
@@ -105,6 +60,21 @@
     "subscribers": 184
   },
   {
+    "start_et": "2026-01-23 20:11",
+    "end_et": "2026-01-24 04:10",
+    "title": "\ud83d\udd34LIVE | She Raid My Arc Till I Dam Battleground | #FillUpMyShartTankImReadyToFart #BUNGULATE",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "TheBurntPeanut",
+    "watch_url": "https://www.youtube.com/watch?v=HVAPQZYym-Q",
+    "source_id": "HVAPQZYym-Q",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/HVAPQZYym-Q/maxresdefault.jpg",
+    "subscribers": 1380000
+  },
+  {
     "start_et": "2026-01-23 20:54",
     "end_et": "2026-01-23 23:11",
     "title": "Skytrak Virtual Tour Double Feature (Banff Springs and Oswego Lake) | LIVE",
@@ -133,6 +103,21 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/Rl10i4KGRr8/maxresdefault.jpg",
     "subscribers": 120
+  },
+  {
+    "start_et": "2026-01-23 22:39",
+    "end_et": "2026-01-24 00:20",
+    "title": "Crushinit GSPro LIVE- Bogey's League Play 1.23",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "crushinit",
+    "watch_url": "https://www.youtube.com/watch?v=QFKyoa7MN6o",
+    "source_id": "QFKyoa7MN6o",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/QFKyoa7MN6o/sddefault.jpg",
+    "subscribers": 36
   },
   {
     "start_et": "2026-01-23 22:54",
@@ -195,6 +180,21 @@
     "subscribers": 60
   },
   {
+    "start_et": "2026-01-24 20:32",
+    "end_et": "2026-01-24 23:27",
+    "title": "Rich & Strong Studio vs Tom70 & Ebone",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Rich Ellis",
+    "watch_url": "https://www.youtube.com/watch?v=AFvqEUWGebY",
+    "source_id": "AFvqEUWGebY",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/AFvqEUWGebY/maxresdefault_live.jpg",
+    "subscribers": 16
+  },
+  {
     "start_et": "2026-01-24 21:40",
     "end_et": "2026-01-24 22:34",
     "title": "GSPro - SimGolf Two Man Best Ball 2026 Week 6",
@@ -208,5 +208,20 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/9TSrNroIdiY/maxresdefault_live.jpg",
     "subscribers": 120
+  },
+  {
+    "start_et": "2026-01-24 22:57",
+    "end_et": "2026-01-25 00:09",
+    "title": "Crushinit GSPro LIVE- NoPros 1.24 League Play",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "crushinit",
+    "watch_url": "https://www.youtube.com/watch?v=yV6-ooYZi4M",
+    "source_id": "yV6-ooYZi4M",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/yV6-ooYZi4M/sddefault_live.jpg",
+    "subscribers": 36
   }
 ]

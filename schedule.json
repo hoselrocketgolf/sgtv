@@ -15,22 +15,7 @@
     "subscribers": 822
   },
   {
-    "start_et": "2026-01-25 08:36",
-    "end_et": "",
-    "title": "SGT 2-Man Scramble - Longest Course Name In America #fun",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Ryanasugolf",
-    "watch_url": "https://www.youtube.com/watch?v=-n2K4vnJzro",
-    "source_id": "-n2K4vnJzro",
-    "type": "",
-    "is_premiere": false,
-    "status": "live",
-    "thumbnail_url": "https://i.ytimg.com/vi/-n2K4vnJzro/maxresdefault_live_live.jpg",
-    "subscribers": 4
-  },
-  {
-    "start_et": "2026-01-25 08:35",
+    "start_et": "2026-01-25 08:47",
     "end_et": "",
     "title": "Live Two-Man Scramble at The Links Valley Golf Course",
     "league": "",
@@ -40,8 +25,8 @@
     "source_id": "RK69qWBVzkM",
     "type": "",
     "is_premiere": false,
-    "status": "upcoming",
-    "thumbnail_url": "https://i.ytimg.com/vi/RK69qWBVzkM/maxresdefault_live.jpg",
+    "status": "live",
+    "thumbnail_url": "https://i.ytimg.com/vi/RK69qWBVzkM/maxresdefault_live_live.jpg",
     "subscribers": 36
   },
   {
@@ -238,5 +223,20 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/69j_nDtyU84/maxresdefault_live.jpg",
     "subscribers": 105
+  },
+  {
+    "start_et": "2026-01-25 08:36",
+    "end_et": "2026-01-25 08:48",
+    "title": "SGT 2-Man Scramble - Longest Course Name In America #fun",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Ryanasugolf",
+    "watch_url": "https://www.youtube.com/watch?v=-n2K4vnJzro",
+    "source_id": "-n2K4vnJzro",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/-n2K4vnJzro/maxresdefault_live.jpg",
+    "subscribers": 4
   }
 ]

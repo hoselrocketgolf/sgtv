@@ -1,20 +1,5 @@
 [
   {
-    "start_et": "2026-01-23 11:43",
-    "end_et": "2026-01-23 15:05",
-    "title": "TBG vs. RRAW & Golfers Unite!",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Triple Bogey Golf",
-    "watch_url": "https://www.youtube.com/watch?v=Su9FUzvHez8",
-    "source_id": "Su9FUzvHez8",
-    "type": "",
-    "is_premiere": false,
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/Su9FUzvHez8/maxresdefault.jpg",
-    "subscribers": 8860
-  },
-  {
     "start_et": "2026-01-23 18:56",
     "end_et": "2026-01-23 20:11",
     "title": "Live Garage Simulator Golf - SGT DLud Golf's Best Courses League @ The Reserve South",
@@ -148,6 +133,21 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/Dq5QJSq_vLc/maxresdefault_live.jpg",
     "subscribers": 60
+  },
+  {
+    "start_et": "2026-01-24 20:10",
+    "end_et": "2026-01-25 03:23",
+    "title": "\ud83d\udd34LIVE | ARC RAIDERS | She Spaceport My Bluegate Until I Stella Montis | #BUNGULATE",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "TheBurntPeanut",
+    "watch_url": "https://www.youtube.com/watch?v=xXAEVrLoaTs",
+    "source_id": "xXAEVrLoaTs",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/xXAEVrLoaTs/maxresdefault.jpg",
+    "subscribers": 1380000
   },
   {
     "start_et": "2026-01-24 20:32",

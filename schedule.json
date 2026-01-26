@@ -12,7 +12,7 @@
     "is_premiere": false,
     "status": "live",
     "thumbnail_url": "https://i.ytimg.com/vi/GFMQV8HEEOo/maxresdefault_live_live.jpg",
-    "subscribers": 825
+    "subscribers": 828
   },
   {
     "start_et": "2026-01-24 20:10",
@@ -28,21 +28,6 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/xXAEVrLoaTs/maxresdefault.jpg",
     "subscribers": 1390000
-  },
-  {
-    "start_et": "2026-01-24 22:57",
-    "end_et": "2026-01-25 00:09",
-    "title": "Crushinit GSPro LIVE- NoPros 1.24 League Play",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "crushinit",
-    "watch_url": "https://www.youtube.com/watch?v=yV6-ooYZi4M",
-    "source_id": "yV6-ooYZi4M",
-    "type": "",
-    "is_premiere": false,
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/yV6-ooYZi4M/sddefault.jpg",
-    "subscribers": 36
   },
   {
     "start_et": "2026-01-24 23:56",

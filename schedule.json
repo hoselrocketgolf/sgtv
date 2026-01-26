@@ -1,5 +1,20 @@
 [
   {
+    "start_et": "2026-01-26 11:40",
+    "end_et": "",
+    "title": "\ud83d\udd34 LIVE GOLF | Monday Match ft. Chase in Stunning South Florida",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "McGolfinTV",
+    "watch_url": "https://www.youtube.com/watch?v=GFMQV8HEEOo",
+    "source_id": "GFMQV8HEEOo",
+    "type": "",
+    "is_premiere": false,
+    "status": "live",
+    "thumbnail_url": "https://i.ytimg.com/vi/GFMQV8HEEOo/maxresdefault_live_live.jpg",
+    "subscribers": 825
+  },
+  {
     "start_et": "2026-01-24 20:10",
     "end_et": "2026-01-25 03:23",
     "title": "\ud83d\udd34LIVE | ARC RAIDERS | She Spaceport My Bluegate Until I Stella Montis | #BUNGULATE",
@@ -13,21 +28,6 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/xXAEVrLoaTs/maxresdefault.jpg",
     "subscribers": 1390000
-  },
-  {
-    "start_et": "2026-01-24 20:32",
-    "end_et": "2026-01-24 23:27",
-    "title": "Rich & Strong Studio vs Tom70 & Ebone",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Rich Ellis",
-    "watch_url": "https://www.youtube.com/watch?v=AFvqEUWGebY",
-    "source_id": "AFvqEUWGebY",
-    "type": "",
-    "is_premiere": false,
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/AFvqEUWGebY/maxresdefault.jpg",
-    "subscribers": 16
   },
   {
     "start_et": "2026-01-24 22:57",
@@ -58,21 +58,6 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/69j_nDtyU84/maxresdefault.jpg",
     "subscribers": 105
-  },
-  {
-    "start_et": "2026-01-25 08:31",
-    "end_et": "2026-01-25 11:45",
-    "title": "\ud83d\udd34 LIVE GOLF | The Quest to Qualify Continues #usopen",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "McGolfinTV",
-    "watch_url": "https://www.youtube.com/watch?v=H8uHSrhlSUI",
-    "source_id": "H8uHSrhlSUI",
-    "type": "",
-    "is_premiere": false,
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/H8uHSrhlSUI/maxresdefault.jpg",
-    "subscribers": 825
   },
   {
     "start_et": "2026-01-25 08:36",
@@ -176,7 +161,7 @@
     "type": "",
     "is_premiere": false,
     "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/y-ch4aDnddk/maxresdefault_live.jpg",
+    "thumbnail_url": "https://i.ytimg.com/vi/y-ch4aDnddk/maxresdefault.jpg",
     "subscribers": 95
   }
 ]

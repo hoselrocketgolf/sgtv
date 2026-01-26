@@ -1,35 +1,5 @@
 [
   {
-    "start_et": "2026-01-25 18:09",
-    "end_et": "",
-    "title": "Live Garage Simulator Golf - TurbodTalon & FlyinFatKid Play A Snow-In Scramble",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "TurbodTalon Golf",
-    "watch_url": "https://www.youtube.com/watch?v=AjiFKD0AT1I",
-    "source_id": "AjiFKD0AT1I",
-    "type": "",
-    "is_premiere": false,
-    "status": "live",
-    "thumbnail_url": "https://i.ytimg.com/vi/AjiFKD0AT1I/maxresdefault_live_live.jpg",
-    "subscribers": 186
-  },
-  {
-    "start_et": "2026-01-25 20:45",
-    "end_et": "",
-    "title": "Commish and GGG play Twisted Sticks Scramble!",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Garbage Garage Golf",
-    "watch_url": "https://www.youtube.com/watch?v=y-ch4aDnddk",
-    "source_id": "y-ch4aDnddk",
-    "type": "",
-    "is_premiere": false,
-    "status": "upcoming",
-    "thumbnail_url": "https://i.ytimg.com/vi/y-ch4aDnddk/maxresdefault_live.jpg",
-    "subscribers": 95
-  },
-  {
     "start_et": "2026-01-24 13:44",
     "end_et": "2026-01-24 14:28",
     "title": "DGUTS - Live Stream - FlyinFatKids League | GSPRO | ProteeVX.",
@@ -43,6 +13,21 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/Vn8v0S1lDLA/maxresdefault.jpg",
     "subscribers": 85
+  },
+  {
+    "start_et": "2026-01-24 14:45",
+    "end_et": "2026-01-24 15:56",
+    "title": "Live Garage Simulator Golf Ping Eye 2 Clubs - Top 100 Courses League @ Bandon Dunes",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "TurbodTalon Golf",
+    "watch_url": "https://www.youtube.com/watch?v=CKdZRwaeenQ",
+    "source_id": "CKdZRwaeenQ",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/CKdZRwaeenQ/maxresdefault.jpg",
+    "subscribers": 187
   },
   {
     "start_et": "2026-01-24 18:19",
@@ -161,7 +146,7 @@
     "type": "",
     "is_premiere": false,
     "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/-n2K4vnJzro/maxresdefault_live.jpg",
+    "thumbnail_url": "https://i.ytimg.com/vi/-n2K4vnJzro/maxresdefault.jpg",
     "subscribers": 4
   },
   {
@@ -208,5 +193,50 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/mp0KKpvpKQU/maxresdefault_live.jpg",
     "subscribers": 1880
+  },
+  {
+    "start_et": "2026-01-25 18:09",
+    "end_et": "2026-01-25 20:05",
+    "title": "Live Garage Simulator Golf - TurbodTalon & FlyinFatKid Play A Snow-In Scramble",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "TurbodTalon Golf",
+    "watch_url": "https://www.youtube.com/watch?v=AjiFKD0AT1I",
+    "source_id": "AjiFKD0AT1I",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/AjiFKD0AT1I/maxresdefault_live.jpg",
+    "subscribers": 187
+  },
+  {
+    "start_et": "2026-01-25 19:54",
+    "end_et": "2026-01-25 20:49",
+    "title": "Crushinit GSPro LIVE- FFK 1.25 League Play",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "crushinit",
+    "watch_url": "https://www.youtube.com/watch?v=s19A7srzEvc",
+    "source_id": "s19A7srzEvc",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/s19A7srzEvc/sddefault_live.jpg",
+    "subscribers": 36
+  },
+  {
+    "start_et": "2026-01-25 20:47",
+    "end_et": "2026-01-25 22:30",
+    "title": "Commish and GGG play Twisted Sticks Scramble!",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Garbage Garage Golf",
+    "watch_url": "https://www.youtube.com/watch?v=y-ch4aDnddk",
+    "source_id": "y-ch4aDnddk",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/y-ch4aDnddk/maxresdefault_live.jpg",
+    "subscribers": 95
   }
 ]

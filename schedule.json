@@ -1,35 +1,5 @@
 [
   {
-    "start_et": "2026-01-26 11:40",
-    "end_et": "",
-    "title": "\ud83d\udd34 LIVE GOLF | Monday Match ft. Chase in Stunning South Florida",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "McGolfinTV",
-    "watch_url": "https://www.youtube.com/watch?v=GFMQV8HEEOo",
-    "source_id": "GFMQV8HEEOo",
-    "type": "",
-    "is_premiere": false,
-    "status": "live",
-    "thumbnail_url": "https://i.ytimg.com/vi/GFMQV8HEEOo/maxresdefault_live_live.jpg",
-    "subscribers": 828
-  },
-  {
-    "start_et": "2026-01-26 14:18",
-    "end_et": "",
-    "title": "TIPS Tour | Torrey Pines North Course | Round 1 of 2 | TBooms & Swing Yard",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Swing Yard",
-    "watch_url": "https://www.youtube.com/watch?v=ATBHl3DMEMk",
-    "source_id": "ATBHl3DMEMk",
-    "type": "",
-    "is_premiere": false,
-    "status": "live",
-    "thumbnail_url": "https://i.ytimg.com/vi/ATBHl3DMEMk/maxresdefault_live_live.jpg",
-    "subscribers": 1000
-  },
-  {
     "start_et": "2026-01-26 14:21",
     "end_et": "",
     "title": "Afternoon LIVE - TIPS Tour Event on SGT and GSPRO",
@@ -45,19 +15,19 @@
     "subscribers": 1880
   },
   {
-    "start_et": "2026-01-24 20:10",
-    "end_et": "2026-01-25 03:23",
-    "title": "\ud83d\udd34LIVE | ARC RAIDERS | She Spaceport My Bluegate Until I Stella Montis | #BUNGULATE",
+    "start_et": "2026-01-25 08:31",
+    "end_et": "2026-01-25 11:45",
+    "title": "\ud83d\udd34 LIVE GOLF | The Quest to Qualify Continues #usopen",
     "league": "",
     "platform": "YouTube",
-    "channel": "TheBurntPeanut",
-    "watch_url": "https://www.youtube.com/watch?v=xXAEVrLoaTs",
-    "source_id": "xXAEVrLoaTs",
+    "channel": "McGolfinTV",
+    "watch_url": "https://www.youtube.com/watch?v=H8uHSrhlSUI",
+    "source_id": "H8uHSrhlSUI",
     "type": "",
     "is_premiere": false,
     "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/xXAEVrLoaTs/maxresdefault.jpg",
-    "subscribers": 1390000
+    "thumbnail_url": "https://i.ytimg.com/vi/H8uHSrhlSUI/maxresdefault.jpg",
+    "subscribers": 828
   },
   {
     "start_et": "2026-01-25 08:36",
@@ -148,5 +118,50 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/y-ch4aDnddk/maxresdefault.jpg",
     "subscribers": 95
+  },
+  {
+    "start_et": "2026-01-26 13:49",
+    "end_et": "2026-01-26 14:15",
+    "title": "Par 3 Tour | Northern Dunes| Round 1 of 2 | TBooms & Swing Yard",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Swing Yard",
+    "watch_url": "https://www.youtube.com/watch?v=FVvaxUgGtP8",
+    "source_id": "FVvaxUgGtP8",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/FVvaxUgGtP8/maxresdefault_live.jpg",
+    "subscribers": 1000
+  },
+  {
+    "start_et": "2026-01-26 14:18",
+    "end_et": "2026-01-26 15:08",
+    "title": "TIPS Tour | Torrey Pines North Course | Round 1 of 2 | TBooms & Swing Yard",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Swing Yard",
+    "watch_url": "https://www.youtube.com/watch?v=ATBHl3DMEMk",
+    "source_id": "ATBHl3DMEMk",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/ATBHl3DMEMk/maxresdefault.jpg",
+    "subscribers": 1000
+  },
+  {
+    "start_et": "2026-01-26 15:13",
+    "end_et": "2026-01-26 15:52",
+    "title": "Pro Tour | Torrey Pines South Course | Round 1 of 2 | TBooms & Swing Yard",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Swing Yard",
+    "watch_url": "https://www.youtube.com/watch?v=vVHphgwk09A",
+    "source_id": "vVHphgwk09A",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/vVHphgwk09A/maxresdefault_live.jpg",
+    "subscribers": 1000
   }
 ]

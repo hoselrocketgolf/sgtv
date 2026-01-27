@@ -31,7 +31,7 @@ RECENT_ENDED_HOURS = int(env_or_default("RECENT_ENDED_HOURS", "36"))
 # Treat "live" streams older than this many hours as stale and drop them.
 MAX_LIVE_HOURS = int(env_or_default("MAX_LIVE_HOURS", "4"))
 # If a live stream looks like it ended but lacks actualEndTime, wait this long before ending it.
-LIVE_END_GRACE_MINS = int(env_or_default("LIVE_END_GRACE_MINS", "10"))
+LIVE_END_GRACE_MINS = int(env_or_default("LIVE_END_GRACE_MINS", "5"))
 # How many live results to pull from Search API per channel (0 disables Search API usage).
 SEARCH_LIVE_MAX_RESULTS = int(env_or_default("SEARCH_LIVE_MAX_RESULTS", "0"))
 # Recheck this many prior YouTube video IDs from the last schedule to catch fast starts/ends.

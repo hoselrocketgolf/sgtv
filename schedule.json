@@ -1,6 +1,6 @@
 [
   {
-    "start_et": "2026-01-27 09:45",
+    "start_et": "2026-01-27 09:46",
     "end_et": "",
     "title": "\ud83d\udd34 LIVE GOLF | Is This A Super Duo?? Break 60 Challenge!!!",
     "league": "",
@@ -10,8 +10,8 @@
     "source_id": "NskuA4YN2pk",
     "type": "",
     "is_premiere": false,
-    "status": "upcoming",
-    "thumbnail_url": "https://i.ytimg.com/vi/NskuA4YN2pk/maxresdefault_live.jpg",
+    "status": "live",
+    "thumbnail_url": "https://i.ytimg.com/vi/NskuA4YN2pk/maxresdefault_live_live.jpg",
     "subscribers": 827
   },
   {
@@ -28,21 +28,6 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/y-ch4aDnddk/maxresdefault.jpg",
     "subscribers": 97
-  },
-  {
-    "start_et": "2026-01-26 11:40",
-    "end_et": "2026-01-26 15:56",
-    "title": "\ud83d\udd34 LIVE GOLF | Monday Match ft. Chase in Stunning South Florida",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "McGolfinTV",
-    "watch_url": "https://www.youtube.com/watch?v=GFMQV8HEEOo",
-    "source_id": "GFMQV8HEEOo",
-    "type": "",
-    "is_premiere": false,
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/GFMQV8HEEOo/maxresdefault.jpg",
-    "subscribers": 827
   },
   {
     "start_et": "2026-01-26 13:49",

@@ -1,5 +1,20 @@
 [
   {
+    "start_et": "2026-01-27 09:45",
+    "end_et": "",
+    "title": "\ud83d\udd34 LIVE GOLF | Is This A Super Duo?? Break 60 Challenge!!!",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "McGolfinTV",
+    "watch_url": "https://www.youtube.com/watch?v=NskuA4YN2pk",
+    "source_id": "NskuA4YN2pk",
+    "type": "",
+    "is_premiere": false,
+    "status": "upcoming",
+    "thumbnail_url": "https://i.ytimg.com/vi/NskuA4YN2pk/maxresdefault_live.jpg",
+    "subscribers": 827
+  },
+  {
     "start_et": "2026-01-25 14:08",
     "end_et": "2026-01-25 16:20",
     "title": "Fix the Glitch",
@@ -163,6 +178,21 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/uXUoB4OaKeg/maxresdefault_live.jpg",
     "subscribers": 191
+  },
+  {
+    "start_et": "2026-01-26 20:15",
+    "end_et": "2026-01-27 03:15",
+    "title": "\ud83d\udd34LIVE | ARC NUTTERS | Maybe HighGuard Later | #ILoveHatingOnNewGamesBecauseTheyAreNew #BUNGULATE",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "TheBurntPeanut",
+    "watch_url": "https://www.youtube.com/watch?v=qOVEYk2f_h8",
+    "source_id": "qOVEYk2f_h8",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/qOVEYk2f_h8/maxresdefault.jpg",
+    "subscribers": 1400000
   },
   {
     "start_et": "2026-01-26 21:25",

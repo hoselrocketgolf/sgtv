@@ -1,5 +1,20 @@
 [
   {
+    "start_et": "2026-01-27 17:45",
+    "end_et": "",
+    "title": "Live Garage Simulator Golf - SGT TurbodTalon's Golf League & No Pros League",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "TurbodTalon Golf",
+    "watch_url": "https://www.youtube.com/watch?v=u8E3fMjPZfc",
+    "source_id": "u8E3fMjPZfc",
+    "type": "",
+    "is_premiere": false,
+    "status": "live",
+    "thumbnail_url": "https://i.ytimg.com/vi/u8E3fMjPZfc/maxresdefault_live_live.jpg",
+    "subscribers": 192
+  },
+  {
     "start_et": "2026-01-26 11:40",
     "end_et": "2026-01-26 15:56",
     "title": "\ud83d\udd34 LIVE GOLF | Monday Match ft. Chase in Stunning South Florida",
@@ -73,21 +88,6 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/vVHphgwk09A/maxresdefault.jpg",
     "subscribers": 1000
-  },
-  {
-    "start_et": "2026-01-26 17:46",
-    "end_et": "2026-01-26 20:04",
-    "title": "Live Garage Simulator Golf - SGT FlyinFatKid & Hosel Rocket Golf Leagues for This Week",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "TurbodTalon Golf",
-    "watch_url": "https://www.youtube.com/watch?v=uXUoB4OaKeg",
-    "source_id": "uXUoB4OaKeg",
-    "type": "",
-    "is_premiere": false,
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/uXUoB4OaKeg/maxresdefault.jpg",
-    "subscribers": 192
   },
   {
     "start_et": "2026-01-26 20:15",

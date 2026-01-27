@@ -1,6 +1,6 @@
 [
   {
-    "start_et": "2026-01-27 15:15",
+    "start_et": "2026-01-27 15:11",
     "end_et": "",
     "title": "I CAN\u2019T MISS THIS PUTT",
     "league": "",
@@ -10,8 +10,8 @@
     "source_id": "R1eegZaAoHI",
     "type": "",
     "is_premiere": false,
-    "status": "upcoming",
-    "thumbnail_url": "https://i.ytimg.com/vi/R1eegZaAoHI/maxresdefault_live.jpg",
+    "status": "live",
+    "thumbnail_url": "https://i.ytimg.com/vi/R1eegZaAoHI/maxresdefault_live_live.jpg",
     "subscribers": 2500
   },
   {
@@ -161,7 +161,7 @@
     "type": "",
     "is_premiere": false,
     "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/OUJLfCp5Hkw/maxresdefault_live.jpg",
+    "thumbnail_url": "https://i.ytimg.com/vi/OUJLfCp5Hkw/maxresdefault.jpg",
     "subscribers": 120
   },
   {

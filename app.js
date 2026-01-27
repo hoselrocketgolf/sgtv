@@ -4,6 +4,7 @@
 const SCHEDULE_URL = "schedule.json";
 const CSV_URL = "";
 const MAX_LIVE_AGE_HOURS = 4;
+const LIVE_EXTENSION_MINS = 5;
 const MAX_LIVE_FUTURE_MINS = 10;
 
 const $ = (id) => document.getElementById(id);
@@ -479,7 +480,7 @@ function readScheduleGeometryFromCss() {
 // -------------------- Event end-time logic --------------------
 // - Prefer explicit end_et if provided
 // - Default: 2 hours from start
-// - If LIVE: extend to max(start+2h, now+20m) so it stays visible while live
+// - If LIVE: extend to max(start+2h, now+5m) so it stays visible while live
 function eventEnd(e) {
   const end = parseET(e.end_et);
   if (end) return end;
@@ -489,7 +490,9 @@ function eventEnd(e) {
 
   if (e.status === "live") {
     const now = new Date();
-    return new Date(Math.max(start.getTime() + 120 * 60000, now.getTime() + 20 * 60000));
+    return new Date(
+      Math.max(start.getTime() + 120 * 60000, now.getTime() + LIVE_EXTENSION_MINS * 60000)
+    );
   }
 
   return new Date(start.getTime() + 120 * 60000);

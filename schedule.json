@@ -1,35 +1,5 @@
 [
   {
-    "start_et": "2026-01-26 20:15",
-    "end_et": "",
-    "title": "\ud83d\udd34LIVE | ARC NUTTERS | Maybe HighGuard Later | #ILoveHatingOnNewGamesBecauseTheyAreNew #BUNGULATE",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "TheBurntPeanut",
-    "watch_url": "https://www.youtube.com/watch?v=qOVEYk2f_h8",
-    "source_id": "qOVEYk2f_h8",
-    "type": "",
-    "is_premiere": false,
-    "status": "live",
-    "thumbnail_url": "https://i.ytimg.com/vi/qOVEYk2f_h8/maxresdefault_live_live.jpg",
-    "subscribers": 1400000
-  },
-  {
-    "start_et": "2026-01-25 08:31",
-    "end_et": "2026-01-25 11:45",
-    "title": "\ud83d\udd34 LIVE GOLF | The Quest to Qualify Continues #usopen",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "McGolfinTV",
-    "watch_url": "https://www.youtube.com/watch?v=H8uHSrhlSUI",
-    "source_id": "H8uHSrhlSUI",
-    "type": "",
-    "is_premiere": false,
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/H8uHSrhlSUI/maxresdefault.jpg",
-    "subscribers": 827
-  },
-  {
     "start_et": "2026-01-25 14:08",
     "end_et": "2026-01-25 16:20",
     "title": "Fix the Glitch",
@@ -238,5 +208,20 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/OUJLfCp5Hkw/maxresdefault_live.jpg",
     "subscribers": 120
+  },
+  {
+    "start_et": "2026-01-26 23:49",
+    "end_et": "2026-01-27 00:40",
+    "title": "Twisted Sticks Torment Round on SGT and GSPRO",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "DLud Golf",
+    "watch_url": "https://www.youtube.com/watch?v=Gfe5WO76G7E",
+    "source_id": "Gfe5WO76G7E",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/Gfe5WO76G7E/maxresdefault_live.jpg",
+    "subscribers": 1880
   }
 ]

@@ -1,18 +1,33 @@
 [
   {
-    "start_et": "2026-01-27 17:45",
+    "start_et": "2026-01-27 20:09",
     "end_et": "",
-    "title": "Live Garage Simulator Golf - SGT TurbodTalon's Golf League & No Pros League",
+    "title": "\ud83d\udd34LIVE | ARC RAIDERS | BIRD CITYYYYYYYYYYYY | CAW CAW! | #SheBeakMyBirdTillIEgg #BUNGULATE",
     "league": "",
     "platform": "YouTube",
-    "channel": "TurbodTalon Golf",
-    "watch_url": "https://www.youtube.com/watch?v=u8E3fMjPZfc",
-    "source_id": "u8E3fMjPZfc",
+    "channel": "TheBurntPeanut",
+    "watch_url": "https://www.youtube.com/watch?v=k4T3CenLkLM",
+    "source_id": "k4T3CenLkLM",
     "type": "",
     "is_premiere": false,
     "status": "live",
-    "thumbnail_url": "https://i.ytimg.com/vi/u8E3fMjPZfc/maxresdefault_live_live.jpg",
-    "subscribers": 193
+    "thumbnail_url": "https://i.ytimg.com/vi/k4T3CenLkLM/maxresdefault_live_live.jpg",
+    "subscribers": 1410000
+  },
+  {
+    "start_et": "2026-01-27 22:10",
+    "end_et": "",
+    "title": "Twisted Sticks $troke and Feel Good Tour on SGT and GSPRO",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "DLud Golf",
+    "watch_url": "https://www.youtube.com/watch?v=MO6ZoWvN0ZI",
+    "source_id": "MO6ZoWvN0ZI",
+    "type": "",
+    "is_premiere": false,
+    "status": "live",
+    "thumbnail_url": "https://i.ytimg.com/vi/MO6ZoWvN0ZI/maxresdefault_live_live.jpg",
+    "subscribers": 1880
   },
   {
     "start_et": "2026-01-26 11:40",
@@ -27,7 +42,7 @@
     "is_premiere": false,
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/GFMQV8HEEOo/maxresdefault.jpg",
-    "subscribers": 832
+    "subscribers": 831
   },
   {
     "start_et": "2026-01-26 13:49",
@@ -60,21 +75,6 @@
     "subscribers": 1010
   },
   {
-    "start_et": "2026-01-26 14:21",
-    "end_et": "2026-01-26 16:04",
-    "title": "Afternoon LIVE - TIPS Tour Event & Twisted Sticks on SGT and GSPRO",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "DLud Golf",
-    "watch_url": "https://www.youtube.com/watch?v=DY4hqbpi660",
-    "source_id": "DY4hqbpi660",
-    "type": "",
-    "is_premiere": false,
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/DY4hqbpi660/maxresdefault.jpg",
-    "subscribers": 1880
-  },
-  {
     "start_et": "2026-01-26 15:13",
     "end_et": "2026-01-26 15:52",
     "title": "Pro Tour | Torrey Pines South Course | Round 1 of 2 | TBooms & Swing Yard",
@@ -90,19 +90,19 @@
     "subscribers": 1010
   },
   {
-    "start_et": "2026-01-26 20:15",
-    "end_et": "2026-01-27 03:15",
-    "title": "\ud83d\udd34LIVE | ARC NUTTERS | Maybe HighGuard Later | #ILoveHatingOnNewGamesBecauseTheyAreNew #BUNGULATE",
+    "start_et": "2026-01-26 17:46",
+    "end_et": "2026-01-26 20:04",
+    "title": "Live Garage Simulator Golf - SGT FlyinFatKid & Hosel Rocket Golf Leagues for This Week",
     "league": "",
     "platform": "YouTube",
-    "channel": "TheBurntPeanut",
-    "watch_url": "https://www.youtube.com/watch?v=qOVEYk2f_h8",
-    "source_id": "qOVEYk2f_h8",
+    "channel": "TurbodTalon Golf",
+    "watch_url": "https://www.youtube.com/watch?v=uXUoB4OaKeg",
+    "source_id": "uXUoB4OaKeg",
     "type": "",
     "is_premiere": false,
     "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/qOVEYk2f_h8/maxresdefault.jpg",
-    "subscribers": 1410000
+    "thumbnail_url": "https://i.ytimg.com/vi/uXUoB4OaKeg/maxresdefault.jpg",
+    "subscribers": 193
   },
   {
     "start_et": "2026-01-26 21:25",
@@ -150,21 +150,6 @@
     "subscribers": 120
   },
   {
-    "start_et": "2026-01-26 23:49",
-    "end_et": "2026-01-27 00:40",
-    "title": "Twisted Sticks Torment Round on SGT and GSPRO",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "DLud Golf",
-    "watch_url": "https://www.youtube.com/watch?v=Gfe5WO76G7E",
-    "source_id": "Gfe5WO76G7E",
-    "type": "",
-    "is_premiere": false,
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/Gfe5WO76G7E/maxresdefault.jpg",
-    "subscribers": 1880
-  },
-  {
     "start_et": "2026-01-27 09:46",
     "end_et": "2026-01-27 13:25",
     "title": "\ud83d\udd34 LIVE GOLF | Is This A Super Duo?? Break 60 Challenge!!!",
@@ -177,7 +162,7 @@
     "is_premiere": false,
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/NskuA4YN2pk/maxresdefault.jpg",
-    "subscribers": 832
+    "subscribers": 831
   },
   {
     "start_et": "2026-01-27 15:11",
@@ -193,5 +178,35 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/R1eegZaAoHI/maxresdefault_live.jpg",
     "subscribers": 2500
+  },
+  {
+    "start_et": "2026-01-27 17:45",
+    "end_et": "2026-01-27 19:30",
+    "title": "Live Garage Simulator Golf - SGT TurbodTalon's Golf League & No Pros League",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "TurbodTalon Golf",
+    "watch_url": "https://www.youtube.com/watch?v=u8E3fMjPZfc",
+    "source_id": "u8E3fMjPZfc",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/u8E3fMjPZfc/maxresdefault_live.jpg",
+    "subscribers": 193
+  },
+  {
+    "start_et": "2026-01-27 21:00",
+    "end_et": "2026-01-27 22:48",
+    "title": "Windy Conditions Ahead (Celtic Manor and St Andrews) | LIVE",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Yak Golf",
+    "watch_url": "https://www.youtube.com/watch?v=P4lPs_2hkbQ",
+    "source_id": "P4lPs_2hkbQ",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/P4lPs_2hkbQ/maxresdefault_live.jpg",
+    "subscribers": 74
   }
 ]

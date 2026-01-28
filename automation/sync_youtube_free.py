@@ -606,9 +606,6 @@ def extract_tiktok_status_from_html(html: str) -> tuple[bool, str, str]:
     if live_token:
         return True, room_id, ""
 
-    if room_id or embedded_room_id:
-        return True, room_id or embedded_room_id, embedded_cover
-
     return False, "", ""
 
 # --------- Time helpers ---------
@@ -881,16 +878,17 @@ def main():
                     print("TikTok row missing handle/url, skipping:", display_name or handle or "unknown")
                     continue
 
-                is_live, room_id, cover = fetch_tiktok_live_status(handle, live_url)
+                is_live, room_id, cover = fetch_tiktok_live_status(handle, channel.get("tiktok_url", ""))
                 label = display_name or (f"@{handle}" if handle else live_url)
                 print(f"TikTok check: {label} -> {'LIVE' if is_live else 'offline'}")
                 if not is_live:
                     continue
 
                 detected_live += 1
-                fallback_name = f"@{handle}" if handle else "TikTok creator"
+                fallback_name = handle or "TikTok creator"
                 channel_name = display_name or fallback_name
-                title = f"{channel_name} is live on TikTok"
+                title_handle = handle or channel_name
+                title = f"{title_handle} is LIVE"
 
                 events.append({
                     "start_et": now_et_fmt(),

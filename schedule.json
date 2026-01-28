@@ -1,35 +1,5 @@
 [
   {
-    "start_et": "2026-01-26 11:40",
-    "end_et": "2026-01-26 15:56",
-    "title": "\ud83d\udd34 LIVE GOLF | Monday Match ft. Chase in Stunning South Florida",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "McGolfinTV",
-    "watch_url": "https://www.youtube.com/watch?v=GFMQV8HEEOo",
-    "source_id": "GFMQV8HEEOo",
-    "type": "",
-    "is_premiere": false,
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/GFMQV8HEEOo/maxresdefault.jpg",
-    "subscribers": 831
-  },
-  {
-    "start_et": "2026-01-26 14:18",
-    "end_et": "2026-01-26 15:08",
-    "title": "TIPS Tour | Torrey Pines North Course | Round 1 of 2 | TBooms & Swing Yard",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Swing Yard",
-    "watch_url": "https://www.youtube.com/watch?v=ATBHl3DMEMk",
-    "source_id": "ATBHl3DMEMk",
-    "type": "",
-    "is_premiere": false,
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/ATBHl3DMEMk/maxresdefault.jpg",
-    "subscribers": 1010
-  },
-  {
     "start_et": "2026-01-26 14:21",
     "end_et": "2026-01-26 16:04",
     "title": "Afternoon LIVE - TIPS Tour Event & Twisted Sticks on SGT and GSPRO",
@@ -43,21 +13,6 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/DY4hqbpi660/maxresdefault.jpg",
     "subscribers": 1880
-  },
-  {
-    "start_et": "2026-01-26 15:13",
-    "end_et": "2026-01-26 15:52",
-    "title": "Pro Tour | Torrey Pines South Course | Round 1 of 2 | TBooms & Swing Yard",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Swing Yard",
-    "watch_url": "https://www.youtube.com/watch?v=vVHphgwk09A",
-    "source_id": "vVHphgwk09A",
-    "type": "",
-    "is_premiere": false,
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/vVHphgwk09A/maxresdefault.jpg",
-    "subscribers": 1010
   },
   {
     "start_et": "2026-01-26 17:46",
@@ -193,6 +148,21 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/u8E3fMjPZfc/maxresdefault_live.jpg",
     "subscribers": 193
+  },
+  {
+    "start_et": "2026-01-27 20:09",
+    "end_et": "2026-01-28 03:16",
+    "title": "\ud83d\udd34LIVE | ARC RAIDERS | BIRD CITYYYYYYYYYYYY | CAW CAW! | #SheBeakMyBirdTillIEgg #BUNGULATE",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "TheBurntPeanut",
+    "watch_url": "https://www.youtube.com/watch?v=k4T3CenLkLM",
+    "source_id": "k4T3CenLkLM",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/k4T3CenLkLM/maxresdefault.jpg",
+    "subscribers": 1420000
   },
   {
     "start_et": "2026-01-27 21:00",

@@ -497,7 +497,7 @@ def fetch_tiktok_live_status(handle: str, tiktok_url: str) -> tuple[bool, str, s
 
     if live_state is False:
         return False, "", ""
-    if room_id and live_state is not False:
+    if live_state is True and room_id:
         return True, room_id, cover
 
     live_url = ensure_tiktok_live_url(handle, tiktok_url)
@@ -522,10 +522,6 @@ def fetch_tiktok_live_status(handle: str, tiktok_url: str) -> tuple[bool, str, s
 
     if last_error and handle:
         print(f"TikTok HTML lookup failed for @{handle}: {last_error}")
-
-    if room_id:
-        # Some responses omit explicit live flags but still include a room id.
-        return True, room_id, cover
 
     return False, "", ""
 

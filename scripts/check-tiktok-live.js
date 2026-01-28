@@ -1,6 +1,10 @@
-import fs from "fs";
-import fetch from "node-fetch";
-import { chromium } from "playwright";
+const fs = require("fs");
+const { chromium } = require("playwright");
+
+const fetch = globalThis.fetch;
+if (typeof fetch !== "function") {
+  throw new Error("Global fetch is not available. Use Node 18+ or enable fetch.");
+}
 
 const SHEET_CSV_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vR5DMZYPLgP64WZYcE1H0PMOQyjD2Rf67NUM1kRkC3dCPVwZJ0kNcj6dUbugO-LOaSNSx798fPA27tK/pub?gid=0&single=true&output=csv";

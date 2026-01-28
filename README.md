@@ -35,8 +35,9 @@ Expected headers (case-insensitive):
 For TikTok rows, provide either `handle` or `tiktok_url`. The script will attempt to
 detect live status and, when live, emit a `watch_url` pointing at `/live`.
 
-For Twitch/Kick rows, the automation script will emit a rolling “live now” entry using the
-provided handle or URL (it does not currently verify live status).
+For Twitch rows, the automation script uses Twitch’s public GQL endpoint with a
+first-party client ID (no API keys required). For Kick rows, it queries the public
+Kick channel API to determine live status and title.
 
 
 ## Run automation in GitHub Actions (recommended for the site)

@@ -47,6 +47,8 @@ REQ_HEADERS = {
     "Referer": "https://www.tiktok.com/",
     "Origin": "https://www.tiktok.com",
 }
+TWITCH_GQL_URL = "https://gql.twitch.tv/gql"
+TWITCH_CLIENT_ID = "kimne78kx3ncx6brgo4mv6wki5h1ko"
 
 COOKIE_JAR = http.cookiejar.CookieJar()
 OPENER = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(COOKIE_JAR))
@@ -76,6 +78,12 @@ def ensure_public_csv(url: str, text: str) -> str:
 def http_get_json(url: str) -> dict:
     txt = http_get(url)
     return json.loads(txt)
+
+def http_post_json(url: str, payload: dict, headers: dict) -> dict:
+    body = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(url, data=body, headers=headers, method="POST")
+    with OPENER.open(req, timeout=45) as resp:
+        return json.loads(resp.read().decode("utf-8", errors="ignore"))
 
 def yt_api(endpoint: str, params: dict) -> dict:
     if not YT_API_KEY:
@@ -228,6 +236,77 @@ def ensure_platform_url(platform: str, handle: str, url: str) -> str:
     if platform_norm == "kick":
         return f"https://kick.com/{handle_clean}"
     return ""
+
+def normalize_handle_from_url(url: str) -> str:
+    if not url:
+        return ""
+    parsed = urllib.parse.urlparse(url)
+    if not parsed.scheme:
+        parsed = urllib.parse.urlparse(f"https://{url.lstrip('/')}")
+    path = parsed.path.strip("/")
+    if not path:
+        return ""
+    return path.split("/")[0]
+
+def fetch_twitch_live_status(handle: str, twitch_url: str) -> tuple[bool, str, str]:
+    resolved_handle = handle or normalize_handle_from_url(twitch_url)
+    if not resolved_handle:
+        return False, "", ""
+    url = ensure_platform_url("twitch", resolved_handle, twitch_url)
+    if not url:
+        return False, "", ""
+
+    payload = {
+        "operationName": "ChannelStream",
+        "variables": {"login": resolved_handle},
+        "query": (
+            "query ChannelStream($login: String!) {"
+            " user(login: $login) {"
+            "  displayName"
+            "  stream { id type title previewImageURL }"
+            " }"
+            "}"
+        ),
+    }
+    headers = {
+        "Client-ID": TWITCH_CLIENT_ID,
+        "Content-Type": "application/json",
+        "User-Agent": USER_AGENT,
+    }
+    try:
+        payload = http_post_json(TWITCH_GQL_URL, payload, headers)
+    except Exception as exc:
+        print(f"Twitch GQL lookup failed for {resolved_handle}: {exc}")
+        return False, "", ""
+
+    user = (payload or {}).get("data", {}).get("user") or {}
+    stream = user.get("stream") or {}
+    if not stream:
+        return False, "", ""
+
+    title = (stream.get("title") or "").strip()
+    preview = (stream.get("previewImageURL") or "").strip()
+    if preview:
+        preview = preview.replace("{width}", "640").replace("{height}", "360")
+    return True, title, preview
+
+def fetch_kick_live_status(handle: str, kick_url: str) -> tuple[bool, str, str]:
+    resolved_handle = handle or normalize_handle_from_url(kick_url)
+    if not resolved_handle:
+        return False, "", ""
+    api_url = f"https://kick.com/api/v1/channels/{urllib.parse.quote(resolved_handle)}"
+    try:
+        payload = http_get_json(api_url)
+    except Exception as exc:
+        print(f"Kick API lookup failed for {resolved_handle}: {exc}")
+        return False, "", ""
+    if not isinstance(payload, dict):
+        return False, "", ""
+    livestream = payload.get("livestream") or {}
+    is_live = bool(livestream)
+    title = (livestream.get("session_title") or "").strip()
+    thumb = (livestream.get("thumbnail_url") or "").strip()
+    return is_live, title, thumb
 
 def load_channels_from_sheet():
     """
@@ -830,20 +909,23 @@ def main():
                 })
             print("TikTok live detected:", detected_live)
 
-        for channel in twitch_channels + kick_channels:
-            platform = (channel.get("platform") or "").strip() or "Twitch"
+        for channel in twitch_channels:
+            platform = "Twitch"
             handle = (channel.get("handle") or "").strip()
             display_name = (channel.get("display_name") or "").strip()
-            url_key = "twitch_url" if platform.strip().lower() == "twitch" else "kick_url"
-            raw_url = (channel.get(url_key) or "").strip()
+            raw_url = (channel.get("twitch_url") or "").strip()
             watch_url = ensure_platform_url(platform, handle, raw_url)
 
             if not watch_url:
-                print(f"{platform} row missing handle/url, skipping:", display_name or handle or "unknown")
+                print("Twitch row missing handle/url, skipping:", display_name or handle or "unknown")
+                continue
+
+            is_live, twitch_title, thumb = fetch_twitch_live_status(handle, watch_url)
+            if not is_live:
                 continue
 
             channel_name = display_name or (f"@{handle}" if handle else watch_url)
-            title = f"{channel_name} on {platform}"
+            title = twitch_title or f"{channel_name} is live on Twitch"
             subs = int(channel.get("sheet_subscribers") or 0)
 
             events.append({
@@ -857,8 +939,43 @@ def main():
                 "source_id": watch_url,
                 "type": "",
                 "is_premiere": False,
-                "status": "",
-                "thumbnail_url": "",
+                "status": "live",
+                "thumbnail_url": thumb,
+                "subscribers": subs
+            })
+
+        for channel in kick_channels:
+            platform = "Kick"
+            handle = (channel.get("handle") or "").strip()
+            display_name = (channel.get("display_name") or "").strip()
+            raw_url = (channel.get("kick_url") or "").strip()
+            watch_url = ensure_platform_url(platform, handle, raw_url)
+
+            if not watch_url:
+                print("Kick row missing handle/url, skipping:", display_name or handle or "unknown")
+                continue
+
+            is_live, kick_title, thumb = fetch_kick_live_status(handle, watch_url)
+            if not is_live:
+                continue
+
+            channel_name = display_name or (f"@{handle}" if handle else watch_url)
+            title = kick_title or f"{channel_name} is live on Kick"
+            subs = int(channel.get("sheet_subscribers") or 0)
+
+            events.append({
+                "start_et": now_et_fmt(),
+                "end_et": "",
+                "title": title,
+                "league": "",
+                "platform": platform,
+                "channel": channel_name,
+                "watch_url": watch_url,
+                "source_id": watch_url,
+                "type": "",
+                "is_premiere": False,
+                "status": "live",
+                "thumbnail_url": thumb,
                 "subscribers": subs
             })
 
@@ -930,8 +1047,7 @@ def main():
                     item = details.get(vid)
                     if not item:
                         continue
-                    channel_id = ((item.get("snippet") or {}).get("channelId")) or ""
-                    channel_id = channel_id.strip()
+                    channel_id = ((item.get("snippet") or {}).get("channelId") or "").strip()
                     if channel_id and channel_id in channel_ids:
                         prior_vids_by_channel.setdefault(channel_id, []).append(vid)
 

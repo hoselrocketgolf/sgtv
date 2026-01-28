@@ -600,7 +600,7 @@ watchBtn:hover{ filter: brightness(1.07); text-decoration:none; }
   overflow:hidden;
 }
 
-scheduleHeader{
+.scheduleHeader{
   display:grid;
   grid-template-columns: auto 1fr auto;
   align-items:center;
@@ -608,14 +608,14 @@ scheduleHeader{
   gap: 16px;
 }
 
-scheduleHeader h2{
+.scheduleHeader h2{
   margin:0;
   font-size: 16px;
   font-weight: 700;
   letter-spacing: 0.02em;
 }
 
-scheduleTools{
+.scheduleTools{
   display:flex;
   align-items:center;
   justify-content:center;

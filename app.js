@@ -8,7 +8,7 @@ const LIVE_EXTENSION_MINS = 5;
 const MAX_LIVE_FUTURE_MINS = 10;
 const YOUTUBE_LIVE_START_GRACE_MINS = 10;
 const YOUTUBE_LIVE_END_GRACE_MINS = 20;
-const LIVE_API = "https://sgtv-live-detector.REPLACE_ME.workers.dev/live-status";
+const LIVE_API = "https://sgtv-live-detector.hoselrocketgolf72.workers.dev/live-status";
 const LIVE_POLL_MS = 12000;
 const LIVE_CHANNELS = ["simgolf", "foresimgolf", "trackmangolf"];
 

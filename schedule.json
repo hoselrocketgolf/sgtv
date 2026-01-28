@@ -1,6 +1,21 @@
 [
   {
-    "start_et": "2026-01-28 14:35",
+    "start_et": "2026-01-28 14:51",
+    "end_et": "",
+    "title": "\ud83d\udd34 LIVE GOLF | 9 Hole NO DRIVER Challenge Plus Golf Club Regripping",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "McGolfinTV",
+    "watch_url": "https://www.youtube.com/watch?v=tiCMzWDbiNI",
+    "source_id": "tiCMzWDbiNI",
+    "type": "",
+    "is_premiere": false,
+    "status": "live",
+    "thumbnail_url": "https://i.ytimg.com/vi/tiCMzWDbiNI/maxresdefault_live_live.jpg",
+    "subscribers": 831
+  },
+  {
+    "start_et": "2026-01-28 14:55",
     "end_et": "",
     "title": "24/7 @TheBurntPeanut VODS/YT | TARKOV | ARC RAIDERS | SILLY GAMES | BUNGULATORS ONLY CHAT",
     "league": "",
@@ -17,6 +32,21 @@
   {
     "start_et": "2026-01-29 22:00",
     "end_et": "",
+    "title": "Thursday Night Thunder Featuring ZonaEJ, JoshoMatic & TSads",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Grip n Sip Golf",
+    "watch_url": "https://www.youtube.com/watch?v=Rx9nfPgRp6I",
+    "source_id": "Rx9nfPgRp6I",
+    "type": "",
+    "is_premiere": false,
+    "status": "upcoming",
+    "thumbnail_url": "https://i.ytimg.com/vi/Rx9nfPgRp6I/maxresdefault_live.jpg",
+    "subscribers": 39
+  },
+  {
+    "start_et": "2026-01-29 22:00",
+    "end_et": "",
     "title": "EP. 197 | Live League Brain Box Giveaway!",
     "league": "",
     "platform": "YouTube",
@@ -28,21 +58,6 @@
     "status": "upcoming",
     "thumbnail_url": "https://i.ytimg.com/vi/jAvHJf3m4AY/maxresdefault_live.jpg",
     "subscribers": 8900
-  },
-  {
-    "start_et": "2026-01-27 09:46",
-    "end_et": "2026-01-27 13:25",
-    "title": "\ud83d\udd34 LIVE GOLF | Is This A Super Duo?? Break 60 Challenge!!!",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "McGolfinTV",
-    "watch_url": "https://www.youtube.com/watch?v=NskuA4YN2pk",
-    "source_id": "NskuA4YN2pk",
-    "type": "",
-    "is_premiere": false,
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/NskuA4YN2pk/maxresdefault.jpg",
-    "subscribers": 831
   },
   {
     "start_et": "2026-01-27 15:11",

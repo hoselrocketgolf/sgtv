@@ -1,21 +1,6 @@
 [
   {
-    "start_et": "2026-01-28 16:56",
-    "end_et": "",
-    "title": "Farmers Insurance Open w/ MattJn - TIPS Tour",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "SHED SIM GOLF",
-    "watch_url": "https://www.youtube.com/watch?v=CuEllRPUiKY",
-    "source_id": "CuEllRPUiKY",
-    "type": "",
-    "is_premiere": false,
-    "status": "live",
-    "thumbnail_url": "https://i.ytimg.com/vi/CuEllRPUiKY/maxresdefault_live_live.jpg",
-    "subscribers": 484
-  },
-  {
-    "start_et": "2026-01-28 17:59",
+    "start_et": "2026-01-28 18:51",
     "end_et": "",
     "title": "24/7 @TheBurntPeanut VODS/YT | TARKOV | ARC RAIDERS | SILLY GAMES | BUNGULATORS ONLY CHAT",
     "league": "",
@@ -163,5 +148,20 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/tiCMzWDbiNI/maxresdefault_live.jpg",
     "subscribers": 832
+  },
+  {
+    "start_et": "2026-01-28 16:56",
+    "end_et": "2026-01-28 18:14",
+    "title": "Farmers Insurance Open w/ MattJn - TIPS Tour",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "SHED SIM GOLF",
+    "watch_url": "https://www.youtube.com/watch?v=CuEllRPUiKY",
+    "source_id": "CuEllRPUiKY",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/CuEllRPUiKY/maxresdefault_live.jpg",
+    "subscribers": 484
   }
 ]

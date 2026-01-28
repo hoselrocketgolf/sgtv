@@ -17,20 +17,26 @@ Recommended column headers (case-insensitive):
 - watch_url
 
 The parser also recognizes common alternatives like `start`, `time`, `url`, `link`, etc.
+Use platform values like `YouTube`, `TikTok`, `Twitch`, or `Kick`.
 
 ## Automating YouTube + TikTok schedules
 The automation script reads a published **channel sheet CSV** and writes `schedule.json`.
 
 Expected headers (case-insensitive):
-- platform (YouTube or TikTok)
+- platform (YouTube, TikTok, Twitch, or Kick)
 - handle
 - display_name
 - channel_id (YouTube only)
 - tiktok_url (TikTok only; can be profile URL)
+- twitch_url (Twitch only; can be channel URL)
+- kick_url (Kick only; can be channel URL)
 - subscribers (optional)
 
 For TikTok rows, provide either `handle` or `tiktok_url`. The script will attempt to
 detect live status and, when live, emit a `watch_url` pointing at `/live`.
+
+For Twitch/Kick rows, the automation script will emit a rolling “live now” entry using the
+provided handle or URL (it does not currently verify live status).
 
 
 ## Run automation in GitHub Actions (recommended for the site)

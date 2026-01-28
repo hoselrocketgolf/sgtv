@@ -6,6 +6,8 @@ const CSV_URL = "";
 const MAX_LIVE_AGE_HOURS = 4;
 const LIVE_EXTENSION_MINS = 5;
 const MAX_LIVE_FUTURE_MINS = 10;
+const YOUTUBE_LIVE_START_GRACE_MINS = 10;
+const YOUTUBE_LIVE_END_GRACE_MINS = 20;
 
 const $ = (id) => document.getElementById(id);
 const on = (el, evt, fn) => {
@@ -143,6 +145,14 @@ function getZonedDateParts(date, timeZone) {
 function isYouTubeUrl(url) {
   if (!url) return false;
   return /(?:youtube\.com|youtu\.be)/i.test(url);
+}
+
+function isYouTubeLiveUrl(url) {
+  if (!url) return false;
+  return (
+    /youtube\.com\/live\/[^/?#]+/i.test(url) ||
+    /youtube\.com\/(?:@[^/]+|channel\/[^/]+|c\/[^/]+|user\/[^/]+)\/live(?:[?#]|$)/i.test(url)
+  );
 }
 
 function inferPlatformFromUrl(url) {
@@ -970,12 +980,25 @@ async function loadSchedule() {
           const explicitEnd = parseET(normalizedEvent.end_et);
           let startOverride = null;
           const hasTikTokLiveUrl = isTikTokLiveUrl(normalizedEvent.watch_url);
+          const isYouTubeEvent = isYouTubeUrl(normalizedEvent.watch_url);
+          const hasLiveThumb = hasLiveThumbnail(normalizedEvent.thumbnail_url);
+          const youTubeLiveUrl = isYouTubeLiveUrl(normalizedEvent.watch_url);
+          const youTubeStartGraceMs = YOUTUBE_LIVE_START_GRACE_MINS * 60 * 1000;
+          const youTubeEndGraceMs = YOUTUBE_LIVE_END_GRACE_MINS * 60 * 1000;
 
           const inferredEnd = start ? explicitEnd || new Date(start.getTime() + 120 * 60000) : null;
           const isLiveWindow =
             start && inferredEnd ? start.getTime() <= now && inferredEnd.getTime() >= now : false;
+          const youTubeStartGrace =
+            isYouTubeEvent && start
+              ? now >= start.getTime() && now - start.getTime() <= youTubeStartGraceMs
+              : false;
+          const youTubeEndGrace =
+            isYouTubeEvent && inferredEnd
+              ? now >= inferredEnd.getTime() && now - inferredEnd.getTime() <= youTubeEndGraceMs
+              : false;
           const liveEligible =
-            !isYouTubeUrl(normalizedEvent.watch_url) || hasLiveThumbnail(normalizedEvent.thumbnail_url);
+            !isYouTubeEvent || hasLiveThumb || youTubeLiveUrl || youTubeStartGrace;
 
           const liveFutureTooFar = start ? start.getTime() - now > maxLiveFutureMs : false;
 
@@ -987,7 +1010,7 @@ async function loadSchedule() {
             if (start) {
               if (start.getTime() > now) {
                 status = "upcoming";
-              } else if (inferredEnd && inferredEnd.getTime() < now) {
+              } else if (inferredEnd && inferredEnd.getTime() < now && !youTubeEndGrace) {
                 status = "ended";
               } else {
                 status = "upcoming";
@@ -1022,6 +1045,11 @@ async function loadSchedule() {
                 if (hasTikTokLiveUrl) {
                   startOverride = new Date(now);
                 } else {
+                  status = "ended";
+                }
+              }
+              if (status === "live" && isYouTubeEvent && !hasLiveThumb && inferredEnd) {
+                if (now - inferredEnd.getTime() > youTubeEndGraceMs) {
                   status = "ended";
                 }
               }

@@ -39,10 +39,9 @@ For Twitch rows, the automation script uses Twitch’s public GQL endpoint with 
 first-party client ID (no API keys required). For Kick rows, it queries the public
 Kick channel API to determine live status and title.
 
-
 ## Run automation in GitHub Actions (recommended for the site)
 To keep TikTok LIVE detection server-side (and avoid browser CORS limits), use the
-included workflow at `.github/workflows/sync-schedule.yml`.
+included workflow at `.github/workflows/sync.yml`.
 
 Set these repo secrets (Settings → Secrets and variables → Actions):
 - `CHANNEL_SHEET_CSV` — required published channel sheet CSV URL
@@ -51,6 +50,17 @@ Set these repo secrets (Settings → Secrets and variables → Actions):
 
 The workflow runs every 15 minutes, fails fast if `CHANNEL_SHEET_CSV` is missing,
 and commits any `schedule.json` updates.
+
+> **Tip:** Use a single workflow to update `schedule.json`. Running multiple workflows
+> that write `schedule.json` can overwrite each other and cause TikTok LIVE entries to
+> disappear. The recommended workflow is `sync.yml`.
+
+## TikTok reliability notes
+TikTok routinely blocks automated requests, which can cause intermittent “offline”
+results even when a channel is live. If you need a more resilient live indicator,
+use the Cloudflare Worker in `worker/worker.js` with the LIVE guide in `app.js`
+(`LIVE_API`). This live guide does not write `schedule.json`, but it gives a fast,
+real-time status display on the site.
 
 ## Run locally (optional)
 Just open `index.html` in your browser.

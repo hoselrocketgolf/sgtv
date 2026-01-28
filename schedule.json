@@ -1,21 +1,21 @@
 [
   {
-    "start_et": "2026-01-28 14:51",
+    "start_et": "2026-01-28 16:56",
     "end_et": "",
-    "title": "\ud83d\udd34 LIVE GOLF | 9 Hole NO DRIVER Challenge Plus Golf Club Regripping",
+    "title": "Farmers Insurance Open w/ MattJn - TIPS Tour",
     "league": "",
     "platform": "YouTube",
-    "channel": "McGolfinTV",
-    "watch_url": "https://www.youtube.com/watch?v=tiCMzWDbiNI",
-    "source_id": "tiCMzWDbiNI",
+    "channel": "SHED SIM GOLF",
+    "watch_url": "https://www.youtube.com/watch?v=CuEllRPUiKY",
+    "source_id": "CuEllRPUiKY",
     "type": "",
     "is_premiere": false,
     "status": "live",
-    "thumbnail_url": "https://i.ytimg.com/vi/tiCMzWDbiNI/maxresdefault_live_live.jpg",
-    "subscribers": 831
+    "thumbnail_url": "https://i.ytimg.com/vi/CuEllRPUiKY/maxresdefault_live_live.jpg",
+    "subscribers": 484
   },
   {
-    "start_et": "2026-01-28 16:01",
+    "start_et": "2026-01-28 16:58",
     "end_et": "",
     "title": "24/7 @TheBurntPeanut VODS/YT | TARKOV | ARC RAIDERS | SILLY GAMES | BUNGULATORS ONLY CHAT",
     "league": "",
@@ -60,6 +60,21 @@
     "subscribers": 8900
   },
   {
+    "start_et": "2026-01-27 09:46",
+    "end_et": "2026-01-27 13:25",
+    "title": "\ud83d\udd34 LIVE GOLF | Is This A Super Duo?? Break 60 Challenge!!!",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "McGolfinTV",
+    "watch_url": "https://www.youtube.com/watch?v=NskuA4YN2pk",
+    "source_id": "NskuA4YN2pk",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/NskuA4YN2pk/maxresdefault.jpg",
+    "subscribers": 831
+  },
+  {
     "start_et": "2026-01-27 15:11",
     "end_et": "2026-01-27 16:23",
     "title": "I CAN\u2019T MISS THIS PUTT",
@@ -101,7 +116,7 @@
     "type": "",
     "is_premiere": false,
     "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/P4lPs_2hkbQ/maxresdefault_live.jpg",
+    "thumbnail_url": "https://i.ytimg.com/vi/P4lPs_2hkbQ/maxresdefault.jpg",
     "subscribers": 75
   },
   {
@@ -133,5 +148,20 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/R_l7WbWhAFY/maxresdefault_live.jpg",
     "subscribers": 1010
+  },
+  {
+    "start_et": "2026-01-28 14:51",
+    "end_et": "2026-01-28 16:37",
+    "title": "\ud83d\udd34 LIVE GOLF | 9 Hole NO DRIVER Challenge Plus Golf Club Regripping",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "McGolfinTV",
+    "watch_url": "https://www.youtube.com/watch?v=tiCMzWDbiNI",
+    "source_id": "tiCMzWDbiNI",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/tiCMzWDbiNI/maxresdefault_live.jpg",
+    "subscribers": 831
   }
 ]

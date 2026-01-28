@@ -521,7 +521,7 @@ function sortEvents(list) {
 function rebuildFilters(events) {
   if (!platformFilter) return;
 
-  const platforms = new Set();
+  const platforms = new Set(["YouTube", "TikTok", "Twitch", "Kick"]);
 
   events.forEach((e) => {
     if (e.platform) platforms.add(e.platform);

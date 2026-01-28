@@ -1,18 +1,18 @@
 [
   {
-    "start_et": "2026-01-28 12:52",
+    "start_et": "2026-01-29 22:00",
     "end_et": "",
-    "title": "TIPS Tour | Torrey Pines South Course | Round 2 of 2 | TBooms & Swing Yard",
+    "title": "EP. 197 | Live League Brain Box Giveaway!",
     "league": "",
     "platform": "YouTube",
-    "channel": "Swing Yard",
-    "watch_url": "https://www.youtube.com/watch?v=R_l7WbWhAFY",
-    "source_id": "R_l7WbWhAFY",
+    "channel": "Triple Bogey Golf",
+    "watch_url": "https://www.youtube.com/watch?v=jAvHJf3m4AY",
+    "source_id": "jAvHJf3m4AY",
     "type": "",
     "is_premiere": false,
-    "status": "live",
-    "thumbnail_url": "https://i.ytimg.com/vi/R_l7WbWhAFY/maxresdefault_live_live.jpg",
-    "subscribers": 1010
+    "status": "upcoming",
+    "thumbnail_url": "https://i.ytimg.com/vi/jAvHJf3m4AY/maxresdefault_live.jpg",
+    "subscribers": 8900
   },
   {
     "start_et": "2026-01-27 09:46",
@@ -86,7 +86,22 @@
     "type": "",
     "is_premiere": false,
     "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/MO6ZoWvN0ZI/maxresdefault_live.jpg",
+    "thumbnail_url": "https://i.ytimg.com/vi/MO6ZoWvN0ZI/maxresdefault.jpg",
     "subscribers": 1880
+  },
+  {
+    "start_et": "2026-01-28 12:52",
+    "end_et": "2026-01-28 13:40",
+    "title": "TIPS Tour | Torrey Pines South Course | Round 2 of 2 | TBooms & Swing Yard",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Swing Yard",
+    "watch_url": "https://www.youtube.com/watch?v=R_l7WbWhAFY",
+    "source_id": "R_l7WbWhAFY",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/R_l7WbWhAFY/maxresdefault_live.jpg",
+    "subscribers": 1010
   }
 ]

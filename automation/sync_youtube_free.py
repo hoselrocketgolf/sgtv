@@ -202,12 +202,41 @@ def load_prior_youtube_video_ids(out_path: str, limit: int) -> list[str]:
             break
     return vids
 
+def normalize_channel_url(url: str, platform: str) -> str:
+    if not url:
+        return ""
+    parsed = urllib.parse.urlparse(url)
+    if not parsed.scheme:
+        parsed = urllib.parse.urlparse(f"https://{url.lstrip('/')}")
+    if not parsed.netloc:
+        return ""
+    clean_path = parsed.path.rstrip("/")
+    return f"{parsed.scheme}://{parsed.netloc}{clean_path}"
+
+def ensure_platform_url(platform: str, handle: str, url: str) -> str:
+    platform_norm = (platform or "").strip().lower()
+    normalized_url = normalize_channel_url(url, platform_norm)
+    if normalized_url:
+        return normalized_url
+    if not handle:
+        return ""
+    handle_clean = handle.lstrip("@").strip()
+    if not handle_clean:
+        return ""
+    if platform_norm == "twitch":
+        return f"https://www.twitch.tv/{handle_clean}"
+    if platform_norm == "kick":
+        return f"https://kick.com/{handle_clean}"
+    return ""
+
 def load_channels_from_sheet():
     """
     Sheet headers expected (case-insensitive):
-      platform, handle, display_name, channel_id, tiktok_url, subscribers
+      platform, handle, display_name, channel_id, tiktok_url, twitch_url, kick_url, subscribers
     For YouTube rows, channel_id is required.
     For TikTok rows, handle or tiktok_url is required.
+    For Twitch rows, handle or twitch_url is required.
+    For Kick rows, handle or kick_url is required.
     """
     csv_text = ensure_public_csv(CHANNEL_SHEET_CSV, http_get(CHANNEL_SHEET_CSV))
     rows = parse_simple_csv(csv_text)
@@ -225,10 +254,16 @@ def load_channels_from_sheet():
         handle = (r.get("handle") or "").strip().lstrip("@")
         display = (r.get("display_name") or "").strip()
         tiktok_url = (r.get("tiktok_url") or "").strip()
+        twitch_url = (r.get("twitch_url") or "").strip()
+        kick_url = (r.get("kick_url") or "").strip()
 
         if platform_norm == "youtube" and not cid:
             continue
         if platform_norm == "tiktok" and not (handle or tiktok_url):
+            continue
+        if platform_norm == "twitch" and not (handle or twitch_url):
+            continue
+        if platform_norm == "kick" and not (handle or kick_url):
             continue
 
         sub_raw = (r.get("subscribers") or "").strip().replace(",", "")
@@ -243,6 +278,8 @@ def load_channels_from_sheet():
             "handle": handle,
             "display_name": display,
             "tiktok_url": tiktok_url,
+            "twitch_url": twitch_url,
+            "kick_url": kick_url,
             "sheet_subscribers": sheet_subs,
         })
 
@@ -742,6 +779,12 @@ def main():
         tiktok_channels = [
             c for c in channels if (c.get("platform") or "").strip().lower() == "tiktok"
         ]
+        twitch_channels = [
+            c for c in channels if (c.get("platform") or "").strip().lower() == "twitch"
+        ]
+        kick_channels = [
+            c for c in channels if (c.get("platform") or "").strip().lower() == "kick"
+        ]
 
         events = list(schedule_events)
         now = now_utc()
@@ -786,6 +829,38 @@ def main():
                     "subscribers": subs
                 })
             print("TikTok live detected:", detected_live)
+
+        for channel in twitch_channels + kick_channels:
+            platform = (channel.get("platform") or "").strip() or "Twitch"
+            handle = (channel.get("handle") or "").strip()
+            display_name = (channel.get("display_name") or "").strip()
+            url_key = "twitch_url" if platform.strip().lower() == "twitch" else "kick_url"
+            raw_url = (channel.get(url_key) or "").strip()
+            watch_url = ensure_platform_url(platform, handle, raw_url)
+
+            if not watch_url:
+                print(f"{platform} row missing handle/url, skipping:", display_name or handle or "unknown")
+                continue
+
+            channel_name = display_name or (f"@{handle}" if handle else watch_url)
+            title = f"{channel_name} on {platform}"
+            subs = int(channel.get("sheet_subscribers") or 0)
+
+            events.append({
+                "start_et": now_et_fmt(),
+                "end_et": "",
+                "title": title,
+                "league": "",
+                "platform": platform,
+                "channel": channel_name,
+                "watch_url": watch_url,
+                "source_id": watch_url,
+                "type": "",
+                "is_premiere": False,
+                "status": "",
+                "thumbnail_url": "",
+                "subscribers": subs
+            })
 
         if used_schedule_sheet:
             if youtube_channels:
@@ -855,7 +930,8 @@ def main():
                     item = details.get(vid)
                     if not item:
                         continue
-                    channel_id = ((item.get("snippet") or {}).get("channelId") or "").strip()
+                    channel_id = ((item.get("snippet") or {}).get("channelId")) or ""
+                    channel_id = channel_id.strip()
                     if channel_id and channel_id in channel_ids:
                         prior_vids_by_channel.setdefault(channel_id, []).append(vid)
 

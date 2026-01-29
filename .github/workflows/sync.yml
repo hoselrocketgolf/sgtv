@@ -10,7 +10,7 @@ permissions:
 
 concurrency:
   group: sync-schedule
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   sync:

@@ -1,6 +1,6 @@
 [
   {
-    "start_et": "2026-01-28 21:00",
+    "start_et": "2026-01-28 20:53",
     "end_et": "",
     "title": "FFK vs GGG!!!",
     "league": "",
@@ -10,9 +10,24 @@
     "source_id": "uGlRpLj8WIA",
     "type": "",
     "is_premiere": false,
-    "status": "upcoming",
-    "thumbnail_url": "https://i.ytimg.com/vi/uGlRpLj8WIA/maxresdefault_live.jpg",
+    "status": "live",
+    "thumbnail_url": "https://i.ytimg.com/vi/uGlRpLj8WIA/maxresdefault_live_live.jpg",
     "subscribers": 97
+  },
+  {
+    "start_et": "2026-01-28 20:57",
+    "end_et": "",
+    "title": "36 Hole in 36 Degrees (PGA West and Lago Mar) | LIVE",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Yak Golf",
+    "watch_url": "https://www.youtube.com/watch?v=7PxIy_w7OtI",
+    "source_id": "7PxIy_w7OtI",
+    "type": "",
+    "is_premiere": false,
+    "status": "live",
+    "thumbnail_url": "https://i.ytimg.com/vi/7PxIy_w7OtI/maxresdefault_live_live.jpg",
+    "subscribers": 75
   },
   {
     "start_et": "2026-01-29 22:00",
@@ -88,21 +103,6 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/u8E3fMjPZfc/maxresdefault.jpg",
     "subscribers": 195
-  },
-  {
-    "start_et": "2026-01-27 21:00",
-    "end_et": "2026-01-27 22:48",
-    "title": "Windy Conditions Ahead (Celtic Manor and St Andrews) | LIVE",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Yak Golf",
-    "watch_url": "https://www.youtube.com/watch?v=P4lPs_2hkbQ",
-    "source_id": "P4lPs_2hkbQ",
-    "type": "",
-    "is_premiere": false,
-    "status": "ended",
-    "thumbnail_url": "https://i.ytimg.com/vi/P4lPs_2hkbQ/maxresdefault.jpg",
-    "subscribers": 75
   },
   {
     "start_et": "2026-01-27 22:10",

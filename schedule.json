@@ -1,20 +1,5 @@
 [
   {
-    "start_et": "2026-01-28 20:53",
-    "end_et": "",
-    "title": "FFK vs GGG!!!",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Garbage Garage Golf",
-    "watch_url": "https://www.youtube.com/watch?v=uGlRpLj8WIA",
-    "source_id": "uGlRpLj8WIA",
-    "type": "",
-    "is_premiere": false,
-    "status": "live",
-    "thumbnail_url": "https://i.ytimg.com/vi/uGlRpLj8WIA/maxresdefault_live_live.jpg",
-    "subscribers": 97
-  },
-  {
     "start_et": "2026-01-28 20:57",
     "end_et": "",
     "title": "36 Hole in 36 Degrees (PGA West and Lago Mar) | LIVE",
@@ -30,6 +15,21 @@
     "subscribers": 75
   },
   {
+    "start_et": "2026-01-28 21:40",
+    "end_et": "",
+    "title": "EP. 196 | Back from the PGA Show! LIVE in the Sim!",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "Triple Bogey Golf",
+    "watch_url": "https://www.youtube.com/watch?v=PRYAcwOxk3k",
+    "source_id": "PRYAcwOxk3k",
+    "type": "",
+    "is_premiere": false,
+    "status": "live",
+    "thumbnail_url": "https://i.ytimg.com/vi/PRYAcwOxk3k/maxresdefault_live_live.jpg",
+    "subscribers": 8900
+  },
+  {
     "start_et": "2026-01-29 22:00",
     "end_et": "",
     "title": "Thursday Night Thunder Featuring ZonaEJ, JoshoMatic & TSads",
@@ -43,21 +43,6 @@
     "status": "upcoming",
     "thumbnail_url": "https://i.ytimg.com/vi/Rx9nfPgRp6I/maxresdefault_live.jpg",
     "subscribers": 39
-  },
-  {
-    "start_et": "2026-01-29 22:00",
-    "end_et": "",
-    "title": "EP. 197 | Live League Brain Box Giveaway!",
-    "league": "",
-    "platform": "YouTube",
-    "channel": "Triple Bogey Golf",
-    "watch_url": "https://www.youtube.com/watch?v=jAvHJf3m4AY",
-    "source_id": "jAvHJf3m4AY",
-    "type": "",
-    "is_premiere": false,
-    "status": "upcoming",
-    "thumbnail_url": "https://i.ytimg.com/vi/jAvHJf3m4AY/maxresdefault_live.jpg",
-    "subscribers": 8900
   },
   {
     "start_et": "2026-01-27 09:46",

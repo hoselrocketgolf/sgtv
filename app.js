@@ -8,9 +8,6 @@ const LIVE_EXTENSION_MINS = 5;
 const MAX_LIVE_FUTURE_MINS = 10;
 const YOUTUBE_LIVE_START_GRACE_MINS = 10;
 const YOUTUBE_LIVE_END_GRACE_MINS = 20;
-const LIVE_API = "https://sgtv-live-detector.hoselrocketgolf72.workers.dev/live-status";
-const LIVE_POLL_MS = 12000;
-const LIVE_CHANNELS = ["simgolf", "foresimgolf", "trackmangolf"];
 
 const $ = (id) => document.getElementById(id);
 const on = (el, evt, fn) => {
@@ -38,9 +35,6 @@ const recentPrev = $("recentPrev");
 const recentNext = $("recentNext");
 const recentCounter = $("recentCounter");
 const recentNav = $("recentNav");
-
-// Live guide
-const liveGuide = $("live-guide");
 
 // Right tile (Today’s Guide)
 const infoTileBody = document.querySelector("#infoTile .tileBody");
@@ -202,141 +196,6 @@ function normalizeWatchUrl(e) {
 function hasLiveThumbnail(url) {
   if (!url) return false;
   return /_live\.jpg(?:\?|$)/i.test(url);
-}
-
-// -------------------- TikTok LIVE guide --------------------
-function normalizeHandle(handle) {
-  return String(handle || "")
-    .trim()
-    .replace(/^@/, "")
-    .toLowerCase();
-}
-
-function getLiveGuideHandles() {
-  const cleaned = LIVE_CHANNELS.map(normalizeHandle).filter(Boolean);
-  return [...new Set(cleaned)];
-}
-
-function buildTikTokLiveUrl(handle) {
-  return `https://www.tiktok.com/@${handle}/live`;
-}
-
-function safeStatus(status) {
-  return status === "live" || status === "offline" || status === "unknown" ? status : "unknown";
-}
-
-function getLiveGuideStatusMap(handles, payload) {
-  const source = payload && typeof payload === "object" ? payload.channels || {} : {};
-  const normalized = {};
-  handles.forEach((handle) => {
-    const direct = source[handle];
-    const status = safeStatus(direct?.status);
-    normalized[handle] = {
-      status,
-      roomId: direct?.roomId || null,
-    };
-  });
-  return normalized;
-}
-
-function renderLiveGuide({ handles, statusMap, checkedAt, note } = {}) {
-  if (!liveGuide) return;
-  const checkedLabel = checkedAt
-    ? new Date(checkedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
-    : "—";
-  const rows = handles.map((handle) => {
-    const data = statusMap[handle] || { status: "unknown", roomId: null };
-    const status = safeStatus(data.status);
-    const statusClass =
-      status === "live" ? "isLive" : status === "unknown" ? "isUnknown" : "isOffline";
-    const statusLabel = status.toUpperCase();
-    const actionLabel = status === "live" ? "Watch on TikTok" : status === "unknown" ? "Check on TikTok" : "";
-    const actionButton = actionLabel
-      ? `<a class="liveGuideBtn ${statusClass}" href="${buildTikTokLiveUrl(handle)}" target="_blank" rel="noreferrer">${actionLabel}</a>`
-      : "";
-
-    return `
-      <div class="liveGuideRow ${statusClass}">
-        <div class="liveGuideIdentity">
-          <div class="liveGuideHandle">@${escapeHtml(handle)}</div>
-          <div class="liveGuideStatus">${escapeHtml(statusLabel)}</div>
-        </div>
-        <div class="liveGuideActions">
-          ${actionButton}
-        </div>
-      </div>
-    `;
-  });
-
-  const noteMarkup = note ? `<div class="liveGuideNote">${escapeHtml(note)}</div>` : "";
-
-  liveGuide.innerHTML = `
-    <div class="tileHeader liveGuideHeader">
-      <div>
-        <h2>TikTok LIVE Guide</h2>
-        <div class="liveGuideMeta">Checked ${escapeHtml(checkedLabel)} • auto-refreshes every 12s</div>
-      </div>
-      <div class="liveGuideLegend">Live detection ≈10–20s</div>
-    </div>
-    ${noteMarkup}
-    <div class="liveGuideRows">
-      ${rows.join("")}
-    </div>
-  `;
-}
-
-function fallbackUnknownPayload(handles) {
-  const statusMap = {};
-  handles.forEach((handle) => {
-    statusMap[handle] = { status: "unknown", roomId: null };
-  });
-  return statusMap;
-}
-
-async function loadLiveGuide() {
-  if (!liveGuide) return;
-  const handles = getLiveGuideHandles();
-  if (!handles.length) {
-    renderLiveGuide({
-      handles: [],
-      statusMap: {},
-      checkedAt: null,
-      note: "Add TikTok handles to LIVE_CHANNELS in app.js.",
-    });
-    return;
-  }
-
-  const isConfigured = LIVE_API && !LIVE_API.includes("REPLACE_ME");
-  if (!isConfigured) {
-    renderLiveGuide({
-      handles,
-      statusMap: fallbackUnknownPayload(handles),
-      checkedAt: null,
-      note: "Replace the LIVE_API URL in app.js with your Cloudflare Worker endpoint.",
-    });
-    return;
-  }
-
-  try {
-    const params = new URLSearchParams({ channels: handles.join(",") });
-    const res = await fetch(`${LIVE_API}?${params.toString()}`, { cache: "no-store" });
-    if (!res.ok) throw new Error(`Live guide fetch failed (${res.status})`);
-    const data = await res.json();
-    const statusMap = getLiveGuideStatusMap(handles, data);
-    renderLiveGuide({
-      handles,
-      statusMap,
-      checkedAt: data?.checkedAt || new Date().toISOString(),
-    });
-  } catch (err) {
-    console.error(err);
-    renderLiveGuide({
-      handles,
-      statusMap: fallbackUnknownPayload(handles),
-      checkedAt: new Date().toISOString(),
-      note: "Live status temporarily unavailable. Showing UNKNOWN until the API recovers.",
-    });
-  }
 }
 
 function extractYouTubeId(url) {
@@ -1242,7 +1101,6 @@ on(refreshBtn, "click", () =>
     if (upNext) upNext.innerHTML = `<div class="muted">${escapeHtml(err.message)}</div>`;
   })
 );
-on(refreshBtn, "click", () => loadLiveGuide().catch((err) => console.error(err)));
 
 on(prevWindow, "click", () => shiftWindow(-1));
 on(nextWindow, "click", () => shiftWindow(1));
@@ -1276,12 +1134,6 @@ loadSchedule().catch((err) => {
   if (nowOn) nowOn.innerHTML = `<div class="muted">Error loading schedule.</div>`;
   if (upNext) upNext.innerHTML = `<div class="muted">${escapeHtml(err.message)}</div>`;
 });
-loadLiveGuide().catch((err) => console.error(err));
-
 setInterval(() => {
   loadSchedule().catch((err) => console.error(err));
 }, 120000);
-
-setInterval(() => {
-  loadLiveGuide().catch((err) => console.error(err));
-}, LIVE_POLL_MS);

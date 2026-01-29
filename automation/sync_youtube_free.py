@@ -186,6 +186,17 @@ def load_existing_schedule(out_path: str) -> list[dict]:
 def extract_live_events(existing: list[dict]) -> list[dict]:
     return [e for e in existing if (e.get("status") or "").strip().lower() == "live"]
 
+def split_schedule_live_events(events: list[dict]) -> tuple[list[dict], list[dict]]:
+    live_events = []
+    keep_events = []
+    for event in events:
+        status = (event.get("status") or "").strip().lower()
+        if status == "live":
+            live_events.append(event)
+        else:
+            keep_events.append(event)
+    return keep_events, live_events
+
 
 def extract_youtube_video_id(url: str) -> str:
     if not url:
@@ -604,7 +615,7 @@ def extract_tiktok_status_from_html(html: str) -> tuple[bool, str, str]:
     if not status_match:
         status_match = re.search(r'"status"\s*:\s*(\d+)', html)
     if not status_match:
-        status_match = re.search(r'"roomStatus"\s*:\s*(\d+)', html)
+        status_match = re.search(r'"roomStatus"\s*:\s*(\d+)')
 
     if status_match:
         code = int(status_match.group(1))
@@ -839,12 +850,14 @@ def is_stale_upcoming(sched_iso: str, now: datetime) -> bool:
 def main():
     schedule_events = []
     used_schedule_sheet = False
+    schedule_sheet_live = []
 
     if SCHEDULE_SHEET_CSV:
         try:
             schedule_events = load_schedule_from_sheet(SCHEDULE_SHEET_CSV)
             if schedule_events:
                 used_schedule_sheet = True
+                schedule_events, schedule_sheet_live = split_schedule_live_events(schedule_events)
                 print(f"Loaded {len(schedule_events)} events from schedule sheet.")
             else:
                 print("Schedule sheet returned no rows. Falling back to YouTube API.")
@@ -877,7 +890,7 @@ def main():
         now = now_utc()
 
         existing_events = load_existing_schedule(OUT_PATH)
-        prior_live_events = extract_live_events(existing_events)
+        prior_live_events = extract_live_events(existing_events) + list(schedule_sheet_live)
         prior_live_by_platform = {}
         for event in prior_live_events:
             platform_key = (event.get("platform") or "").strip().lower()

@@ -183,6 +183,10 @@ def load_existing_schedule(out_path: str) -> list[dict]:
     except Exception:
         return []
 
+def extract_live_events(existing: list[dict]) -> list[dict]:
+    return [e for e in existing if (e.get("status") or "").strip().lower() == "live"]
+
+
 def extract_youtube_video_id(url: str) -> str:
     if not url:
         return ""
@@ -247,6 +251,17 @@ def normalize_handle_from_url(url: str) -> str:
     if not path:
         return ""
     return path.split("/")[0]
+
+def extract_tiktok_handle_from_event(event: dict) -> str:
+    return normalize_tiktok_handle("", event.get("watch_url") or "")
+
+def extract_handle_from_event(event: dict) -> str:
+    url = event.get("watch_url") or ""
+    handle = normalize_handle_from_url(url)
+    if handle:
+        return handle
+    channel = (event.get("channel") or "").strip().lstrip("@")
+    return channel
 
 def fetch_twitch_live_status(handle: str, twitch_url: str) -> tuple[bool, str, str]:
     resolved_handle = handle or normalize_handle_from_url(twitch_url)
@@ -861,6 +876,13 @@ def main():
         events = list(schedule_events)
         now = now_utc()
 
+        existing_events = load_existing_schedule(OUT_PATH)
+        prior_live_events = extract_live_events(existing_events)
+        prior_live_by_platform = {}
+        for event in prior_live_events:
+            platform_key = (event.get("platform") or "").strip().lower()
+            prior_live_by_platform.setdefault(platform_key, []).append(event)
+
         if tiktok_channels:
             print("Scanning TikTok handles:", len(tiktok_channels))
             detected_live = 0
@@ -903,6 +925,26 @@ def main():
                 })
             print("TikTok live detected:", detected_live)
 
+        if prior_live_by_platform.get("tiktok"):
+            print("Rechecking existing TikTok live streams:", len(prior_live_by_platform["tiktok"]))
+            for event in prior_live_by_platform["tiktok"]:
+                handle = extract_tiktok_handle_from_event(event)
+                if not handle:
+                    continue
+                is_live, room_id, cover = fetch_tiktok_live_status(handle, event.get("watch_url") or "")
+                label = event.get("channel") or f"@{handle}"
+                print(f"TikTok recheck: {label} -> {'LIVE' if is_live else 'offline'}")
+                if not is_live:
+                    continue
+                updated = dict(event)
+                updated["start_et"] = event.get("start_et") or now_et_fmt()
+                updated["end_et"] = ""
+                updated["status"] = "live"
+                updated["source_id"] = room_id or event.get("source_id")
+                if cover:
+                    updated["thumbnail_url"] = cover
+                events.append(updated)
+
         for channel in twitch_channels:
             platform = "Twitch"
             handle = (channel.get("handle") or "").strip()
@@ -937,6 +979,27 @@ def main():
                 "thumbnail_url": thumb,
                 "subscribers": subs
             })
+
+        if prior_live_by_platform.get("twitch"):
+            print("Rechecking existing Twitch live streams:", len(prior_live_by_platform["twitch"]))
+            for event in prior_live_by_platform["twitch"]:
+                handle = extract_handle_from_event(event)
+                if not handle:
+                    continue
+                is_live, twitch_title, thumb = fetch_twitch_live_status(handle, event.get("watch_url") or "")
+                label = event.get("channel") or handle
+                print(f"Twitch recheck: {label} -> {'LIVE' if is_live else 'offline'}")
+                if not is_live:
+                    continue
+                updated = dict(event)
+                updated["start_et"] = event.get("start_et") or now_et_fmt()
+                updated["end_et"] = ""
+                updated["status"] = "live"
+                if twitch_title:
+                    updated["title"] = twitch_title
+                if thumb:
+                    updated["thumbnail_url"] = thumb
+                events.append(updated)
 
         for channel in kick_channels:
             platform = "Kick"
@@ -973,9 +1036,62 @@ def main():
                 "subscribers": subs
             })
 
+        if prior_live_by_platform.get("kick"):
+            print("Rechecking existing Kick live streams:", len(prior_live_by_platform["kick"]))
+            for event in prior_live_by_platform["kick"]:
+                handle = extract_handle_from_event(event)
+                if not handle:
+                    continue
+                is_live, kick_title, thumb = fetch_kick_live_status(handle, event.get("watch_url") or "")
+                label = event.get("channel") or handle
+                print(f"Kick recheck: {label} -> {'LIVE' if is_live else 'offline'}")
+                if not is_live:
+                    continue
+                updated = dict(event)
+                updated["start_et"] = event.get("start_et") or now_et_fmt()
+                updated["end_et"] = ""
+                updated["status"] = "live"
+                if kick_title:
+                    updated["title"] = kick_title
+                if thumb:
+                    updated["thumbnail_url"] = thumb
+                events.append(updated)
+
         if used_schedule_sheet:
             if youtube_channels:
                 print("Schedule sheet provided. Skipping YouTube sync.")
+            if prior_live_by_platform.get("youtube") and YT_API_KEY:
+                print("Rechecking existing YouTube live streams:", len(prior_live_by_platform["youtube"]))
+                now = now_utc()
+                prior_live_ids = []
+                for event in prior_live_by_platform["youtube"]:
+                    vid = extract_youtube_video_id(event.get("watch_url") or "")
+                    if vid and vid not in prior_live_ids:
+                        prior_live_ids.append(vid)
+                if prior_live_ids:
+                    details = fetch_videos_details(prior_live_ids)
+                    for vid in prior_live_ids:
+                        item = details.get(vid)
+                        if not item:
+                            continue
+                        status, start_iso, _, is_live_broadcast, is_premiere, title, thumb_url = classify_video(item, now)
+                        if is_premiere or status != "live" or not is_live_broadcast:
+                            continue
+                        events.append({
+                            "start_et": iso_to_et_fmt(start_iso or now.isoformat()),
+                            "end_et": "",
+                            "title": title,
+                            "league": "",
+                            "platform": "YouTube",
+                            "channel": (item.get("snippet") or {}).get("channelTitle") or "",
+                            "watch_url": f"https://www.youtube.com/watch?v={vid}",
+                            "source_id": vid,
+                            "type": "",
+                            "is_premiere": False,
+                            "status": "live",
+                            "thumbnail_url": (thumb_url.replace(".jpg", "_live.jpg") if thumb_url else ""),
+                            "subscribers": 0,
+                        })
         elif youtube_channels and not YT_API_KEY:
             print("Missing YT_API_KEY env var. Skipping YouTube sync.")
         elif youtube_channels:

@@ -1,18 +1,18 @@
 [
   {
-    "start_et": "2026-01-28 18:51",
+    "start_et": "2026-01-28 21:00",
     "end_et": "",
-    "title": "24/7 @TheBurntPeanut VODS/YT | TARKOV | ARC RAIDERS | SILLY GAMES | BUNGULATORS ONLY CHAT",
+    "title": "FFK vs GGG!!!",
     "league": "",
-    "platform": "Twitch",
-    "channel": "TheBurntPeanut_247",
-    "watch_url": "https://www.twitch.tv/theburntpeanut_247",
-    "source_id": "https://www.twitch.tv/theburntpeanut_247",
+    "platform": "YouTube",
+    "channel": "Garbage Garage Golf",
+    "watch_url": "https://www.youtube.com/watch?v=uGlRpLj8WIA",
+    "source_id": "uGlRpLj8WIA",
     "type": "",
     "is_premiere": false,
-    "status": "live",
-    "thumbnail_url": "https://static-cdn.jtvnw.net/previews-ttv/live_user_theburntpeanut_247-640x360.jpg",
-    "subscribers": 0
+    "status": "upcoming",
+    "thumbnail_url": "https://i.ytimg.com/vi/uGlRpLj8WIA/maxresdefault_live.jpg",
+    "subscribers": 97
   },
   {
     "start_et": "2026-01-29 22:00",
@@ -87,7 +87,7 @@
     "is_premiere": false,
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/u8E3fMjPZfc/maxresdefault.jpg",
-    "subscribers": 193
+    "subscribers": 195
   },
   {
     "start_et": "2026-01-27 21:00",
@@ -163,5 +163,20 @@
     "status": "ended",
     "thumbnail_url": "https://i.ytimg.com/vi/CuEllRPUiKY/maxresdefault_live.jpg",
     "subscribers": 484
+  },
+  {
+    "start_et": "2026-01-28 19:26",
+    "end_et": "2026-01-28 20:17",
+    "title": "Live Garage Simulator Golf - Yamaha Hal Sutton Persimmon & Ping Eye 2 Irons",
+    "league": "",
+    "platform": "YouTube",
+    "channel": "TurbodTalon Golf",
+    "watch_url": "https://www.youtube.com/watch?v=dzg9jXwAuNc",
+    "source_id": "dzg9jXwAuNc",
+    "type": "",
+    "is_premiere": false,
+    "status": "ended",
+    "thumbnail_url": "https://i.ytimg.com/vi/dzg9jXwAuNc/maxresdefault_live.jpg",
+    "subscribers": 195
   }
 ]
